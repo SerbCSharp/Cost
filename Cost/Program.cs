@@ -1,6 +1,5 @@
 using Cost.Application;
 using Cost.Infrastructure.Repositories;
-using Cost.Infrastructure.Repositories.AFKDevelopment;
 using Cost.Presentation.ReportsToExcel;
 using System.Text.Json.Serialization;
 
@@ -12,19 +11,8 @@ builder.Services.AddSwaggerGen(x => x.IncludeXmlComments(Path.Combine(AppContext
 builder.Services.AddScoped<GeneratingReports>();
 builder.Services.AddScoped<ExportingReportsToExcel>();
 builder.Services.Configure<Base1CConfiguration>(builder.Configuration.GetSection(Base1CConfiguration.Section));
-//builder.Services.AddScoped<IGettingData, Cost.Infrastructure.Repositories.AFKDevelopment.GettingData>();
-
-
-builder.Services.AddScoped<Func<string, IGettingData>>(serviceProvider => key =>
-{
-    return key switch
-    {
-        "A" => serviceProvider.GetRequiredService<GettingData>(),
-        "B" => serviceProvider.GetRequiredService<GettingData>(),
-        _ => throw new ArgumentException("Неверный ключ сервиса")
-    };
-});
-
+builder.Services.AddScoped<GettingDataAFKDevelopment>();
+builder.Services.AddScoped<IGettingDataFactory, GettingDataFactory>();
 
 var app = builder.Build();
 

@@ -1,4 +1,4 @@
-﻿using Cost.Infrastructure.Repositories.AFKDevelopment;
+﻿using Cost.Infrastructure.Repositories;
 
 namespace Cost.Application
 {
@@ -14,13 +14,12 @@ namespace Cost.Application
         {
             switch (type)
             {
-                case "A":
-                    return _serviceProvider.GetService<GettingData>();
-                case "B":
-                    return _serviceProvider.GetService<GettingData>();
+                case "AFKDevelopment":
+                    return _serviceProvider.GetRequiredService<GettingDataAFKDevelopment>();
+                case "Vega":
+                case "AFK":
                 default:
-                    // Обработка ошибки или возвращение сервиса по умолчанию
-                    return _serviceProvider.GetService<GettingData>();
+                    return _serviceProvider.GetRequiredService<GettingDataAFKDevelopment>();
             }
         }
     }

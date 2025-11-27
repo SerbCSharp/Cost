@@ -20,14 +20,14 @@ using System.Data;
 using System.Net.Http.Headers;
 using System.Text;
 
-namespace Cost.Infrastructure.Repositories.AFKDevelopment
+namespace Cost.Infrastructure.Repositories
 {
-    public class GettingData : IGettingData
+    public class GettingDataAFKDevelopment : IGettingData
     {
         private readonly HttpClient httpClient;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly Base1CConfiguration _base1CConfiguration;
-        public GettingData(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
+        public GettingDataAFKDevelopment(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
         {
             _base1CConfiguration = base1CConfiguration.Value;
             string username = _base1CConfiguration.Username;

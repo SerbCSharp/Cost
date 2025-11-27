@@ -1,28 +1,31 @@
 ﻿using Cost.Domain;
+using Cost.Infrastructure.Repositories;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.InvoiceReceived;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Cost.Application
 {
     public class GeneratingReports
     {
-        private readonly IGettingDataFactory _factory;
+        private readonly IGettingDataFactory _gettingDataFactory;
 
-        public GeneratingReports(IGettingDataFactory factory)
+        public GeneratingReports(IGettingDataFactory gettingDataFactory)
         {
-            _factory = factory;
+            _gettingDataFactory = gettingDataFactory;
         }
 
         public async Task<List<ContractsCounterpartiesValue>> ContractsFrom1CAsync(int attributeAgreement, string typeAgreement, string purchaser = "") // Договора из 1С
         {
-            var contractsCounterpartiesValue = (await _factory.Create("A").ContractsCounterpartiesAsync()).Value
+            IGettingData gettingData = _gettingDataFactory.Create("");
+            var contractsCounterpartiesValue = (await gettingData.ContractsCounterpartiesAsync()).Value
                 .Where(x => x.TypeAgreement == typeAgreement).ToList();
 
             List<AdditionalInformationValue> contractorOrSupplier = null;
             List<ContractsCounterpartiesValue> contractsCounterparties = null;
 
-            var additionalInformation = await _factory.Create("A").AdditionalInformationAsync();
+            var additionalInformation = await _iGettingData.AdditionalInformationAsync();
             switch (attributeAgreement)
             {
                 case 1: // Подрядчики
@@ -42,10 +45,10 @@ namespace Cost.Application
                     break;
             }
 
-            var nomenclatureGroups = await _factory.Create("A").NomenclatureGroupsAsync();
-            var constructionProjects = await _factory.Create("A").ConstructionProjectsAsync();
-            var typesCalculations = await _factory.Create("A").TypesCalculationsAsync();
-            var costItems = await _factory.Create("A").CostItemsAsync();
+            var nomenclatureGroups = await _iGettingData.NomenclatureGroupsAsync();
+            var constructionProjects = await _iGettingData.ConstructionProjectsAsync();
+            var typesCalculations = await _iGettingData.TypesCalculationsAsync();
+            var costItems = await _iGettingData.CostItemsAsync();
 
             foreach (var contractsCounterpartie in contractsCounterparties)
             {
@@ -82,7 +85,7 @@ namespace Cost.Application
                                                                                     from subCalculation in tmp.DefaultIfEmpty()
                                                                                     select new { c3, subCalculation?.Description };
             // Поставщики + договора
-            var counterparties = await _factory.Create("A").CounterpartiesAsync();
+            var counterparties = await _iGettingData.CounterpartiesAsync();
             var contractorPlusContract = counterparties.Value.Join(contractPlusNomenclatureGroupPlusConstructionPlusTypesCalculation, p1 => p1.Ref_Key, c1 => c1.c3.c2.c1.ContractorId,
                 (p5, c5) => new { p5, c5 }).Where(x => x.p5.Description != purchaser).ToList();
 
@@ -121,11 +124,11 @@ namespace Cost.Application
 
         public async Task<IEnumerable<Contracts>> WeDoNotHaveTheseContractsAsync() // Отсутствующие у нас договора
         {
-            var contractsCounterpartiesValue = (await _factory.Create("A").ContractsCounterpartiesAsync()).Value
+            var contractsCounterpartiesValue = (await _iGettingData.ContractsCounterpartiesAsync()).Value
                 .Where(x => x.TypeAgreement == "СПоставщиком" && x.Date?.Year > 2024 && x.DeletionMark == false);
 
             // Поставщики + договора
-            var counterparties = await _factory.Create("A").CounterpartiesAsync();
+            var counterparties = await _iGettingData.CounterpartiesAsync();
             var contractorPlusContract = counterparties.Value.Join(contractsCounterpartiesValue, p1 => p1.Ref_Key, c1 => c1.ContractorId,
                 (p2, c2) => new { p2, c2 }).Where(x => x.p2.Description != "СЗ ЛЕГИС ООО");
 
@@ -140,7 +143,7 @@ namespace Cost.Application
                 Sum = x.c2.Sum
             });
 
-            var contractsFromExcel = _factory.Create("A").GetContracts();
+            var contractsFromExcel = _iGettingData.GetContracts();
 
             return contractsFrom1C.Except(contractsFromExcel);
         }
@@ -148,7 +151,7 @@ namespace Cost.Application
         public async Task<List<ReconciliationStatement>> ReconciliationStatementAsync(string contractName) // Акт сверки
         {
             var contract = (await ContractsFrom1CAsync(0, "СПоставщиком", "СЗ ЛЕГИС ООО")).FirstOrDefault(x => x.Name == contractName);
-            var payments = (await _factory.Create("A").PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false
+            var payments = (await _iGettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false
                 && x.CounterpartyAgreementId == contract.CounterpartyAgreementId)
                                 .Select(y => new ReconciliationStatement
                                 {
@@ -156,7 +159,7 @@ namespace Cost.Application
                                     Debit = y.DocumentAmount,
                                     DocumentName = "Списание с расчетного счета"
                                 });
-            var receiptGoodsServices = (await _factory.Create("A").ReceiptGoodsServicesAsync()).Value
+            var receiptGoodsServices = (await _iGettingData.ReceiptGoodsServicesAsync()).Value
                 .Where(x => x.Posted == true && x.ContractId == contract.CounterpartyAgreementId)
                                 .Select(y => new ReconciliationStatement
                                 {
@@ -165,7 +168,7 @@ namespace Cost.Application
                                     DocumentName = "Поступление товаров и услуг"
                                 });
 
-            var receiptProcessing = (await _factory.Create("A").ReceiptProcessingAsync()).Value
+            var receiptProcessing = (await _iGettingData.ReceiptProcessingAsync()).Value
                 .Where(x => x.Posted == true && x.ContractId == contract.CounterpartyAgreementId)
                                 .Select(y => new ReconciliationStatement
                                 {
@@ -179,7 +182,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var selling = (await _factory.Create("A").SellingAsync()).Value
+            var selling = (await _iGettingData.SellingAsync()).Value
                 .Where(x => x.Posted == true && x.CounterpartyAgreementId == contract.CounterpartyAgreementId)
                                 .Select(y => new ReconciliationStatement
                                 {
@@ -190,7 +193,7 @@ namespace Cost.Application
 
             var plusSelling = plusReceiptProcessing.Concat(selling);
 
-            var debtAdjustment = (await _factory.Create("A").DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
+            var debtAdjustment = (await _iGettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
             // Убираем из Корректировки долга проводки по одному договору в одном документе Корректировка долга
             foreach (var item in debtAdjustment)
             {
@@ -260,7 +263,7 @@ namespace Cost.Application
             var plusReceivableDoubleEntry = plusReceivable.Concat(PlusReceivableDoubleEntry);
             var plusPayableDoubleEntry = plusReceivableDoubleEntry.Concat(PlusPayableDoubleEntry);
 
-            var receiptToCurrentAccount = (await _factory.Create("A").ReceiptToCurrentAccountAsync()).Value
+            var receiptToCurrentAccount = (await _iGettingData.ReceiptToCurrentAccountAsync()).Value
                 .Where(x => x.Posted == true && x.CounterpartyAgreementId == contract.CounterpartyAgreementId)
                                 .Select(y => new ReconciliationStatement
                                 {
@@ -273,7 +276,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var operations = _factory.Create("A").GetOperations();
+            var operations = _iGettingData.GetOperations();
             var operationDebit = operations.Where(x => x.ContractDebit == contract.CounterpartyAgreementId)
                     .Select(y => new ReconciliationStatement
                     {
@@ -301,15 +304,15 @@ namespace Cost.Application
 
         public async Task<List<Domain.Cost>> CostAsync() // Стоимость строительства объектов
         {
-            var contracts = _factory.Create("A").GetContracts();
+            var contracts = _iGettingData.GetContracts();
 
-            var payments = (await _factory.Create("A").PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
+            var payments = (await _iGettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
 
             var groupPayments = payments.GroupBy(x => x.CounterpartyAgreementId)
                 .Select(y => new { ContractId = y.Key, SumPayment = y.Sum(z => z.DocumentAmount) }).ToList();
 
-            var receiptGoodsServices = (await _factory.Create("A").ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true);
-            var receiptProcessing = (await _factory.Create("A").ReceiptProcessingAsync()).Value.Where(x => x.Posted == true);
+            var receiptGoodsServices = (await _iGettingData.ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true);
+            var receiptProcessing = (await _iGettingData.ReceiptProcessingAsync()).Value.Where(x => x.Posted == true);
             var receipts = receiptGoodsServices.Concat(receiptProcessing).ToList();
             var groupReceipts = receipts.GroupBy(x => x.ContractId).Select(y => new { ContractId = y.Key, SumReceipt = y.Sum(z => z.DocumentAmount) }).ToList();
 
@@ -327,7 +330,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var selling = (await _factory.Create("A").SellingAsync()).Value.Where(x => x.Posted == true);
+            var selling = (await _iGettingData.SellingAsync()).Value.Where(x => x.Posted == true);
             var sellingGrouped = selling.GroupBy(y => y.CounterpartyAgreementId)
                 .Select(x => new { CounterpartyAgreementId = x.Key, DocumentAmount = x.Sum(y => y.DocumentAmount) });
 
@@ -337,7 +340,7 @@ namespace Cost.Application
                               from subSelling in tmp.DefaultIfEmpty()
                               select new { c1, Selling = subSelling?.DocumentAmount ?? 0 };
 
-            var debtAdjustment = (await _factory.Create("A").DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
+            var debtAdjustment = (await _iGettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
             // Убираем из Корректировки долга проводки по одному договору в одном документе Корректировка долга
             foreach (var item in debtAdjustment)
             {
@@ -387,7 +390,7 @@ namespace Cost.Application
                                  from subReceivable in tmp.DefaultIfEmpty()
                                  select new { c3, sumReceivable = subReceivable?.Sum ?? 0 };
 
-            var receiptToCurrentAccount = (await _factory.Create("A").ReceiptToCurrentAccountAsync()).Value.Where(x => x.Posted == true);
+            var receiptToCurrentAccount = (await _iGettingData.ReceiptToCurrentAccountAsync()).Value.Where(x => x.Posted == true);
             var receiptToCurrentAccountGrouped = receiptToCurrentAccount.GroupBy(y => y.CounterpartyAgreementId)
                 .Select(x => new { CounterpartyAgreementId = x.Key, DocumentAmount = x.Sum(y => y.DocumentAmount) });
 
@@ -399,7 +402,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var facility = _factory.Create("A").GetFacility();
+            var facility = _iGettingData.GetFacility();
 
             var facilityGrouped = facility.GroupBy(y => y.ObjectNameIn1C).Select(x => new { ObjectNameIn1C = x.Key, x.FirstOrDefault().TotalArea });
             var PlusFacility = from c5 in PlusReceiptToCurrentAccount
@@ -408,7 +411,7 @@ namespace Cost.Application
                                from subArea in tmp.DefaultIfEmpty()
                                select new { c5, TotalArea = subArea?.TotalArea ?? 0 };
 
-            var operations = _factory.Create("A").GetOperations();
+            var operations = _iGettingData.GetOperations();
             var operationsDebitGrouped = operations.GroupBy(y => y.ContractDebit).Select(x => new { ContractDebit = x.Key, Sum = x.Sum(y => y.Sum) });
             var PlusOperationDebit = from c6 in PlusFacility
                                      join operD in operationsDebitGrouped
@@ -519,10 +522,10 @@ namespace Cost.Application
 
         public async Task<List<InvoiceReceivedValue>> InvoiceReceivedAsync()
         {
-            var invoiceReceived = (await _factory.Create("A").InvoiceReceivedAsync()).Value.Where(x => x.DeletionMark == false && x.Posted == true);
+            var invoiceReceived = (await _iGettingData.InvoiceReceivedAsync()).Value.Where(x => x.DeletionMark == false && x.Posted == true);
             var noContractCode = invoiceReceived.Where(x => x.CounterpartyAgreementId == "00000000-0000-0000-0000-000000000000");
 
-            var payments = (await _factory.Create("A").PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
+            var payments = (await _iGettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
             var PlusPayments = from c1 in noContractCode
                                join payment in payments
                                on c1.DocumentId equals payment.PaymentId into tmp
@@ -552,10 +555,10 @@ namespace Cost.Application
         {
             var date = new DateTime(2021, 10, 1);
 
-            var invoiceReceived = (await _factory.Create("A").InvoiceReceivedAsync()).Value.Where(x => x.DeletionMark == false && x.Posted == true);
+            var invoiceReceived = (await _iGettingData.InvoiceReceivedAsync()).Value.Where(x => x.DeletionMark == false && x.Posted == true);
 
             var paymentsNDS = invoiceReceived.Where(x => x.DocumentType == "StandardODATA.Document_СписаниеСРасчетногоСчета");
-            var payments = (await _factory.Create("A").PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false && x.Date >= date);
+            var payments = (await _iGettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false && x.Date >= date);
             var Payments = from p in payments
                            join c in paymentsNDS
                                on p.PaymentId equals c.DocumentId into tmp
@@ -571,7 +574,7 @@ namespace Cost.Application
                                };
 
             var receiptGoodsServicesNDS = invoiceReceived.Where(x => x.DocumentType == "StandardODATA.Document_ПоступлениеТоваровУслуг");
-            var receiptGoodsServices = (await _factory.Create("A").ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true && x.Date >= date);
+            var receiptGoodsServices = (await _iGettingData.ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true && x.Date >= date);
             var ReceiptGoodsServices = from p in receiptGoodsServices
                                        join c in receiptGoodsServicesNDS
                                        on p.ReceiptId equals c.DocumentId into tmp
@@ -587,7 +590,7 @@ namespace Cost.Application
                                        };
 
             var receiptProcessingNDS = invoiceReceived.Where(x => x.DocumentType == "StandardODATA.Document_ПоступлениеИзПереработки");
-            var receiptProcessing = (await _factory.Create("A").ReceiptProcessingAsync()).Value.Where(x => x.Posted == true && x.Date >= date);
+            var receiptProcessing = (await _iGettingData.ReceiptProcessingAsync()).Value.Where(x => x.Posted == true && x.Date >= date);
             var ReceiptProcessing = from p in receiptProcessing
                                     join c in receiptProcessingNDS
                                        on p.ReceiptId equals c.DocumentId into tmp
@@ -607,7 +610,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var selling = (await _factory.Create("A").SellingAsync()).Value
+            var selling = (await _iGettingData.SellingAsync()).Value
                 .Where(x => x.Posted == true && x.Date >= date)
                                 .Select(y => new IncomeAndExpenses
                                 {
@@ -619,7 +622,7 @@ namespace Cost.Application
 
             var plusSelling = plusReceiptProcessing.Concat(selling);
 
-            var debtAdjustment = (await _factory.Create("A").DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
+            var debtAdjustment = (await _iGettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
             // Убираем из Корректировки долга проводки по одному договору в одном документе Корректировка долга
             foreach (var item in debtAdjustment)
             {
@@ -693,7 +696,7 @@ namespace Cost.Application
             var plusReceivableDoubleEntry = plusReceivable.Concat(PlusReceivableDoubleEntry);
             var plusPayableDoubleEntry = plusReceivableDoubleEntry.Concat(PlusPayableDoubleEntry);
 
-            var receiptToCurrentAccount = (await _factory.Create("A").ReceiptToCurrentAccountAsync()).Value
+            var receiptToCurrentAccount = (await _iGettingData.ReceiptToCurrentAccountAsync()).Value
                 .Where(x => x.Posted == true && x.Date >= date)
                                 .Select(y => new IncomeAndExpenses
                                 {
@@ -707,7 +710,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var operations = _factory.Create("A").GetOperations();
+            var operations = _iGettingData.GetOperations();
             var operationDebit = operations.Where(x => x.Date >= date)
                     .Select(y => new IncomeAndExpenses
                     {
@@ -729,7 +732,7 @@ namespace Cost.Application
                     });
 
             var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
-            var contract = _factory.Create("A").GetContracts();
+            var contract = _iGettingData.GetContracts();
 
 
             var plusContract = from p in plusOperationCredit
