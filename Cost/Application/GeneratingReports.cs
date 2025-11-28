@@ -1,9 +1,5 @@
 ﻿using Cost.Domain;
-using Cost.Infrastructure.Repositories;
-using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
-using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
-using Cost.Infrastructure.Repositories.Models.InvoiceReceived;
-using Microsoft.AspNetCore.Mvc;
+using Cost.Presentation.DTO.Request;
 
 namespace Cost.Application
 {
@@ -16,122 +12,16 @@ namespace Cost.Application
             _gettingDataFactory = gettingDataFactory;
         }
 
-        public async Task<List<ContractsCounterpartiesValue>> ContractsFrom1CAsync(int attributeAgreement, string typeAgreement, string purchaser = "") // Договора из 1С
+        public async Task<IEnumerable<Contracts>> WeDoNotHaveTheseContractsAsync(Organizations organization) // Отсутствующие у нас договора
         {
-            IGettingData gettingData = _gettingDataFactory.Create("");
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
             var contractsCounterpartiesValue = (await gettingData.ContractsCounterpartiesAsync()).Value
-                .Where(x => x.TypeAgreement == typeAgreement).ToList();
-
-            List<AdditionalInformationValue> contractorOrSupplier = null;
-            List<ContractsCounterpartiesValue> contractsCounterparties = null;
-
-            var additionalInformation = await _iGettingData.AdditionalInformationAsync();
-            switch (attributeAgreement)
-            {
-                case 1: // Подрядчики
-                    contractorOrSupplier = additionalInformation.Value.Where(x => x.IndicatorType.Contains("ДоговорыКонтрагентов", StringComparison.OrdinalIgnoreCase)
-                        && x.IndicatorValue == "1").ToList();
-                    contractsCounterparties = contractsCounterpartiesValue.Join(contractorOrSupplier, p => p.CounterpartyAgreementId,
-                        c => c.Indicator, (p, c) => p).ToList();
-                    break;
-                case 2: // Поставщики материалов
-                    contractorOrSupplier = additionalInformation.Value.Where(x => x.IndicatorType.Contains("ДоговорыКонтрагентов", StringComparison.OrdinalIgnoreCase)
-                        && x.IndicatorValue == "2").ToList();
-                    contractsCounterparties = contractsCounterpartiesValue.Join(contractorOrSupplier, p => p.CounterpartyAgreementId,
-                        c => c.Indicator, (p, c) => p).ToList();
-                    break;
-                default:
-                    contractsCounterparties = contractsCounterpartiesValue.ToList();
-                    break;
-            }
-
-            var nomenclatureGroups = await _iGettingData.NomenclatureGroupsAsync();
-            var constructionProjects = await _iGettingData.ConstructionProjectsAsync();
-            var typesCalculations = await _iGettingData.TypesCalculationsAsync();
-            var costItems = await _iGettingData.CostItemsAsync();
-
-            foreach (var contractsCounterpartie in contractsCounterparties)
-            {
-                foreach (var AdditionalDetail in contractsCounterpartie.AdditionalDetails)
-                {
-                    if (AdditionalDetail.ValueType.Contains("НоменклатурныеГруппы"))
-                    {
-                        contractsCounterpartie.NomenclatureGroupsId = AdditionalDetail.Value;
-                    }
-                    if (AdditionalDetail.ValueType.Contains("СтатьиЗатрат"))
-                    {
-                        contractsCounterpartie.CostItemsId = AdditionalDetail.Value;
-                    }
-                }
-            }
-
-            var contractsGrouped = contractsCounterparties.ToList();
-
-            var contractPlusNomenclatureGroup = from c1 in contractsGrouped
-                                                join nomenclatureGroup in nomenclatureGroups.Value
-                                                       on c1.NomenclatureGroupsId equals nomenclatureGroup.Ref_Key into tmp
-                                                from subNomenclatureGroup in tmp.DefaultIfEmpty()
-                                                select new { c1, subNomenclatureGroup?.ConstructionObjectId };
-
-            var contractPlusNomenclatureGroupPlusConstruction = from c2 in contractPlusNomenclatureGroup
-                                                                join construction in constructionProjects.Value
-                                                                       on c2.ConstructionObjectId equals construction.Ref_Key into tmp
-                                                                from subConstruction in tmp.DefaultIfEmpty()
-                                                                select new { c2, subConstruction?.Description };
-
-            var contractPlusNomenclatureGroupPlusConstructionPlusTypesCalculation = from c3 in contractPlusNomenclatureGroupPlusConstruction
-                                                                                    join calculation in typesCalculations.Value
-                                                                                           on c3.c2.c1.TypeCalculationId equals calculation.Ref_Key into tmp
-                                                                                    from subCalculation in tmp.DefaultIfEmpty()
-                                                                                    select new { c3, subCalculation?.Description };
-            // Поставщики + договора
-            var counterparties = await _iGettingData.CounterpartiesAsync();
-            var contractorPlusContract = counterparties.Value.Join(contractPlusNomenclatureGroupPlusConstructionPlusTypesCalculation, p1 => p1.Ref_Key, c1 => c1.c3.c2.c1.ContractorId,
-                (p5, c5) => new { p5, c5 }).Where(x => x.p5.Description != purchaser).ToList();
-
-
-            var contracts = from c4 in contractorPlusContract
-                            join cost in costItems.Value
-                                   on c4.c5.c3.c2.c1.CostItemsId equals cost.Ref_Key into tmp
-                            from subCost in tmp.DefaultIfEmpty()
-                            select new ContractsCounterpartiesValue
-                            {
-                                AgreementSigned = c4.c5.c3.c2.c1.AgreementSigned,
-                                AmountIncludesNDS = c4.c5.c3.c2.c1.AmountIncludesNDS,
-                                AmountSecurityRetention = c4.c5.c3.c2.c1.AmountSecurityRetention,
-                                Comment = c4.c5.c3.c2.c1.Comment,
-                                ConstructionProjects = c4.c5.c3.Description,
-                                ContractClosed = c4.c5.c3.c2.c1.ContractClosed,
-                                ContractorId = c4.c5.c3.c2.c1.ContractorId,
-                                CostItemsId = c4.c5.c3.c2.c1.CostItemsId,
-                                CostItems = subCost?.Description,
-                                CounterpartyAgreementId = c4.c5.c3.c2.c1.CounterpartyAgreementId,
-                                Date = c4.c5.c3.c2.c1.Date,
-                                NomenclatureGroupsId = c4.c5.c3.c2.c1.NomenclatureGroupsId,
-                                Number = c4.c5.c3.c2.c1.Number,
-                                Name = c4.c5.c3.c2.c1.Name,
-                                OrganizationId = c4.c5.c3.c2.c1.OrganizationId,
-                                RateNDS = c4.c5.c3.c2.c1.RateNDS,
-                                Sum = c4.c5.c3.c2.c1.Sum,
-                                SumNDS = c4.c5.c3.c2.c1.SumNDS,
-                                TypeCalculation = c4.c5.Description,
-                                Contractor = c4.p5.Description,
-                                TypeAgreement = c4.c5.c3.c2.c1.TypeAgreement
-                            };
-
-            return contracts.ToList();
-        }
-
-        public async Task<IEnumerable<Contracts>> WeDoNotHaveTheseContractsAsync() // Отсутствующие у нас договора
-        {
-            var contractsCounterpartiesValue = (await _iGettingData.ContractsCounterpartiesAsync()).Value
                 .Where(x => x.TypeAgreement == "СПоставщиком" && x.Date?.Year > 2024 && x.DeletionMark == false);
 
             // Поставщики + договора
-            var counterparties = await _iGettingData.CounterpartiesAsync();
+            var counterparties = await gettingData.CounterpartiesAsync();
             var contractorPlusContract = counterparties.Value.Join(contractsCounterpartiesValue, p1 => p1.Ref_Key, c1 => c1.ContractorId,
                 (p2, c2) => new { p2, c2 }).Where(x => x.p2.Description != "СЗ ЛЕГИС ООО");
-
 
             var contractsFrom1C = contractorPlusContract.Select(x => new Contracts
             {
@@ -143,24 +33,25 @@ namespace Cost.Application
                 Sum = x.c2.Sum
             });
 
-            var contractsFromExcel = _iGettingData.GetContracts();
+            var contractsFromExcel = gettingData.GetContracts();
 
             return contractsFrom1C.Except(contractsFromExcel);
         }
 
-        public async Task<List<ReconciliationStatement>> ReconciliationStatementAsync(string contractName) // Акт сверки
+        public async Task<List<ReconciliationStatement>> ReconciliationStatementAsync(string contractName, Organizations organization) // Акт сверки
         {
-            var contract = (await ContractsFrom1CAsync(0, "СПоставщиком", "СЗ ЛЕГИС ООО")).FirstOrDefault(x => x.Name == contractName);
-            var payments = (await _iGettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false
-                && x.CounterpartyAgreementId == contract.CounterpartyAgreementId)
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+            var contract = gettingData.GetContracts().FirstOrDefault(x => x.Name == contractName);
+            var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false
+                && x.CounterpartyAgreementId == contract.ContractId)
                                 .Select(y => new ReconciliationStatement
                                 {
                                     Date = y.Date,
                                     Debit = y.DocumentAmount,
                                     DocumentName = "Списание с расчетного счета"
                                 });
-            var receiptGoodsServices = (await _iGettingData.ReceiptGoodsServicesAsync()).Value
-                .Where(x => x.Posted == true && x.ContractId == contract.CounterpartyAgreementId)
+            var receiptGoodsServices = (await gettingData.ReceiptGoodsServicesAsync()).Value
+                .Where(x => x.Posted == true && x.ContractId == contract.ContractId)
                                 .Select(y => new ReconciliationStatement
                                 {
                                     Date = y.Date,
@@ -168,8 +59,8 @@ namespace Cost.Application
                                     DocumentName = "Поступление товаров и услуг"
                                 });
 
-            var receiptProcessing = (await _iGettingData.ReceiptProcessingAsync()).Value
-                .Where(x => x.Posted == true && x.ContractId == contract.CounterpartyAgreementId)
+            var receiptProcessing = (await gettingData.ReceiptProcessingAsync()).Value
+                .Where(x => x.Posted == true && x.ContractId == contract.ContractId)
                                 .Select(y => new ReconciliationStatement
                                 {
                                     Date = y.Date,
@@ -182,8 +73,8 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var selling = (await _iGettingData.SellingAsync()).Value
-                .Where(x => x.Posted == true && x.CounterpartyAgreementId == contract.CounterpartyAgreementId)
+            var selling = (await gettingData.SellingAsync()).Value
+                .Where(x => x.Posted == true && x.CounterpartyAgreementId == contract.ContractId)
                                 .Select(y => new ReconciliationStatement
                                 {
                                     Date = y.Date,
@@ -193,7 +84,7 @@ namespace Cost.Application
 
             var plusSelling = plusReceiptProcessing.Concat(selling);
 
-            var debtAdjustment = (await _iGettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
+            var debtAdjustment = (await gettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
             // Убираем из Корректировки долга проводки по одному договору в одном документе Корректировка долга
             foreach (var item in debtAdjustment)
             {
@@ -215,11 +106,11 @@ namespace Cost.Application
 
             var Payable = debtAdjustment.SelectMany(x => x.AccountsPayable, (p, c) =>
             new { p.Ref_Key, c.CounterpartyAgreementId, c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
-                .Where(y => y.CounterpartyAgreementId == contract.CounterpartyAgreementId).ToList();
+                .Where(y => y.CounterpartyAgreementId == contract.ContractId).ToList();
 
             var Receivable = debtAdjustment.SelectMany(x => x.AccountsReceivable, (p, c) =>
             new { p.Ref_Key, c.CounterpartyAgreementId, c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
-                .Where(y => y.CounterpartyAgreementId == contract.CounterpartyAgreementId).ToList();
+                .Where(y => y.CounterpartyAgreementId == contract.ContractId).ToList();
 
             var payableReconciliationStatement = Payable.Select(y => new ReconciliationStatement
             {
@@ -240,11 +131,11 @@ namespace Cost.Application
 
             var ReceivableDoubleEntry = debtAdjustment.Where(x => x.AccountsReceivable.Length == 0).SelectMany(x => x.AccountsPayable, (p, c) =>
             new { p.Ref_Key, CounterpartyAgreementId = c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
-                .Where(y => y.CounterpartyAgreementId == contract.CounterpartyAgreementId).ToList();
+                .Where(y => y.CounterpartyAgreementId == contract.ContractId).ToList();
 
             var PayableDoubleEntry = debtAdjustment.Where(x => x.AccountsPayable.Length == 0).SelectMany(x => x.AccountsReceivable, (p, c) =>
             new { p.Ref_Key, CounterpartyAgreementId = c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
-                .Where(y => y.CounterpartyAgreementId == contract.CounterpartyAgreementId).ToList();
+                .Where(y => y.CounterpartyAgreementId == contract.ContractId).ToList();
 
             var PlusReceivableDoubleEntry = ReceivableDoubleEntry.Select(y => new ReconciliationStatement
             {
@@ -263,8 +154,8 @@ namespace Cost.Application
             var plusReceivableDoubleEntry = plusReceivable.Concat(PlusReceivableDoubleEntry);
             var plusPayableDoubleEntry = plusReceivableDoubleEntry.Concat(PlusPayableDoubleEntry);
 
-            var receiptToCurrentAccount = (await _iGettingData.ReceiptToCurrentAccountAsync()).Value
-                .Where(x => x.Posted == true && x.CounterpartyAgreementId == contract.CounterpartyAgreementId)
+            var receiptToCurrentAccount = (await gettingData.ReceiptToCurrentAccountAsync()).Value
+                .Where(x => x.Posted == true && x.CounterpartyAgreementId == contract.ContractId)
                                 .Select(y => new ReconciliationStatement
                                 {
                                     Date = y.Date,
@@ -276,8 +167,8 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var operations = _iGettingData.GetOperations();
-            var operationDebit = operations.Where(x => x.ContractDebit == contract.CounterpartyAgreementId)
+            var operations = gettingData.GetOperations();
+            var operationDebit = operations.Where(x => x.ContractDebit == contract.ContractId)
                     .Select(y => new ReconciliationStatement
                     {
                         Date = y.Date,
@@ -287,7 +178,7 @@ namespace Cost.Application
 
             var plusOperationDebit = plusreceiptToCurrentAccount.Concat(operationDebit);
 
-            var operationCredit = operations.Where(x => x.ContractCredit == contract.CounterpartyAgreementId)
+            var operationCredit = operations.Where(x => x.ContractCredit == contract.ContractId)
                     .Select(y => new ReconciliationStatement
                     {
                         Date = y.Date,
@@ -302,17 +193,18 @@ namespace Cost.Application
             return reconciliationStatement;
         }
 
-        public async Task<List<Domain.Cost>> CostAsync() // Стоимость строительства объектов
+        public async Task<List<Domain.Cost>> CostAsync(Organizations organization) // Стоимость строительства объектов
         {
-            var contracts = _iGettingData.GetContracts();
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+            var contracts = gettingData.GetContracts();
 
-            var payments = (await _iGettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
+            var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
 
             var groupPayments = payments.GroupBy(x => x.CounterpartyAgreementId)
                 .Select(y => new { ContractId = y.Key, SumPayment = y.Sum(z => z.DocumentAmount) }).ToList();
 
-            var receiptGoodsServices = (await _iGettingData.ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true);
-            var receiptProcessing = (await _iGettingData.ReceiptProcessingAsync()).Value.Where(x => x.Posted == true);
+            var receiptGoodsServices = (await gettingData.ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true);
+            var receiptProcessing = (await gettingData.ReceiptProcessingAsync()).Value.Where(x => x.Posted == true);
             var receipts = receiptGoodsServices.Concat(receiptProcessing).ToList();
             var groupReceipts = receipts.GroupBy(x => x.ContractId).Select(y => new { ContractId = y.Key, SumReceipt = y.Sum(z => z.DocumentAmount) }).ToList();
 
@@ -330,7 +222,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var selling = (await _iGettingData.SellingAsync()).Value.Where(x => x.Posted == true);
+            var selling = (await gettingData.SellingAsync()).Value.Where(x => x.Posted == true);
             var sellingGrouped = selling.GroupBy(y => y.CounterpartyAgreementId)
                 .Select(x => new { CounterpartyAgreementId = x.Key, DocumentAmount = x.Sum(y => y.DocumentAmount) });
 
@@ -340,7 +232,7 @@ namespace Cost.Application
                               from subSelling in tmp.DefaultIfEmpty()
                               select new { c1, Selling = subSelling?.DocumentAmount ?? 0 };
 
-            var debtAdjustment = (await _iGettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
+            var debtAdjustment = (await gettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
             // Убираем из Корректировки долга проводки по одному договору в одном документе Корректировка долга
             foreach (var item in debtAdjustment)
             {
@@ -390,7 +282,7 @@ namespace Cost.Application
                                  from subReceivable in tmp.DefaultIfEmpty()
                                  select new { c3, sumReceivable = subReceivable?.Sum ?? 0 };
 
-            var receiptToCurrentAccount = (await _iGettingData.ReceiptToCurrentAccountAsync()).Value.Where(x => x.Posted == true);
+            var receiptToCurrentAccount = (await gettingData.ReceiptToCurrentAccountAsync()).Value.Where(x => x.Posted == true);
             var receiptToCurrentAccountGrouped = receiptToCurrentAccount.GroupBy(y => y.CounterpartyAgreementId)
                 .Select(x => new { CounterpartyAgreementId = x.Key, DocumentAmount = x.Sum(y => y.DocumentAmount) });
 
@@ -402,7 +294,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var facility = _iGettingData.GetFacility();
+            var facility = gettingData.GetFacility();
 
             var facilityGrouped = facility.GroupBy(y => y.ObjectNameIn1C).Select(x => new { ObjectNameIn1C = x.Key, x.FirstOrDefault().TotalArea });
             var PlusFacility = from c5 in PlusReceiptToCurrentAccount
@@ -411,7 +303,7 @@ namespace Cost.Application
                                from subArea in tmp.DefaultIfEmpty()
                                select new { c5, TotalArea = subArea?.TotalArea ?? 0 };
 
-            var operations = _iGettingData.GetOperations();
+            var operations = gettingData.GetOperations();
             var operationsDebitGrouped = operations.GroupBy(y => y.ContractDebit).Select(x => new { ContractDebit = x.Key, Sum = x.Sum(y => y.Sum) });
             var PlusOperationDebit = from c6 in PlusFacility
                                      join operD in operationsDebitGrouped
@@ -426,47 +318,32 @@ namespace Cost.Application
                                       from suboperC in tmp.DefaultIfEmpty()
                                       select new { c7, SumCredit = suboperC?.Sum ?? 0 };
 
-            var invoiceReceived = await InvoiceReceivedAsync();
-            var invoiceReceivedGrouped = invoiceReceived.GroupBy(y => y.CounterpartyAgreementId).Select(x => new
+            var cost = PlusOperationCredit.Select(x => new Domain.Cost
             {
-                CounterpartyAgreementId = x.Key,
-                DocumentAmount = x.Sum(y => y.DocumentAmount),
-                DocumentNDSAmount = x.Sum(y => y.DocumentNDSAmount)
-            });
-            var PlusInvoiceReceived = from c8 in PlusOperationCredit
-                                      join invoice in invoiceReceivedGrouped
-                                      on c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.ContractId equals invoice.CounterpartyAgreementId into tmp
-                                      from subInvoice in tmp.DefaultIfEmpty()
-                                      select new { c8, DocumentAmount = subInvoice?.DocumentAmount ?? 0, DocumentNDSAmount = subInvoice?.DocumentNDSAmount ?? 0 };
-
-            var cost = PlusInvoiceReceived.Select(x => new Domain.Cost
-            {
-                ContractId = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.ContractId,
-                Contractor = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.Contractor,
-                Number = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.Number,
-                NumberAA = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.NumberAA,
-                Date = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.Date,
-                Sum = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.Sum,
-                ConstructionObject = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.ConstructionObject,
-                CostItem = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.CostItem,
-                Receipt = x.c8.c7.c6.c5.c4.c3.c2.c1.sumReceipt ?? 0,
-                Payment = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.subPay?.SumPayment ?? 0,
-                Selling = x.c8.c7.c6.c5.c4.c3.c2.Selling,
-                Payable = x.c8.c7.c6.c5.c4.c3.sumPayable,
-                Receivable = x.c8.c7.c6.c5.c4.sumReceivable,
-                ReceiptToCurrentAccount = x.c8.c7.c6.c5.ReceiptToCurrentAccount,
-                AmountIncludesNDS = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.AmountIncludesNDS,
-                ContractClosed = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.ContractClosed,
-                ContractorOrSupplier = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.ContractorOrSupplier,
-                GeneralContracting = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.GeneralContracting,
-                RateNDS = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.RateNDS,
-                Name = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.Name,
-                WarrantyLien = x.c8.c7.c6.c5.c4.c3.c2.c1.con2.con1.WarrantyLien,
-                TotalArea = x.c8.c7.c6.TotalArea,
-                SumDebit = x.c8.c7.SumDebit,
-                SumCredit = x.c8.SumCredit,
-                DocumentAmount = x.DocumentAmount,
-                DocumentNDSAmount = x.DocumentNDSAmount
+                ContractId = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.ContractId,
+                Contractor = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.Contractor,
+                Number = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.Number,
+                NumberAA = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.NumberAA,
+                Date = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.Date,
+                Sum = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.Sum,
+                ConstructionObject = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.ConstructionObject,
+                CostItem = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.CostItem,
+                Receipt = x.c7.c6.c5.c4.c3.c2.c1.sumReceipt ?? 0,
+                Payment = x.c7.c6.c5.c4.c3.c2.c1.con2.subPay?.SumPayment ?? 0,
+                Selling = x.c7.c6.c5.c4.c3.c2.Selling,
+                Payable = x.c7.c6.c5.c4.c3.sumPayable,
+                Receivable = x.c7.c6.c5.c4.sumReceivable,
+                ReceiptToCurrentAccount = x.c7.c6.c5.ReceiptToCurrentAccount,
+                AmountIncludesNDS = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.AmountIncludesNDS,
+                ContractClosed = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.ContractClosed,
+                ContractorOrSupplier = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.ContractorOrSupplier,
+                GeneralContracting = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.GeneralContracting,
+                RateNDS = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.RateNDS,
+                Name = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.Name,
+                WarrantyLien = x.c7.c6.c5.c4.c3.c2.c1.con2.con1.WarrantyLien,
+                TotalArea = x.c7.c6.TotalArea,
+                SumDebit = x.c7.SumDebit,
+                SumCredit = x.SumCredit,
             }).ToList();
 
             cost.ForEach(item =>
@@ -520,45 +397,15 @@ namespace Cost.Application
             return result;
         }
 
-        public async Task<List<InvoiceReceivedValue>> InvoiceReceivedAsync()
+        public async Task<List<IncomeAndExpenses>> IncomeAndExpensesAsync(Organizations organization, DateTime date)
         {
-            var invoiceReceived = (await _iGettingData.InvoiceReceivedAsync()).Value.Where(x => x.DeletionMark == false && x.Posted == true);
-            var noContractCode = invoiceReceived.Where(x => x.CounterpartyAgreementId == "00000000-0000-0000-0000-000000000000");
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+            //var date = new DateTime(2021, 10, 1);
 
-            var payments = (await _iGettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
-            var PlusPayments = from c1 in noContractCode
-                               join payment in payments
-                               on c1.DocumentId equals payment.PaymentId into tmp
-                               from subPayment in tmp.DefaultIfEmpty()
-                               select new { c1, subPayment?.CounterpartyAgreementId };
-
-            var PlusNoContractCode = from c2 in invoiceReceived
-                                     join plusPayment in PlusPayments
-                                     on c2.InvoiceReceivedId equals plusPayment.c1.InvoiceReceivedId into tmp
-                                     from subPlusPayment in tmp.DefaultIfEmpty()
-                                     select new { c2, subPlusPayment?.CounterpartyAgreementId };
-
-            return PlusNoContractCode.Select(x => new InvoiceReceivedValue
-            {
-                InvoiceReceivedId = x.c2.InvoiceReceivedId,
-                Number = x.c2.Number,
-                DocumentType = x.c2.DocumentType,
-                Date = x.c2.Date,
-                TypeInvoice = x.c2.TypeInvoice,
-                CounterpartyAgreementId = x.c2.CounterpartyAgreementId == "00000000-0000-0000-0000-000000000000" ? x.CounterpartyAgreementId : x.c2.CounterpartyAgreementId,
-                DocumentAmount = x.c2.DocumentAmount + x.c2.AmountPlus - x.c2.AmountMinus,
-                DocumentNDSAmount = x.c2.DocumentNDSAmount + x.c2.AmountNDSPlus - x.c2.AmountNDSMinus
-            }).ToList();
-        }
-
-        public async Task<List<IncomeAndExpenses>> IncomeAndExpensesAsync()
-        {
-            var date = new DateTime(2021, 10, 1);
-
-            var invoiceReceived = (await _iGettingData.InvoiceReceivedAsync()).Value.Where(x => x.DeletionMark == false && x.Posted == true);
+            var invoiceReceived = (await gettingData.InvoiceReceivedAsync()).Value.Where(x => x.DeletionMark == false && x.Posted == true);
 
             var paymentsNDS = invoiceReceived.Where(x => x.DocumentType == "StandardODATA.Document_СписаниеСРасчетногоСчета");
-            var payments = (await _iGettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false && x.Date >= date);
+            var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false && x.Date >= date);
             var Payments = from p in payments
                            join c in paymentsNDS
                                on p.PaymentId equals c.DocumentId into tmp
@@ -574,7 +421,7 @@ namespace Cost.Application
                                };
 
             var receiptGoodsServicesNDS = invoiceReceived.Where(x => x.DocumentType == "StandardODATA.Document_ПоступлениеТоваровУслуг");
-            var receiptGoodsServices = (await _iGettingData.ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true && x.Date >= date);
+            var receiptGoodsServices = (await gettingData.ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true && x.Date >= date);
             var ReceiptGoodsServices = from p in receiptGoodsServices
                                        join c in receiptGoodsServicesNDS
                                        on p.ReceiptId equals c.DocumentId into tmp
@@ -590,7 +437,7 @@ namespace Cost.Application
                                        };
 
             var receiptProcessingNDS = invoiceReceived.Where(x => x.DocumentType == "StandardODATA.Document_ПоступлениеИзПереработки");
-            var receiptProcessing = (await _iGettingData.ReceiptProcessingAsync()).Value.Where(x => x.Posted == true && x.Date >= date);
+            var receiptProcessing = (await gettingData.ReceiptProcessingAsync()).Value.Where(x => x.Posted == true && x.Date >= date);
             var ReceiptProcessing = from p in receiptProcessing
                                     join c in receiptProcessingNDS
                                        on p.ReceiptId equals c.DocumentId into tmp
@@ -610,7 +457,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var selling = (await _iGettingData.SellingAsync()).Value
+            var selling = (await gettingData.SellingAsync()).Value
                 .Where(x => x.Posted == true && x.Date >= date)
                                 .Select(y => new IncomeAndExpenses
                                 {
@@ -622,7 +469,7 @@ namespace Cost.Application
 
             var plusSelling = plusReceiptProcessing.Concat(selling);
 
-            var debtAdjustment = (await _iGettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
+            var debtAdjustment = (await gettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
             // Убираем из Корректировки долга проводки по одному договору в одном документе Корректировка долга
             foreach (var item in debtAdjustment)
             {
@@ -696,7 +543,7 @@ namespace Cost.Application
             var plusReceivableDoubleEntry = plusReceivable.Concat(PlusReceivableDoubleEntry);
             var plusPayableDoubleEntry = plusReceivableDoubleEntry.Concat(PlusPayableDoubleEntry);
 
-            var receiptToCurrentAccount = (await _iGettingData.ReceiptToCurrentAccountAsync()).Value
+            var receiptToCurrentAccount = (await gettingData.ReceiptToCurrentAccountAsync()).Value
                 .Where(x => x.Posted == true && x.Date >= date)
                                 .Select(y => new IncomeAndExpenses
                                 {
@@ -710,7 +557,7 @@ namespace Cost.Application
 
             // ---------------------------------------------------------------------------------------------------------------
 
-            var operations = _iGettingData.GetOperations();
+            var operations = gettingData.GetOperations();
             var operationDebit = operations.Where(x => x.Date >= date)
                     .Select(y => new IncomeAndExpenses
                     {
@@ -732,7 +579,7 @@ namespace Cost.Application
                     });
 
             var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
-            var contract = _iGettingData.GetContracts();
+            var contract = gettingData.GetContracts();
 
 
             var plusContract = from p in plusOperationCredit

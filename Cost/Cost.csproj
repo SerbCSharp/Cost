@@ -9,19 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Infrastructure\Repositories\AFK\**" />
-    <Compile Remove="Infrastructure\Repositories\Vega\**" />
-    <Content Remove="Infrastructure\Repositories\AFK\**" />
-    <Content Remove="Infrastructure\Repositories\Vega\**" />
-    <EmbeddedResource Remove="Infrastructure\Repositories\AFK\**" />
-    <EmbeddedResource Remove="Infrastructure\Repositories\Vega\**" />
-    <None Remove="Infrastructure\Repositories\AFK\**" />
-    <None Remove="Infrastructure\Repositories\Vega\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-	  <PackageReference Include="EPPlus" Version="8.2.1" />
-	  <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+	  <PackageReference Include="EPPlus" Version="8.3.0" />
+	  <PackageReference Include="Swashbuckle.AspNetCore" Version="7.3.2" />
   </ItemGroup>
 
 </Project>

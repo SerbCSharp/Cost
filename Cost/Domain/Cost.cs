@@ -27,7 +27,5 @@
         public decimal SumDebit { get; set; }
         public decimal SumCredit { get; set; }
         public decimal ConstructionCost { get; set; }
-        public decimal DocumentAmount { get; set; }
-        public decimal DocumentNDSAmount { get; set; }
     }
 }

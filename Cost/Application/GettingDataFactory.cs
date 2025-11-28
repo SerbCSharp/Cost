@@ -17,7 +17,9 @@ namespace Cost.Application
                 case "AFKDevelopment":
                     return _serviceProvider.GetRequiredService<GettingDataAFKDevelopment>();
                 case "Vega":
+                    return _serviceProvider.GetRequiredService<GettingDataAFKDevelopment>();
                 case "AFK":
+                    return _serviceProvider.GetRequiredService<GettingDataAFKDevelopment>();
                 default:
                     return _serviceProvider.GetRequiredService<GettingDataAFKDevelopment>();
             }

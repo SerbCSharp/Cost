@@ -36,6 +36,5 @@ namespace Cost.Application
         List<Facility> GetFacility(); // Объекты строительства
         List<Contracts> GetContracts(); // Договора
         List<Operations> GetOperations(); // Бухгалтерские операции
-
     }
 }

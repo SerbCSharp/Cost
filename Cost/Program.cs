@@ -4,10 +4,16 @@ using Cost.Presentation.ReportsToExcel;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddControllers().AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpClient();
-builder.Services.AddSwaggerGen(x => x.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + ".xml")));
+builder.Services.AddSwaggerGen(options =>
+{
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + ".xml"));
+});
 builder.Services.AddScoped<GeneratingReports>();
 builder.Services.AddScoped<ExportingReportsToExcel>();
 builder.Services.Configure<Base1CConfiguration>(builder.Configuration.GetSection(Base1CConfiguration.Section));

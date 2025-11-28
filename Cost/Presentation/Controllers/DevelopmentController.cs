@@ -21,10 +21,10 @@ namespace Cost.Presentation.Controllers
         /// <summary>Акт сверки</summary>
         /// <response>Записывает информацию в Transcript.xlsx</response>
         [HttpGet("ReconciliationStatement")]
-        public async Task<IActionResult> ReconciliationStatementAsync([Required] Organizations organization)
+        public async Task<IActionResult> ReconciliationStatementAsync([Required] Organizations Organization, [Required] string ContractName)
         {
             //  добавить string
-            var reconciliationStatement = await _generatingReports.ReconciliationStatementAsync("");
+            var reconciliationStatement = await _generatingReports.ReconciliationStatementAsync(ContractName, Organization);
             _exportingReportsToExcel.ReconciliationStatement(reconciliationStatement);
             return NoContent();
         }
@@ -32,9 +32,9 @@ namespace Cost.Presentation.Controllers
         /// <summary>Отчет о стоимости строительства</summary>
         /// <response>Записывает информацию в Cost.xlsx</response>
         [HttpGet("Cost")]
-        public async Task<IActionResult> CostAsync([Required] Organizations organization)
+        public async Task<IActionResult> CostAsync([Required] Organizations Organization)
         {
-            var cost = await _generatingReports.CostAsync();
+            var cost = await _generatingReports.CostAsync(Organization);
             _exportingReportsToExcel.Cost(cost);
             return NoContent();
         }
@@ -42,9 +42,9 @@ namespace Cost.Presentation.Controllers
         /// <summary>Отсутствующие у нас договора</summary>
         /// <response>Записывает информацию в WeDoNotHaveTheseContracts.xlsx</response>
         [HttpGet("WeDoNotHaveTheseContracts")]
-        public async Task<IActionResult> WeDoNotHaveTheseContractsAsync([Required] Organizations organization)
+        public async Task<IActionResult> WeDoNotHaveTheseContractsAsync([Required] Organizations Organization)
         {
-            var noContracts = await _generatingReports.WeDoNotHaveTheseContractsAsync();
+            var noContracts = await _generatingReports.WeDoNotHaveTheseContractsAsync(Organization);
             _exportingReportsToExcel.WeDoNotHaveTheseContracts(noContracts);
             return NoContent();
         }
@@ -52,10 +52,9 @@ namespace Cost.Presentation.Controllers
         /// <summary>Генподрядные, НДС за период</summary>
         /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
         [HttpGet("IncomeAndExpenses")]
-        public async Task<IActionResult> IncomeAndExpensesAsync([Required] Organizations organization)
+        public async Task<IActionResult> IncomeAndExpensesAsync([Required] Organizations Organization, DateTime date)
         {
-            // добавить date
-            var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync();
+            var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization, date);
             _exportingReportsToExcel.IncomeAndExpenses(incomeAndExpenses);
             return NoContent();
         }
