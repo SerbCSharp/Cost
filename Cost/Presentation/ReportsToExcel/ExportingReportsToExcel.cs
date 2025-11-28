@@ -1,4 +1,6 @@
 ﻿using Cost.Domain;
+using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
+using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System.Drawing;
@@ -299,6 +301,127 @@ namespace Cost.Presentation.ReportsToExcel
 
             range.AutoFilter = true;
             sheet.View.FreezePanes(2, 2);
+
+            package.SaveAs(new FileInfo(filePath));
+        }
+
+        public void ContractsFrom1C(List<ContractsCounterpartiesValue> Contracts) // 
+        {
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Contracts.xlsx";
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets.Add("Договоры из 1С");
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+
+            // Шапка
+            sheet.Cells[1, 1].Value = "Код договора из 1С";
+            sheet.Cells[1, 2].Value = "Подрядчик";
+            sheet.Cells[1, 3].Value = "Номер договора";
+            sheet.Cells[1, 4].Value = "Номер ДС";
+            sheet.Cells[1, 5].Value = "Наименование";
+            sheet.Cells[1, 6].Value = "Дата договора";
+            sheet.Cells[1, 7].Value = "Сумма договора";
+            sheet.Cells[1, 8].Value = "Ставка НДС";
+            sheet.Cells[1, 9].Value = "ГП";
+            sheet.Cells[1, 10].Value = "ГУ";
+            sheet.Cells[1, 11].Value = "Подрядчик/Поставщик";
+            sheet.Cells[1, 12].Value = "Литер";
+            sheet.Cells[1, 13].Value = "Статья затрат";
+            sheet.Cells[1, 14].Value = "Комментарий";
+            sheet.Cells[1, 15].Value = "Статус";
+            sheet.Cells[1, 1, 1, 15].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 15].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            var column = 0;
+            foreach (var item in Contracts)
+            {
+                sheet.Cells[row, column + 1].Value = item.CounterpartyAgreementId;
+                sheet.Cells[row, column + 2].Value = item.Contractor;
+                sheet.Cells[row, column + 3].Value = item.Number;
+                sheet.Cells[row, column + 4].Value = "";
+                sheet.Cells[row, column + 5].Value = item.Name;
+                sheet.Cells[row, column + 6].Value = item.Date;
+                sheet.Cells[row, column + 7].Value = item.Sum;
+                sheet.Cells[row, column + 8].Value = item.RateNDS;
+                sheet.Cells[row, column + 9].Value = item.TypeCalculation;
+                sheet.Cells[row, column + 10].Value = "";
+                sheet.Cells[row, column + 11].Value = "";
+                sheet.Cells[row, column + 12].Value = item.ConstructionProjects;
+                sheet.Cells[row, column + 13].Value = item.CostItems;
+                sheet.Cells[row, column + 14].Value = "";
+                sheet.Cells[row, column + 15].Value = item.ContractClosed;
+                sheet.Cells[row, column + 16].Value = item.TypeAgreement;
+                row++;
+            }
+
+            sheet.Cells[1, 1, row, 15].AutoFitColumns();
+
+            var range = sheet.Cells[1, 1, row - 1, 15];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+
+            sheet.Cells[2, 6, row, 6].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Cells[2, 7, row, 7].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            sheet.View.FreezePanes(2, 2);
+
+            range.AutoFilter = true;
+
+            package.SaveAs(new FileInfo(filePath));
+        }
+
+        public void Operations(List<OperationsTmpValue> operations)
+        {
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Operations.xlsx";
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets["Бухгалтерские операции"];
+            if (sheet == null)
+                sheet = package.Workbook.Worksheets.Add("Бухгалтерские операции");
+
+            sheet.Cells.Style.Font.Name = "Times New Roman";
+            sheet.Cells.Style.Font.Size = 13;
+
+            // Шапка
+            sheet.Cells[1, 1].Value = "Код из 1С";
+            sheet.Cells[1, 2].Value = "Номер";
+            sheet.Cells[1, 3].Value = "Дата";
+            sheet.Cells[1, 4].Value = "Сумма";
+            sheet.Cells[1, 5].Value = "Содержание";
+            sheet.Cells[1, 6].Value = "Комментарий";
+            sheet.Cells[1, 1, 1, 6].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            var column = 0;
+            foreach (var item in operations)
+            {
+                sheet.Cells[row, column + 1].Value = item.Ref_Key;
+                sheet.Cells[row, column + 2].Value = item.Number;
+                sheet.Cells[row, column + 3].Value = item.Date;
+                sheet.Cells[row, column + 4].Value = item.Sum;
+                sheet.Cells[row, column + 5].Value = item.Content;
+                sheet.Cells[row, column + 6].Value = item.Comment;
+                row++;
+            }
+            sheet.Cells[1, 1, row, 6].AutoFitColumns();
+
+            var range = sheet.Cells[1, 1, row - 1, 6];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+
+            sheet.Cells[2, 3, row, 3].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Cells[2, 4, row, 4].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            range.AutoFilter = true;
 
             package.SaveAs(new FileInfo(filePath));
         }

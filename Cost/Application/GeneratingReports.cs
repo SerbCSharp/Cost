@@ -1,4 +1,6 @@
 ﻿using Cost.Domain;
+using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
+using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using Cost.Presentation.DTO.Request;
 
 namespace Cost.Application
@@ -400,7 +402,6 @@ namespace Cost.Application
         public async Task<List<IncomeAndExpenses>> IncomeAndExpensesAsync(Organizations organization, DateTime date)
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
-            //var date = new DateTime(2021, 10, 1);
 
             var invoiceReceived = (await gettingData.InvoiceReceivedAsync()).Value.Where(x => x.DeletionMark == false && x.Posted == true);
 
@@ -604,6 +605,100 @@ namespace Cost.Application
             });
 
             return incomeAndExpenses.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Date).ToList();
+        }
+
+        public async Task<List<ContractsCounterpartiesValue>> ContractsFrom1CAsync(string typeAgreement, Organizations organization) // Договора из 1С
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+            var contractsCounterpartiesValue = (await gettingData.ContractsCounterpartiesAsync()).Value;
+                //.Where(x => x.TypeAgreement == typeAgreement).ToList();
+
+            List<ContractsCounterpartiesValue> contractsCounterparties = null;
+
+            var additionalInformation = await gettingData.AdditionalInformationAsync();
+            
+            contractsCounterparties = contractsCounterpartiesValue.ToList();
+
+            var nomenclatureGroups = await gettingData.NomenclatureGroupsAsync();
+            var constructionProjects = await gettingData.ConstructionProjectsAsync();
+            var typesCalculations = await gettingData.TypesCalculationsAsync();
+            var costItems = await gettingData.CostItemsAsync();
+
+            foreach (var contractsCounterpartie in contractsCounterparties)
+            {
+                foreach (var AdditionalDetail in contractsCounterpartie.AdditionalDetails)
+                {
+                    if (AdditionalDetail.ValueType.Contains("НоменклатурныеГруппы"))
+                    {
+                        contractsCounterpartie.NomenclatureGroupsId = AdditionalDetail.Value;
+                    }
+                    if (AdditionalDetail.ValueType.Contains("СтатьиЗатрат"))
+                    {
+                        contractsCounterpartie.CostItemsId = AdditionalDetail.Value;
+                    }
+                }
+            }
+
+            var contractsGrouped = contractsCounterparties.ToList();
+
+            var contractPlusNomenclatureGroup = from c1 in contractsGrouped
+                                                join nomenclatureGroup in nomenclatureGroups.Value
+                                                       on c1.NomenclatureGroupsId equals nomenclatureGroup.Ref_Key into tmp
+                                                from subNomenclatureGroup in tmp.DefaultIfEmpty()
+                                                select new { c1, subNomenclatureGroup?.ConstructionObjectId };
+
+            var contractPlusNomenclatureGroupPlusConstruction = from c2 in contractPlusNomenclatureGroup
+                                                                join construction in constructionProjects.Value
+                                                                       on c2.ConstructionObjectId equals construction.Ref_Key into tmp
+                                                                from subConstruction in tmp.DefaultIfEmpty()
+                                                                select new { c2, subConstruction?.Description };
+
+            var contractPlusNomenclatureGroupPlusConstructionPlusTypesCalculation = from c3 in contractPlusNomenclatureGroupPlusConstruction
+                                                                                    join calculation in typesCalculations.Value
+                                                                                           on c3.c2.c1.TypeCalculationId equals calculation.Ref_Key into tmp
+                                                                                    from subCalculation in tmp.DefaultIfEmpty()
+                                                                                    select new { c3, subCalculation?.Description };
+            // Поставщики + договора
+            var counterparties = await gettingData.CounterpartiesAsync();
+            var contractorPlusContract = counterparties.Value.Join(contractPlusNomenclatureGroupPlusConstructionPlusTypesCalculation, p1 => p1.Ref_Key, c1 => c1.c3.c2.c1.ContractorId,
+                (p5, c5) => new { p5, c5 }).ToList();
+
+
+            var contracts = from c4 in contractorPlusContract
+                            join cost in costItems.Value
+                                   on c4.c5.c3.c2.c1.CostItemsId equals cost.Ref_Key into tmp
+                            from subCost in tmp.DefaultIfEmpty()
+                            select new ContractsCounterpartiesValue
+                            {
+                                ConstructionProjects = c4.c5.c3.Description,
+                                ContractClosed = c4.c5.c3.c2.c1.ContractClosed,
+                                ContractorId = c4.c5.c3.c2.c1.ContractorId,
+                                CostItemsId = c4.c5.c3.c2.c1.CostItemsId,
+                                CostItems = subCost?.Description,
+                                CounterpartyAgreementId = c4.c5.c3.c2.c1.CounterpartyAgreementId,
+                                Date = c4.c5.c3.c2.c1.Date,
+                                NomenclatureGroupsId = c4.c5.c3.c2.c1.NomenclatureGroupsId,
+                                Number = c4.c5.c3.c2.c1.Number,
+                                Name = c4.c5.c3.c2.c1.Name,
+                                OrganizationId = c4.c5.c3.c2.c1.OrganizationId,
+                                RateNDS = c4.c5.c3.c2.c1.RateNDS,
+                                Sum = c4.c5.c3.c2.c1.Sum,
+                                SumNDS = c4.c5.c3.c2.c1.SumNDS,
+                                TypeCalculation = c4.c5.Description,
+                                Contractor = c4.p5.Description,
+                                TypeAgreement = c4.c5.c3.c2.c1.TypeAgreement
+                            };
+
+            return contracts.ToList();
+        }
+
+        public async Task<List<OperationsTmpValue>> Operations(Organizations organization)
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+            var operations = (await gettingData.OperationAsync()).Value.Where(x => !x.DeletionMark && x.FillingMethod == "Вручную")
+                .OrderByDescending(y => y.Date).ToList();
+
+            return operations;
         }
     }
 }

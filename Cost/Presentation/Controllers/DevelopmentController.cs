@@ -58,5 +58,25 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.IncomeAndExpenses(incomeAndExpenses);
             return NoContent();
         }
+
+        /// <summary>Договора из 1С</summary>
+        /// <response>Записывает информацию в Contracts.xlsx</response>
+        [HttpGet("ContractsFrom1C")]
+        public async Task<IActionResult> ContractsFrom1CAsync([Required] Organizations Organization)
+        {
+            var contractsFrom1C = await _generatingReports.ContractsFrom1CAsync("СПоставщиком", Organization);
+            _exportingReportsToExcel.ContractsFrom1C(contractsFrom1C);
+            return NoContent();
+        }
+
+        /// <summary>Операции из 1С</summary>
+        /// <response>Записывает информацию в Operations.xlsx</response>
+        [HttpGet("Operations")]
+        public async Task<IActionResult> OperationsAsync([Required] Organizations Organization)
+        {
+            var operations = await _generatingReports.Operations(Organization);
+            _exportingReportsToExcel.Operations(operations);
+            return NoContent();
+        }
     }
 }

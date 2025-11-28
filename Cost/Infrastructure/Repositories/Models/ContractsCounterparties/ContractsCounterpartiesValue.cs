@@ -19,9 +19,6 @@ namespace Cost.Infrastructure.Repositories.Models.ContractsCounterparties
         [JsonPropertyName("Сумма")]
         public decimal? Sum { get; set; }
 
-        [JsonPropertyName("СуммаВключаетНДС")]
-        public bool? AmountIncludesNDS { get; set; }
-
         [JsonPropertyName("СуммаНДС")]
         public decimal? SumNDS { get; set; }
 
@@ -31,17 +28,8 @@ namespace Cost.Infrastructure.Repositories.Models.ContractsCounterparties
         [JsonPropertyName("ДоговорЗакрыт")]
         public bool? ContractClosed { get; set; }
 
-        [JsonPropertyName("ИмпСуммаГарантийногоУдержания")]
-        public decimal? AmountSecurityRetention { get; set; }
-
         [JsonPropertyName("ДополнительныеРеквизиты")]
         public AdditionalDetails[] AdditionalDetails { get; set; }
-
-        [JsonPropertyName("Комментарий")]
-        public string Comment { get; set; }
-
-        [JsonPropertyName("ДоговорПодписан")]
-        public bool? AgreementSigned { get; set; }
 
         [JsonPropertyName("Owner_Key")]
         public string ContractorId { get; set; } // Подрядчик

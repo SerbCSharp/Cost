@@ -8,6 +8,7 @@ using Cost.Infrastructure.Repositories.Models.Counterparties;
 using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
 using Cost.Infrastructure.Repositories.Models.InvoiceReceived;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
+using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using Cost.Infrastructure.Repositories.Models.Payments;
 using Cost.Infrastructure.Repositories.Models.Receipts;
 using Cost.Infrastructure.Repositories.Models.ReceiptToCurrentAccount;
@@ -36,5 +37,6 @@ namespace Cost.Application
         List<Facility> GetFacility(); // Объекты строительства
         List<Contracts> GetContracts(); // Договора
         List<Operations> GetOperations(); // Бухгалтерские операции
+        Task<OperationsTmp> OperationAsync(); // Операции
     }
 }
