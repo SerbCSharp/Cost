@@ -23,12 +23,13 @@ using System.Text;
 
 namespace Cost.Infrastructure.Repositories
 {
-    public class GettingDataAFK : IGettingData
+    public class GettingDataVega : IGettingData
     {
         private readonly HttpClient httpClient;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly Base1CConfiguration _base1CConfiguration;
-        public GettingDataAFK(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
+
+        public GettingDataVega(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
         {
             _base1CConfiguration = base1CConfiguration.Value;
             string username = _base1CConfiguration.Username;
@@ -177,7 +178,7 @@ namespace Cost.Infrastructure.Repositories
 
         public List<Contracts> GetContracts() // Договора
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\AFK\\Catalogs.xlsx";
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Vega\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             FileInfo fileInfo = new FileInfo(filePath);
             using var package = new ExcelPackage(fileInfo);
@@ -231,7 +232,7 @@ namespace Cost.Infrastructure.Repositories
 
         public List<Operations> GetOperations() // Бухгалтерские операции
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\AFK\\Catalogs.xlsx";
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Vega\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             FileInfo fileInfo = new FileInfo(filePath);
             using var package = new ExcelPackage(fileInfo);

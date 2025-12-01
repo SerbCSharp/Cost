@@ -19,6 +19,7 @@ builder.Services.AddScoped<ExportingReportsToExcel>();
 builder.Services.Configure<Base1CConfiguration>(builder.Configuration.GetSection(Base1CConfiguration.Section));
 builder.Services.AddScoped<GettingDataAFKDevelopment>();
 builder.Services.AddScoped<GettingDataAFK>();
+builder.Services.AddScoped<GettingDataVega>();
 builder.Services.AddScoped<IGettingDataFactory, GettingDataFactory>();
 
 var app = builder.Build();

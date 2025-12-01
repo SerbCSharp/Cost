@@ -243,7 +243,7 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 8].Value = "ГП";
             sheet.Cells[1, 9].Value = "Ставка НДС";
             sheet.Cells[1, 10].Value = "Расчетные ГП";
-            sheet.Cells[1, 11].Value = "Расчетная НДС";
+            sheet.Cells[1, 11].Value = "Расчетная НДС от выполнения";
             sheet.Cells[1, 12].Value = "Сумма (счет-фактура)";
             sheet.Cells[1, 13].Value = "Сумма НДС (счет-фактура)";
             sheet.Cells[1, 14].Value = "НДС к уплате (расчетный)";
