@@ -11,7 +11,7 @@ namespace Cost.Presentation.ReportsToExcel
     {
         public void Cost(List<Domain.Cost> cost) // Стоимость строительства
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Cost.xlsx";
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Cost1.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -106,7 +106,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void WeDoNotHaveTheseContracts(IEnumerable<Contracts> contracts)
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\WeDoNotHaveTheseContracts.xlsx";
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\WeDoNotHaveTheseContracts1.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -159,7 +159,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void ReconciliationStatement(List<ReconciliationStatement> reconciliationStatement)
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Transcript.xlsx";
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Transcript1.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -221,7 +221,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void IncomeAndExpenses(List<IncomeAndExpenses> incomeAndExpenses)
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\IncomeAndExpenses.xlsx";
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\IncomeAndExpenses1.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -307,7 +307,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void ContractsFrom1C(List<ContractsCounterpartiesValue> Contracts) // 
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Contracts.xlsx";
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Contracts1.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -331,8 +331,9 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 13].Value = "Статья затрат";
             sheet.Cells[1, 14].Value = "Комментарий";
             sheet.Cells[1, 15].Value = "Статус";
-            sheet.Cells[1, 1, 1, 15].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 15].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[1, 16].Value = "Тип договора";
+            sheet.Cells[1, 1, 1, 16].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 16].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             var row = 2;
             var column = 0;
@@ -357,9 +358,9 @@ namespace Cost.Presentation.ReportsToExcel
                 row++;
             }
 
-            sheet.Cells[1, 1, row, 15].AutoFitColumns();
+            sheet.Cells[1, 1, row, 16].AutoFitColumns();
 
-            var range = sheet.Cells[1, 1, row - 1, 15];
+            var range = sheet.Cells[1, 1, row - 1, 16];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -377,7 +378,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void Operations(List<OperationsTmpValue> operations)
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Operations.xlsx";
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Operations1.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 

@@ -44,98 +44,98 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<Counterparties> CounterpartiesAsync() // Контрагенты
         {
-            var counterpartiesUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_Контрагенты?$format=json&$select=Ref_Key,Description,Parent_Key";
+            var counterpartiesUrl = "http://localhost/vega/odata/standard.odata/Catalog_Контрагенты?$format=json&$select=Ref_Key,Description,Parent_Key";
             using HttpResponseMessage counterpartiesResponse = await httpClient.GetAsync(counterpartiesUrl);
             return await counterpartiesResponse.Content.ReadFromJsonAsync<Counterparties>();
         }
 
         public async Task<ContractsCounterparties> ContractsCounterpartiesAsync() // Договоры контрагентов
         {
-            var contractsCounterpartiesUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_ДоговорыКонтрагентов?$format=json";
+            var contractsCounterpartiesUrl = "http://localhost/vega/odata/standard.odata/Catalog_ДоговорыКонтрагентов?$format=json";
             using HttpResponseMessage contractsCounterpartiesResponse = await httpClient.GetAsync(contractsCounterpartiesUrl);
             return await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
         }
 
         public async Task<Receipts> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
         {
-            var receiptsUrl = "http://localhost/afk_de/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json";
+            var receiptsUrl = "http://localhost/vega/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json";
             using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
             return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
         }
 
         public async Task<Payments> PaymentsAsync() // Списание с расчетного счета
         {
-            var paymentsUrl = "http://localhost/afk_de/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json";
+            var paymentsUrl = "http://localhost/vega/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json";
             using HttpResponseMessage paymentsResponse = await httpClient.GetAsync(paymentsUrl);
             return await paymentsResponse.Content.ReadFromJsonAsync<Payments>();
         }
 
         public async Task<ReceiptToCurrentAccount> ReceiptToCurrentAccountAsync() // Поступление на расчетный счет
         {
-            var receiptToCurrentAccountUrl = "http://localhost/afk_de/odata/standard.odata/Document_ПоступлениеНаРасчетныйСчет?$format=json";
+            var receiptToCurrentAccountUrl = "http://localhost/vega/odata/standard.odata/Document_ПоступлениеНаРасчетныйСчет?$format=json";
             using HttpResponseMessage receiptToCurrentAccountResponse = await httpClient.GetAsync(receiptToCurrentAccountUrl);
             return await receiptToCurrentAccountResponse.Content.ReadFromJsonAsync<ReceiptToCurrentAccount>();
         }
 
         public async Task<NomenclatureGroups> NomenclatureGroupsAsync() // Номенклатурные группы
         {
-            var nomenclatureGroupsUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_НоменклатурныеГруппы?$format=json";
+            var nomenclatureGroupsUrl = "http://localhost/vega/odata/standard.odata/Catalog_НоменклатурныеГруппы?$format=json";
             using HttpResponseMessage nomenclatureGroupsResponse = await httpClient.GetAsync(nomenclatureGroupsUrl);
             return await nomenclatureGroupsResponse.Content.ReadFromJsonAsync<NomenclatureGroups>();
         }
 
         public async Task<ConstructionProjects> ConstructionProjectsAsync() // Объекты Строительства
         {
-            var constructionProjectsUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_ОбъектыСтроительства?$format=json";
+            var constructionProjectsUrl = "http://localhost/vega/odata/standard.odata/Catalog_ОбъектыСтроительства?$format=json";
             using HttpResponseMessage constructionProjectsResponse = await httpClient.GetAsync(constructionProjectsUrl);
             return await constructionProjectsResponse.Content.ReadFromJsonAsync<ConstructionProjects>();
         }
 
         public async Task<CostItems> CostItemsAsync() // Статьи затрат
         {
-            var costItemsUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_СтатьиЗатрат?$format=json";
+            var costItemsUrl = "http://localhost/vega/odata/standard.odata/Catalog_СтатьиЗатрат?$format=json";
             using HttpResponseMessage costItemsResponse = await httpClient.GetAsync(costItemsUrl);
             return await costItemsResponse.Content.ReadFromJsonAsync<CostItems>();
         }
 
         public async Task<TypesCalculations> TypesCalculationsAsync() // Виды взаиморасчетов
         {
-            var typesCalculationsUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_ВидыВзаиморасчетов?$format=json";
+            var typesCalculationsUrl = "http://localhost/vega/odata/standard.odata/Catalog_ВидыВзаиморасчетов?$format=json";
             using HttpResponseMessage typesCalculationsResponse = await httpClient.GetAsync(typesCalculationsUrl);
             return await typesCalculationsResponse.Content.ReadFromJsonAsync<TypesCalculations>();
         }
 
         public async Task<DebtAdjustment> DebtAdjustmentAsync() // Корректировка долга
         {
-            var debtAdjustmentUrl = "http://localhost/afk_de/odata/standard.odata/Document_КорректировкаДолга?$format=json";
+            var debtAdjustmentUrl = "http://localhost/vega/odata/standard.odata/Document_КорректировкаДолга?$format=json";
             using HttpResponseMessage debtAdjustmentResponse = await httpClient.GetAsync(debtAdjustmentUrl);
             return await debtAdjustmentResponse.Content.ReadFromJsonAsync<DebtAdjustment>();
         }
 
         public async Task<Receipts> ReceiptProcessingAsync() // Поступление из переработки
         {
-            var receiptsUrl = "http://localhost/afk_de/odata/standard.odata/Document_ПоступлениеИзПереработки?$format=json";
+            var receiptsUrl = "http://localhost/vega/odata/standard.odata/Document_ПоступлениеИзПереработки?$format=json";
             using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
             return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
         }
 
         public async Task<Selling> SellingAsync() // Реализация
         {
-            var sellingUrl = "http://localhost/afk_de/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json";
+            var sellingUrl = "http://localhost/vega/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json";
             using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
             return await sellingResponse.Content.ReadFromJsonAsync<Selling>();
         }
 
         public async Task<AdditionalInformation> AdditionalInformationAsync() // Дополнительные сведения
         {
-            var additionalInformationUrl = "http://localhost/afk_de/odata/standard.odata/InformationRegister_ДополнительныеСведения?$format=json";
+            var additionalInformationUrl = "http://localhost/vega/odata/standard.odata/InformationRegister_ДополнительныеСведения?$format=json";
             using HttpResponseMessage additionalInformationResponse = await httpClient.GetAsync(additionalInformationUrl);
             return await additionalInformationResponse.Content.ReadFromJsonAsync<AdditionalInformation>();
         }
 
         public async Task<InvoiceReceived> InvoiceReceivedAsync() // Счета-фактуры полученные
         {
-            var invoiceReceivedUrl = "http://localhost/afk_de/odata/standard.odata/Document_СчетФактураПолученный?$format=json";
+            var invoiceReceivedUrl = "http://localhost/vega/odata/standard.odata/Document_СчетФактураПолученный?$format=json";
             using HttpResponseMessage invoiceReceivedResponse = await httpClient.GetAsync(invoiceReceivedUrl);
             return await invoiceReceivedResponse.Content.ReadFromJsonAsync<InvoiceReceived>();
         }
@@ -274,8 +274,8 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            //var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_КорректировкаПоступления?$format=json";
-            var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_ИмпПриемкаСтроительныхРаботУслуг?$format=json";
+            //var operationUrl = "http://localhost/vega/odata/standard.odata/Document_КорректировкаПоступления?$format=json";
+            var operationUrl = "http://localhost/vega/odata/standard.odata/Document_ИмпПриемкаСтроительныхРаботУслуг?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);
@@ -284,7 +284,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<OperationsTmp> OperationAsync() // Операции
         {
-            var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_ОперацияБух?$format=json";
+            var operationUrl = "http://localhost/vega/odata/standard.odata/Document_ОперацияБух?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             return await operationResponse.Content.ReadFromJsonAsync<OperationsTmp>();
         }
