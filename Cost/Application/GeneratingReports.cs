@@ -354,49 +354,52 @@ namespace Cost.Application
                 item.Payment = item.Payment + item.Payable + item.Selling + item.SumDebit;
             });
 
-            var result = cost.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(y => new Domain.Cost
-            {
-                Contractor = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Contractor,
-                Number = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Number,
-                Date = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Date,
-                Sum = y.Sum(z => z.Sum),
-                ConstructionObject = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ConstructionObject,
-                CostItem = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).CostItem,
-                Receipt = y.Sum(z => z.Receipt),
-                Payment = y.Sum(z => z.Payment),
-                AmountIncludesNDS = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).AmountIncludesNDS,
-                ContractClosed = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ContractClosed,
-                ContractorOrSupplier = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ContractorOrSupplier,
-                GeneralContracting = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).GeneralContracting,
-                RateNDS = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).RateNDS,
-                Name = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Name,
-                WarrantyLien = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).WarrantyLien,
-                TotalArea = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).TotalArea
-            }).ToList();
+            //var serb = cost.GroupBy(y => y.ContractId).Select(x => new { x.Key, count = x.Count() }).OrderByDescending(y => y.count);
 
-            result.ForEach(item =>
-            {
-                if (!string.IsNullOrEmpty(item.ConstructionObject))
-                {
-                    if (item.ContractorOrSupplier == "Подрядчик")
-                    {
-                        if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут" || item.Receipt > item.Sum)
-                        {
-                            item.ConstructionCost = item.Receipt;
-                        }
-                        else
-                        {
-                            item.ConstructionCost = item.Sum ?? 0;
-                        }
-                    }
-                    else
-                    {
-                        item.ConstructionCost = item.Payment;
-                    }
-                }
-            });
 
-            return result;
+            //var result = cost.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(y => new Domain.Cost
+            //{
+            //    Contractor = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Contractor,
+            //    Number = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Number,
+            //    Date = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Date,
+            //    Sum = y.Sum(z => z.Sum),
+            //    ConstructionObject = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ConstructionObject,
+            //    CostItem = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).CostItem,
+            //    Receipt = y.Sum(z => z.Receipt),
+            //    Payment = y.Sum(z => z.Payment),
+            //    AmountIncludesNDS = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).AmountIncludesNDS,
+            //    ContractClosed = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ContractClosed,
+            //    ContractorOrSupplier = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ContractorOrSupplier,
+            //    GeneralContracting = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).GeneralContracting,
+            //    RateNDS = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).RateNDS,
+            //    Name = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Name,
+            //    WarrantyLien = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).WarrantyLien,
+            //    TotalArea = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).TotalArea
+            //}).ToList();
+
+            //result.ForEach(item =>
+            //{
+            //    if (!string.IsNullOrEmpty(item.ConstructionObject))
+            //    {
+            //        if (item.ContractorOrSupplier == "Подрядчик")
+            //        {
+            //            if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут" || item.Receipt > item.Sum)
+            //            {
+            //                item.ConstructionCost = item.Receipt;
+            //            }
+            //            else
+            //            {
+            //                item.ConstructionCost = item.Sum ?? 0;
+            //            }
+            //        }
+            //        else
+            //        {
+            //            item.ConstructionCost = item.Payment;
+            //        }
+            //    }
+            //});
+
+            return cost;
         }
 
         public async Task<List<IncomeAndExpenses>> IncomeAndExpensesAsync(Organizations organization, DateTime date)

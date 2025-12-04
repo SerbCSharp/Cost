@@ -14,12 +14,8 @@ namespace Cost.Infrastructure.Repositories.Models.Payments
         [JsonPropertyName("ДоговорКонтрагента_Key")]
         public string CounterpartyAgreementId { get; set; }
 
-        [JsonPropertyName("РасшифровкаПлатежа")]
-        public PaymentDecryption[] PaymentDecryption { get; set; }
-
         [JsonPropertyName("Ref_Key")]
         public string PaymentId { get; set; }
         public bool? DeletionMark { get; set; }
-        public string PaymentDecryptionId { get; set; }
     }
 }

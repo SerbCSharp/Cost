@@ -65,6 +65,7 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 17].Formula = $"O{row}*(1.2-K{row})";
                 sheet.Cells[row, column + 18].Formula = $"F{row}-E{row}*(L{row}+M{row})";
                 sheet.Cells[row, column + 19].Formula = $"O{row}-O{row}*(L{row}+M{row})-R{row}";
+                sheet.Cells[row, column + 20].Value = item.ContractId;
                 row++;
             }
 

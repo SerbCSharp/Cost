@@ -57,14 +57,14 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<Receipts> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
         {
-            var receiptsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json";
+            var receiptsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key";
             using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
             return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
         }
 
         public async Task<Payments> PaymentsAsync() // Списание с расчетного счета
         {
-            var paymentsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json";
+            var paymentsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark";
             using HttpResponseMessage paymentsResponse = await httpClient.GetAsync(paymentsUrl);
             return await paymentsResponse.Content.ReadFromJsonAsync<Payments>();
         }
