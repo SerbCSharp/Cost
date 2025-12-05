@@ -11,5 +11,8 @@ namespace Cost.Infrastructure.Repositories.Models.Payments
 
         [JsonPropertyName("СуммаПлатежа")]
         public decimal PaymentAmount { get; set; }
+
+        [JsonPropertyName("СуммаНДС")]
+        public decimal PaymentNDSAmount { get; set; }
     }
 }

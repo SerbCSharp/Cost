@@ -237,19 +237,26 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 1].Value = "Дата";
             sheet.Cells[1, 2].Value = "Выполнение";
             sheet.Cells[1, 3].Value = "Оплата";
-            sheet.Cells[1, 4].Value = "Документ";
-            sheet.Cells[1, 5].Value = "ContractId";
-            sheet.Cells[1, 6].Value = "Контрагент";
-            sheet.Cells[1, 7].Value = "Договор";
-            sheet.Cells[1, 8].Value = "ГП";
-            sheet.Cells[1, 9].Value = "Ставка НДС";
-            sheet.Cells[1, 10].Value = "Расчетные ГП";
-            sheet.Cells[1, 11].Value = "Расчетная НДС от выполнения";
-            sheet.Cells[1, 12].Value = "Сумма (счет-фактура)";
-            sheet.Cells[1, 13].Value = "Сумма НДС (счет-фактура)";
-            sheet.Cells[1, 14].Value = "НДС к уплате (расчетный)";
-            sheet.Cells[1, 1, 1, 14].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 14].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[1, 4].Value = "Сумма НДС";
+            sheet.Cells[1, 5].Value = "Сумма НДС (счет-фактура)";
+            sheet.Cells[1, 6].Value = "Документ";
+            sheet.Cells[1, 7].Value = "ContractId";
+            sheet.Cells[1, 8].Value = "Контрагент";
+            sheet.Cells[1, 9].Value = "Договор";
+            sheet.Cells[1, 10].Value = "Дата договора";
+            sheet.Cells[1, 11].Value = "Сумма договора";
+            sheet.Cells[1, 12].Value = "Статус договора";
+            sheet.Cells[1, 13].Value = "ГП";
+            sheet.Cells[1, 14].Value = "ГУ";
+            sheet.Cells[1, 15].Value = "Ставка НДС";
+            sheet.Cells[1, 16].Value = "Литер";
+            sheet.Cells[1, 17].Value = "Статья затрат";
+            sheet.Cells[1, 18].Value = "Подрядчик/Поставщик";
+            sheet.Cells[1, 19].Value = "Литер из оплат";
+            sheet.Cells[1, 20].Value = "Статья затрат из оплат";
+
+            sheet.Cells[1, 1, 1, 20].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 20].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             var row = 2;
             var column = 0;
@@ -258,50 +265,49 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 1].Value = item.Date;
                 sheet.Cells[row, column + 2].Value = item.Receipt;
                 sheet.Cells[row, column + 3].Value = item.Payment;
-                sheet.Cells[row, column + 4].Value = item.DocumentName;
-                sheet.Cells[row, column + 5].Value = item.ContractId;
-                sheet.Cells[row, column + 6].Value = item.Contractor;
-                sheet.Cells[row, column + 7].Value = item.Number;
-                sheet.Cells[row, column + 8].Value = item.GeneralContracting;
-                sheet.Cells[row, column + 9].Value = item.RateNDS;
-                sheet.Cells[row, column + 10].Formula = $"B{row}*H{row}";
-                sheet.Cells[row, column + 11].Formula = $"B{row}*I{row}/(1+I{row})";
-                sheet.Cells[row, column + 12].Value = item.DocumentAmount;
-                sheet.Cells[row, column + 13].Value = item.DocumentNDSAmount;
-                sheet.Cells[row, column + 14].Formula = $"B{row}*(0.2-I{row})";
+                sheet.Cells[row, column + 4].Value = item.DocumentNDSAmount;
+                sheet.Cells[row, column + 5].Value = item.InvoiceReceivedNDS;
+                sheet.Cells[row, column + 6].Value = item.DocumentName;
+                sheet.Cells[row, column + 7].Value = item.ContractId;
+                sheet.Cells[row, column + 8].Value = item.Contractor;
+                sheet.Cells[row, column + 9].Value = item.Number;
+                sheet.Cells[row, column + 10].Value = item.DateContract;
+                sheet.Cells[row, column + 11].Value = item.SumContract;
+                sheet.Cells[row, column + 12].Value = item.ContractClosed;
+                sheet.Cells[row, column + 13].Value = item.GeneralContracting;
+                sheet.Cells[row, column + 14].Value = item.WarrantyLien;
+                sheet.Cells[row, column + 15].Value = item.RateNDS;
+                sheet.Cells[row, column + 16].Value = item.ConstructionObject;
+                sheet.Cells[row, column + 17].Value = item.CostItem;
+                sheet.Cells[row, column + 18].Value = item.ContractorOrSupplier;
+                sheet.Cells[row, column + 19].Value = item.LiterPayment;
+                sheet.Cells[row, column + 20].Value = item.CostItemPayment;
                 row++;
             }
             sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B2:B{row - 1})";
             sheet.Cells[row, column + 3].Formula = $"=SUBTOTAL(9,C2:C{row - 1})";
-            sheet.Cells[row, column + 10].Formula = $"=SUBTOTAL(9,J2:J{row - 1})";
-            sheet.Cells[row, column + 11].Formula = $"=SUBTOTAL(9,K2:K{row - 1})";
-            sheet.Cells[row, column + 12].Formula = $"=SUBTOTAL(9,L2:L{row - 1})";
-            sheet.Cells[row, column + 13].Formula = $"=SUBTOTAL(9,M2:M{row - 1})";
-            sheet.Cells[row, column + 14].Formula = $"=SUBTOTAL(9,N2:N{row - 1})";
+            sheet.Cells[row, column + 4].Formula = $"=SUBTOTAL(9,D2:D{row - 1})";
+            sheet.Cells[row, column + 5].Formula = $"=SUBTOTAL(9,E2:E{row - 1})";
 
-            sheet.Cells[row, column + 10].Style.Fill.PatternType = ExcelFillStyle.Solid; 
-            sheet.Cells[row, column + 10].Style.Fill.BackgroundColor.SetColor(Color.Cornsilk);
-            sheet.Cells[row, column + 14].Style.Fill.PatternType = ExcelFillStyle.Solid;
-            sheet.Cells[row, column + 14].Style.Fill.BackgroundColor.SetColor(Color.Cornsilk);
-
-            sheet.Cells[row, 2, row, 14].Style.Font.Bold = true;
-            sheet.Cells[1, 1, row, 14].AutoFitColumns();
-            sheet.Column(5).Hidden = true;
+            sheet.Cells[row, 2, row, 20].Style.Font.Bold = true;
+            sheet.Cells[1, 1, row, 20].AutoFitColumns();
+            sheet.Column(7).Hidden = true;
             sheet.Column(6).Width = 50;
 
-            var range = sheet.Cells[1, 1, row - 1, 14];
+            var range = sheet.Cells[1, 1, row - 1, 20];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
 
             sheet.Cells[2, 1, row, 1].Style.Numberformat.Format = "dd.mm.yyyy";
-            sheet.Cells[2, 2, row, 3].Style.Numberformat.Format = "### ### ### ##0.00";
-            sheet.Cells[2, 8, row, 9].Style.Numberformat.Format = "0%";
-            sheet.Cells[2, 10, row, 14].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 2, row, 5].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 10, row, 10].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Cells[2, 11, row, 11].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 13, row, 15].Style.Numberformat.Format = "0%";
 
             range.AutoFilter = true;
-            sheet.View.FreezePanes(2, 2);
+            sheet.View.FreezePanes(2, 1);
 
             package.SaveAs(new FileInfo(filePath));
         }

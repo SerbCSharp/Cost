@@ -1,6 +1,7 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
+using Cost.Infrastructure.Repositories.Models.BillPayment;
 using Cost.Infrastructure.Repositories.Models.ConstructionProjects;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.CostItems;
@@ -38,5 +39,9 @@ namespace Cost.Application
         List<Contracts> GetContracts(); // Договора
         List<Operations> GetOperations(); // Бухгалтерские операции
         Task<OperationsTmp> OperationAsync(); // Операции
+        Task<BillPayment> BillPaymentAsync(); // Оплата счетов
+        List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments(); // Литер и статья затрат в оплатах
+        Task<string> TmpAsync();
+
     }
 }

@@ -2,6 +2,7 @@
 using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
+using Cost.Infrastructure.Repositories.Models.BillPayment;
 using Cost.Infrastructure.Repositories.Models.ConstructionProjects;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.CostItems;
@@ -287,6 +288,16 @@ namespace Cost.Infrastructure.Repositories
             var operationUrl = "http://localhost/vega/odata/standard.odata/Document_ОперацияБух?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             return await operationResponse.Content.ReadFromJsonAsync<OperationsTmp>();
+        }
+
+        public Task<BillPayment> BillPaymentAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -13,5 +13,15 @@
         public decimal GeneralContracting { get; set; }
         public decimal? DocumentAmount { get; set; }
         public decimal? DocumentNDSAmount { get; set; }
+        public decimal? InvoiceReceivedNDS { get; set; }
+        public DateTime? DateContract { get; set; }
+        public decimal? SumContract { get; set; }
+        public string ContractClosed { get; set; }
+        public decimal WarrantyLien { get; set; }
+        public string ConstructionObject { get; set; }
+        public string CostItem { get; set; }
+        public string ContractorOrSupplier { get; set; }
+        public string LiterPayment { get; set; }
+        public string CostItemPayment { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
+using Cost.Infrastructure.Repositories.Models.BillPayment;
 using Cost.Infrastructure.Repositories.Models.ConstructionProjects;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.CostItems;
@@ -64,7 +65,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<Payments> PaymentsAsync() // Списание с расчетного счета
         {
-            var paymentsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark";
+            var paymentsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа";
             using HttpResponseMessage paymentsResponse = await httpClient.GetAsync(paymentsUrl);
             return await paymentsResponse.Content.ReadFromJsonAsync<Payments>();
         }
@@ -274,7 +275,7 @@ namespace Cost.Infrastructure.Repositories
         public async Task<string> TmpAsync()
         {
             //var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_КорректировкаПоступления?$format=json";
-            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ИмпПриемкаСтроительныхРаботУслуг?$format=json";
+            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);
@@ -286,6 +287,16 @@ namespace Cost.Infrastructure.Repositories
             var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ОперацияБух?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             return await operationResponse.Content.ReadFromJsonAsync<OperationsTmp>();
+        }
+
+        public Task<BillPayment> BillPaymentAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -17,5 +17,12 @@ namespace Cost.Infrastructure.Repositories.Models.Payments
         [JsonPropertyName("Ref_Key")]
         public string PaymentId { get; set; }
         public bool? DeletionMark { get; set; }
+
+        [JsonPropertyName("РасшифровкаПлатежа")]
+        public PaymentDecryption[] PaymentDecryption { get; set; }
+        public decimal PaymentNDSAmount { get; set; }
+        public string PaymentDecryptionId { get; set; }
+        public string Liter { get; set; }
+        public string CostItems { get; set; }
     }
 }
