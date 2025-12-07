@@ -11,5 +11,6 @@
         public string PurposePayment { get; set; }
         public string CostItemsInAgreement { get; set; }
         public string Contractor { get; set; }
+        public decimal PaymentNDSAmount { get; set; }
     }
 }

@@ -78,5 +78,15 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.Operations(operations);
             return NoContent();
         }
+
+        /// <summary>Оплаты</summary>
+        /// <response>Записывает информацию в Payments.xlsx</response>
+        [HttpGet("Payments")]
+        public async Task<IActionResult> PaymentsAsync([Required] Organizations Organization)
+        {
+            var payments = await _generatingReports.PaymentsAsync(Organization);
+            _exportingReportsToExcel.Payments(payments);
+            return NoContent();
+        }
     }
 }

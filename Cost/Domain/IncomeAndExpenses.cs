@@ -23,5 +23,6 @@
         public string ContractorOrSupplier { get; set; }
         public string LiterPayment { get; set; }
         public string CostItemPayment { get; set; }
+        public string Name { get; set; }
     }
 }

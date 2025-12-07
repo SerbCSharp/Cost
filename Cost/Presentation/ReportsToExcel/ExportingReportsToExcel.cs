@@ -1,4 +1,5 @@
 ﻿using Cost.Domain;
+using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using OfficeOpenXml;
@@ -430,6 +431,68 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[2, 4, row, 4].Style.Numberformat.Format = "### ### ### ##0.00";
 
             range.AutoFilter = true;
+
+            package.SaveAs(new FileInfo(filePath));
+        }
+
+        public void Payments(List<LiterAndCostItemInPayments> payments) // Оплаты
+        {
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Payments1.xlsx";
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets.Add("Оплаты");
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+
+            // Шапка
+            sheet.Cells[1, 1].Value = "PaymentId";
+            sheet.Cells[1, 2].Value = "Number";
+            sheet.Cells[1, 3].Value = "Date";
+            sheet.Cells[1, 4].Value = "Сумма";
+            sheet.Cells[1, 5].Value = "NDS";
+            sheet.Cells[1, 6].Value = "Литер";
+            sheet.Cells[1, 7].Value = "Статья затрат";
+            sheet.Cells[1, 8].Value = "PurposePayment";
+            sheet.Cells[1, 9].Value = "Контрагент";
+            sheet.Cells[1, 1, 1, 9].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            var column = 0;
+            foreach (var item in payments)
+            {
+                sheet.Cells[row, column + 1].Value = item.PaymentId;
+                sheet.Cells[row, column + 2].Value = item.Number;
+                sheet.Cells[row, column + 3].Value = item.Date;
+                sheet.Cells[row, column + 4].Value = item.PaymentAmount;
+                sheet.Cells[row, column + 5].Value = item.PaymentNDSAmount;
+                sheet.Cells[row, column + 6].Value = item.Liter;
+                sheet.Cells[row, column + 7].Value = item.CostItems;
+                sheet.Cells[row, column + 8].Value = item.PurposePayment;
+                sheet.Cells[row, column + 9].Value = item.Contractor;
+                row++;
+            }
+            sheet.Cells[row, column + 4].Formula = $"=SUBTOTAL(9,D2:D{row - 1})";
+            sheet.Cells[row, 2, row, 9].Style.Font.Bold = true;
+            sheet.Cells[1, 1, row, 9].AutoFitColumns();
+            sheet.Column(1).Hidden = true;
+            sheet.Column(6).Width = 30;
+            sheet.Column(7).Width = 50;
+            sheet.Column(8).Width = 50;
+            sheet.Column(9).Width = 30;
+
+            var range = sheet.Cells[1, 1, row - 1, 9];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+
+            sheet.Cells[2, 3, row, 3].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Cells[2, 4, row, 5].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            range.AutoFilter = true;
+            sheet.View.FreezePanes(2, 1);
 
             package.SaveAs(new FileInfo(filePath));
         }

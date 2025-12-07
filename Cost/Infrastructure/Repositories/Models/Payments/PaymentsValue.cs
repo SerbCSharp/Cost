@@ -24,5 +24,8 @@ namespace Cost.Infrastructure.Repositories.Models.Payments
         public string PaymentDecryptionId { get; set; }
         public string Liter { get; set; }
         public string CostItems { get; set; }
+
+        [JsonPropertyName("НазначениеПлатежа")]
+        public string PaymentPurpose { get; set; }
     }
 }
