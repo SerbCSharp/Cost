@@ -407,30 +407,35 @@ namespace Cost.Application
 
             var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateTime());
 
-            var contractor = incomeAndExpenses.Where(x => x.ContractorOrSupplier == "Подрядчик").GroupBy(y => y.ContractId).Select(z => new Domain.Cost
+            var facility = gettingData.GetFacility();
+            var facilityGrouped = facility.GroupBy(y => y.ObjectNameIn1C).Select(x => new { ObjectNameIn1C = x.Key, x.FirstOrDefault().TotalArea });
+            var PlusFacility = from income in incomeAndExpenses
+                               join area in facilityGrouped
+                               on income.ConstructionObject equals area.ObjectNameIn1C into tmp
+                               from subArea in tmp.DefaultIfEmpty()
+                               select new { income, TotalArea = subArea?.TotalArea ?? 0 };
+
+            var contractor = PlusFacility.Where(x => x.income.ContractorOrSupplier == "Подрядчик").GroupBy(y => y.income.ContractId).Select(z => new Domain.Cost
             {
                 ContractId = z.Key,
-                Receipt = z.Sum(s => s.Receipt),
-                Payment = z.Sum(s => s.Payment),
-                Contractor = z.FirstOrDefault().Contractor,
-                Number = z.FirstOrDefault().Number,
-                RateNDS = z.FirstOrDefault().RateNDS,
-                GeneralContracting = z.FirstOrDefault().GeneralContracting,
-                ConstructionObject = z.FirstOrDefault().ConstructionObject,
-                ContractClosed = z.FirstOrDefault().ContractClosed,
-                ContractorOrSupplier = z.FirstOrDefault().ContractorOrSupplier,
-                CostItem = z.FirstOrDefault().CostItem,
-                Date = z.FirstOrDefault().Date,
-                Sum = z.FirstOrDefault().SumContract,
-                WarrantyLien = z.FirstOrDefault().WarrantyLien,
-                Name = z.FirstOrDefault().Name
+                Receipt = z.Sum(s => s.income.Receipt),
+                Payment = z.Sum(s => s.income.Payment),
+                Contractor = z.FirstOrDefault().income.Contractor,
+                Number = z.FirstOrDefault().income.Number,
+                RateNDS = z.FirstOrDefault().income.RateNDS,
+                GeneralContracting = z.FirstOrDefault().income.GeneralContracting,
+                ConstructionObject = z.FirstOrDefault().income.ConstructionObject,
+                ContractClosed = z.FirstOrDefault().income.ContractClosed,
+                ContractorOrSupplier = z.FirstOrDefault().income.ContractorOrSupplier,
+                CostItem = z.FirstOrDefault().income.CostItem,
+                Date = z.FirstOrDefault().income.Date,
+                Sum = z.FirstOrDefault().income.SumContract,
+                WarrantyLien = z.FirstOrDefault().income.WarrantyLien,
+                Name = z.FirstOrDefault().income.Name,
+                TotalArea = z.FirstOrDefault().TotalArea
             });
 
-
-
-
             var contracts = gettingData.GetContracts().Where(x => x.ContractorOrSupplier == "Подрядчик");
-
             var contractsPlusContractor = from con in contracts
                                           join income in contractor
                                           on con.ContractId equals income.ContractId into tmp
@@ -452,12 +457,9 @@ namespace Cost.Application
                                               Sum = con.Sum,
                                               WarrantyLien = con.WarrantyLien,
                                               Name = con.Name,
-                                              NumberAA = con.NumberAA
+                                              NumberAA = con.NumberAA,
+                                              TotalArea = subIncome.TotalArea
                                           };
-
-
-
-
             var result = contractsPlusContractor.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(y => new Domain.Cost
             {
                 ContractId = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ContractId,
@@ -493,32 +495,27 @@ namespace Cost.Application
                 }
             });
 
-
-
-
-
-
-
-            var supplier = incomeAndExpenses.Where(x => x.ContractorOrSupplier == "Поставщик")
-                .GroupBy(y => new { y.ContractId, y.LiterPayment, y.CostItemPayment }).Select(z => new Domain.Cost
+            var supplier = PlusFacility.Where(x => x.income.ContractorOrSupplier == "Поставщик")
+                .GroupBy(y => new { y.income.ContractId, y.income.LiterPayment, y.income.CostItemPayment }).Select(z => new Domain.Cost
                 {
                     ContractId = z.Key.ContractId,
                     Receipt = null,
-                    Payment = z.Sum(s => s.Payment),
-                    Contractor = z.FirstOrDefault().Contractor,
-                    Number = z.FirstOrDefault().Number,
-                    RateNDS = z.FirstOrDefault().RateNDS,
-                    GeneralContracting = z.FirstOrDefault().GeneralContracting,
+                    Payment = z.Sum(s => s.income.Payment),
+                    Contractor = z.FirstOrDefault().income.Contractor,
+                    Number = z.FirstOrDefault().income.Number,
+                    RateNDS = z.FirstOrDefault().income.RateNDS,
+                    GeneralContracting = z.FirstOrDefault().income.GeneralContracting,
                     ConstructionObject = z.Key.LiterPayment,
-                    ContractClosed = z.FirstOrDefault().ContractClosed,
-                    ContractorOrSupplier = z.FirstOrDefault().ContractorOrSupplier,
+                    ContractClosed = z.FirstOrDefault().income.ContractClosed,
+                    ContractorOrSupplier = z.FirstOrDefault().income.ContractorOrSupplier,
                     CostItem = z.Key.CostItemPayment,
-                    Date = z.FirstOrDefault().Date,
+                    Date = z.FirstOrDefault().income.Date,
                     Sum = null,
-                    WarrantyLien = z.FirstOrDefault().WarrantyLien,
-                    Name = z.FirstOrDefault().Name,
-                    ConstructionCost = z.Sum(s => s.Payment)
-                }).Where(z => z.Payment != 0);
+                    WarrantyLien = z.FirstOrDefault().income.WarrantyLien,
+                    Name = z.FirstOrDefault().income.Name,
+                    ConstructionCost = z.Sum(s => s.income.Payment),
+                    TotalArea = z.FirstOrDefault().TotalArea
+                }).Where(w => w.Payment != 0);
 
             var contractorOrSupplier = result.Concat(supplier);
 
@@ -955,6 +952,7 @@ namespace Cost.Application
                 Number = z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.Number,
                 Contractor = z.payment.subcontract?.Contractor,
                 LiterInAgreement = z.payment.subcontract?.ConstructionObject,
+                CostItemsInAgreement = z.payment.subcontract?.CostItem,
                 ContractorOrSupplier = z.payment.subcontract?.ContractorOrSupplier,
                 ContractId = z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.CounterpartyAgreementId
             }).ToList();

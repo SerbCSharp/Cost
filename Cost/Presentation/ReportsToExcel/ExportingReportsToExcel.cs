@@ -472,7 +472,7 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 7].Value = item.CostItems;
                 sheet.Cells[row, column + 8].Value = item.PurposePayment;
                 sheet.Cells[row, column + 9].Value = item.Contractor;
-                sheet.Cells[row, column + 10].Value = item.LiterInAgreement;
+                sheet.Cells[row, column + 10].Value = item.CostItemsInAgreement;
                 sheet.Cells[row, column + 11].Value = item.ContractorOrSupplier;
                 sheet.Cells[row, column + 12].Value = item.ContractId;
                 row++;
