@@ -12,7 +12,7 @@ namespace Cost.Presentation.ReportsToExcel
     {
         public void Cost(List<Domain.Cost> cost) // Стоимость строительства
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Cost1.xlsx";
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Cost.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -64,9 +64,10 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 15].Value = item.ConstructionCost;
                 sheet.Cells[row, column + 16].Value = item.Name;
                 sheet.Cells[row, column + 17].Formula = $"O{row}*(1.2-K{row})";
-                sheet.Cells[row, column + 18].Formula = $"F{row}-E{row}*(L{row}+M{row})";
-                sheet.Cells[row, column + 19].Formula = $"O{row}-O{row}*(L{row}+M{row})-R{row}";
-                sheet.Cells[row, column + 20].Value = item.ContractId;
+                sheet.Cells[row, column + 18].Formula = $"IF(J{row}=\"Подрядчик\",F{row}-E{row}*(L{row}+M{row}),0)";
+                sheet.Cells[row, column + 19].Formula = $"=IF(J{row}=\"Подрядчик\",O{row}-O{row}*(L{row}+M{row})-R{row},0)";
+                //sheet.Cells[row, column + 20].Value = item.ContractId;
+                //sheet.Cells[row, column + 21].Value = item.NumberAA;
                 row++;
             }
 
@@ -471,6 +472,9 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 7].Value = item.CostItems;
                 sheet.Cells[row, column + 8].Value = item.PurposePayment;
                 sheet.Cells[row, column + 9].Value = item.Contractor;
+                sheet.Cells[row, column + 10].Value = item.LiterInAgreement;
+                sheet.Cells[row, column + 11].Value = item.ContractorOrSupplier;
+                sheet.Cells[row, column + 12].Value = item.ContractId;
                 row++;
             }
             sheet.Cells[row, column + 4].Formula = $"=SUBTOTAL(9,D2:D{row - 1})";

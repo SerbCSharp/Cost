@@ -12,5 +12,8 @@
         public string CostItemsInAgreement { get; set; }
         public string Contractor { get; set; }
         public decimal PaymentNDSAmount { get; set; }
+        public string LiterInAgreement { get; set; }
+        public string ContractorOrSupplier { get; set; }
+        public string ContractId { get; set; }
     }
 }

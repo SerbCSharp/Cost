@@ -11,7 +11,7 @@
         public string CostItem { get; set; }
         public string ContractorOrSupplier { get; set; }
         public decimal TotalArea { get; set; }
-        public decimal Receipt { get; set; }
+        public decimal? Receipt { get; set; }
         public decimal Payment { get; set; }
         //public decimal Selling { get; set; }
         //public decimal Payable { get; set; } // К оплате
@@ -22,7 +22,7 @@
         public decimal RateNDS { get; set; }
         public decimal GeneralContracting { get; set; }
         public decimal WarrantyLien { get; set; }
-        //public string NumberAA { get; set; }
+        public string NumberAA { get; set; }
         public string Name { get; set; }
         //public decimal SumDebit { get; set; }
         //public decimal SumCredit { get; set; }

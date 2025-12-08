@@ -403,6 +403,8 @@ namespace Cost.Application
 
         public async Task<List<Domain.Cost>> CostAsync(Organizations organization) // Стоимость строительства объектов
         {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
             var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateTime());
 
             var contractor = incomeAndExpenses.Where(x => x.ContractorOrSupplier == "Подрядчик").GroupBy(y => y.ContractId).Select(z => new Domain.Cost
@@ -424,11 +426,84 @@ namespace Cost.Application
                 Name = z.FirstOrDefault().Name
             });
 
+
+
+
+            var contracts = gettingData.GetContracts().Where(x => x.ContractorOrSupplier == "Подрядчик");
+
+            var contractsPlusContractor = from con in contracts
+                                          join income in contractor
+                                          on con.ContractId equals income.ContractId into tmp
+                                          from subIncome in tmp.DefaultIfEmpty()
+                                          select new Domain.Cost
+                                          {
+                                              ContractId = con.ContractId,
+                                              Receipt = subIncome?.Receipt,
+                                              Payment = subIncome?.Payment ?? 0,
+                                              Contractor = con.Contractor,
+                                              Number = con.Number,
+                                              RateNDS = con.RateNDS,
+                                              GeneralContracting = con.GeneralContracting,
+                                              ConstructionObject = con.ConstructionObject,
+                                              ContractClosed = con.ContractClosed,
+                                              ContractorOrSupplier = con.ContractorOrSupplier,
+                                              CostItem = con.CostItem,
+                                              Date = con.Date,
+                                              Sum = con.Sum,
+                                              WarrantyLien = con.WarrantyLien,
+                                              Name = con.Name,
+                                              NumberAA = con.NumberAA
+                                          };
+
+
+
+
+            var result = contractsPlusContractor.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(y => new Domain.Cost
+            {
+                ContractId = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ContractId,
+                Contractor = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Contractor,
+                Number = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Number,
+                Date = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Date,
+                Sum = y.Sum(z => z.Sum),
+                ConstructionObject = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ConstructionObject,
+                CostItem = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).CostItem,
+                Receipt = y.Sum(z => z.Receipt),
+                Payment = y.Sum(z => z.Payment),
+                ContractClosed = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ContractClosed,
+                ContractorOrSupplier = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ContractorOrSupplier,
+                GeneralContracting = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).GeneralContracting,
+                RateNDS = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).RateNDS,
+                Name = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Name,
+                WarrantyLien = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).WarrantyLien,
+                TotalArea = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).TotalArea
+            }).ToList();
+
+            result.ForEach(item =>
+            {
+                if (!string.IsNullOrEmpty(item.ConstructionObject))
+                {
+                    if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут" || item.Receipt > item.Sum)
+                    {
+                        item.ConstructionCost = item.Receipt ?? 0;
+                    }
+                    else
+                    {
+                        item.ConstructionCost = item.Sum ?? 0;
+                    }
+                }
+            });
+
+
+
+
+
+
+
             var supplier = incomeAndExpenses.Where(x => x.ContractorOrSupplier == "Поставщик")
                 .GroupBy(y => new { y.ContractId, y.LiterPayment, y.CostItemPayment }).Select(z => new Domain.Cost
                 {
                     ContractId = z.Key.ContractId,
-                    Receipt = z.Sum(s => s.Receipt),
+                    Receipt = null,
                     Payment = z.Sum(s => s.Payment),
                     Contractor = z.FirstOrDefault().Contractor,
                     Number = z.FirstOrDefault().Number,
@@ -439,14 +514,15 @@ namespace Cost.Application
                     ContractorOrSupplier = z.FirstOrDefault().ContractorOrSupplier,
                     CostItem = z.Key.CostItemPayment,
                     Date = z.FirstOrDefault().Date,
-                    Sum = z.FirstOrDefault().SumContract,
+                    Sum = null,
                     WarrantyLien = z.FirstOrDefault().WarrantyLien,
-                    Name = z.FirstOrDefault().Name
-                });
+                    Name = z.FirstOrDefault().Name,
+                    ConstructionCost = z.Sum(s => s.Payment)
+                }).Where(z => z.Payment != 0);
 
-            var contractorOrSupplier = contractor.Concat(supplier);
+            var contractorOrSupplier = result.Concat(supplier);
 
-            return contractorOrSupplier.Where(y => !string.IsNullOrEmpty(y.ContractId)).ToList();
+            return contractorOrSupplier.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number).ToList();
         }
 
         public async Task<List<IncomeAndExpenses>> IncomeAndExpensesAsync(Organizations organization, DateTime date)
@@ -464,7 +540,7 @@ namespace Cost.Application
                                                  {
                                                      Date = p.Date,
                                                      DocumentAmount = subC.PaymentAmount,
-                                                     CounterpartyAgreementId = p.CounterpartyAgreementId,
+                                                     CounterpartyAgreementId = subC.ContractId,
                                                      PaymentNDSAmount = subC.PaymentNDSAmount,
                                                      Liter = subC.Liter,
                                                      CostItems = subC.CostItems
@@ -648,8 +724,8 @@ namespace Cost.Application
                     });
 
             var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
-            var contract = gettingData.GetContracts();
 
+            var contract = gettingData.GetContracts();
             var plusContract = from p in plusOperationCredit
                                join c in contract
                                on p.ContractId equals c.ContractId into tmp
@@ -783,7 +859,7 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false).ToList();
+            var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
             var billPayment = await gettingData.BillPaymentAsync();
             var additionalInformation = await gettingData.AdditionalInformationAsync();
             var nomenclatureGroups = await gettingData.NomenclatureGroupsAsync();
@@ -800,11 +876,12 @@ namespace Cost.Application
                     CounterpartyAgreementId = z.paymentDecryption.CounterpartyAgreementId,
                     DocumentAmount = z.paymentDecryption.PaymentAmount,
                     PaymentNDSAmount = z.paymentDecryption.PaymentNDSAmount,
-                    PaymentPurpose = z.payment.PaymentPurpose
+                    PaymentPurpose = z.payment.PaymentPurpose,
+                    Number = z.payment.Number
                 }).ToList();
 
             var paymentNoMany = payments.Where(x => x.PaymentDecryption.Length == 0).ToList();
-            var concat = paymentMany.Concat(paymentNoMany);
+            var concat = paymentMany.Concat(paymentNoMany).ToList();
 
             var billPaymentMany = billPayment.Value.Select(x => new { x, x.RecordSet.FirstOrDefault().InvoiceForPaymentId });
             var paymentsPlusCashFlowArticlesPlusBillPayment = from payMany in concat
@@ -874,6 +951,12 @@ namespace Cost.Application
                 PaymentNDSAmount = z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.PaymentNDSAmount,
                 PurposePayment = string.IsNullOrEmpty(z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.PaymentPurpose) 
                     ? z.subcost?.PurposePayment : z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.PaymentPurpose,
+                Date = z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.Date,
+                Number = z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.Number,
+                Contractor = z.payment.subcontract?.Contractor,
+                LiterInAgreement = z.payment.subcontract?.ConstructionObject,
+                ContractorOrSupplier = z.payment.subcontract?.ContractorOrSupplier,
+                ContractId = z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.CounterpartyAgreementId
             }).ToList();
         }
     }
