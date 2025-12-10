@@ -87,6 +87,17 @@ namespace Cost.Presentation.Controllers
             var payments = await _generatingReports.PaymentsAsync(Organization);
             _exportingReportsToExcel.Payments(payments);
             return NoContent();
+
+        }
+
+        /// <summary>Проверка заполнения номенклатурных групп</summary>
+        /// <response>Записывает информацию в Nomenclature.xlsx</response>
+        [HttpGet("Nomenclature")]
+        public async Task<IActionResult> NomenclatureAsync([Required] Organizations Organization)
+        {
+            var nomenclature = await _generatingReports.Nomenclature(Organization);
+            _exportingReportsToExcel.Nomenclature(nomenclature);
+            return NoContent();
         }
     }
 }

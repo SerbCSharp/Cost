@@ -248,7 +248,7 @@ namespace Cost.Application
                                           };
             var result = contractsPlusContractor.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(y => new Domain.Cost
             {
-                ContractId = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).ContractId,
+                ContractId = y?.FirstOrDefault(z => string.IsNullOrEmpty(z?.NumberAA))?.ContractId,
                 Contractor = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Contractor,
                 Number = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Number,
                 Date = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).Date,
@@ -300,9 +300,9 @@ namespace Cost.Application
                     WarrantyLien = z.FirstOrDefault().WarrantyLien,
                     Name = z.FirstOrDefault().Name,
                     ConstructionCost = z.Sum(s => s.Payment)
-                }).Where(w => w.Payment != 0);
+                }).Where(w => w.Payment != 0).ToList();
 
-            var contractorOrSupplier = result.Concat(supplier);
+            var contractorOrSupplier = result.Concat(supplier).ToList();
 
             var facility = gettingData.GetFacility();
             var facilityGrouped = facility.GroupBy(y => y.ObjectNameIn1C).Select(x => new { ObjectNameIn1C = x.Key, x.FirstOrDefault().TotalArea });
@@ -583,7 +583,7 @@ namespace Cost.Application
             
             contractsCounterparties = contractsCounterpartiesValue.ToList();
 
-            var nomenclatureGroups = await gettingData.NomenclatureGroupsAsync();
+            var nomenclatureGroups = (await gettingData.NomenclatureGroupsAsync()).Value.Where(x => x.DeletionMark == false);
             var constructionProjects = await gettingData.ConstructionProjectsAsync();
             var typesCalculations = await gettingData.TypesCalculationsAsync();
             var costItems = await gettingData.CostItemsAsync();
@@ -606,7 +606,7 @@ namespace Cost.Application
             var contractsGrouped = contractsCounterparties.ToList();
 
             var contractPlusNomenclatureGroup = from c1 in contractsGrouped
-                                                join nomenclatureGroup in nomenclatureGroups.Value
+                                                join nomenclatureGroup in nomenclatureGroups
                                                        on c1.NomenclatureGroupsId equals nomenclatureGroup.Ref_Key into tmp
                                                 from subNomenclatureGroup in tmp.DefaultIfEmpty()
                                                 select new { c1, subNomenclatureGroup?.ConstructionObjectId };
@@ -669,10 +669,12 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
+            //var serb = await gettingData.TmpAsync();
+
             var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
             var billPayment = await gettingData.BillPaymentAsync();
             var additionalInformation = await gettingData.AdditionalInformationAsync();
-            var nomenclatureGroups = await gettingData.NomenclatureGroupsAsync();
+            var nomenclatureGroups = (await gettingData.NomenclatureGroupsAsync()).Value.Where(x => x.DeletionMark == false); ;
             var costItems = await gettingData.CostItemsAsync();
             var constructionProjects = await gettingData.ConstructionProjectsAsync();
 
@@ -715,10 +717,10 @@ namespace Cost.Application
                                                                           select new { payCons, subCost?.IndicatorValue };
 
             var paymentsPlusCashFlowArticlesPlusBillPaymentPlusConstructionObjectName = from payObjectName in paymentsPlusCashFlowArticlesPlusBillPaymentPlusCostItem
-                                                                                        join objectName in nomenclatureGroups.Value
+                                                                                        join objectName in nomenclatureGroups
                                                                                         on payObjectName.payCons.IndicatorValue equals objectName.Ref_Key into tmp
                                                                                         from subObjectName in tmp.DefaultIfEmpty()
-                                                                                        select new { payObjectName, subObjectName?.ConstructionObjectId };
+                                                                                        select new { payObjectName, subObjectName?.ConstructionObjectId, subObjectName?.Description };
 
             var paymentsPlusCashFlowArticlesPlusBillPaymentPlusCostItemName = from payCostName in paymentsPlusCashFlowArticlesPlusBillPaymentPlusConstructionObjectName
                                                                               join costName in costItems.Value
@@ -730,7 +732,7 @@ namespace Cost.Application
                                              join objectName in constructionProjects.Value
                                              on payObjectName.payCostName.ConstructionObjectId equals objectName.Ref_Key into tmp
                                              from subObjectName in tmp.DefaultIfEmpty()
-                                             select new { payObjectName, subObjectName?.Description };
+                                             select new { subObjectName?.Description, payObjectName };
 
             var contracts = gettingData.GetContracts();
 
@@ -767,8 +769,38 @@ namespace Cost.Application
                 LiterInAgreement = z.payment.subcontract?.ConstructionObject,
                 CostItemsInAgreement = z.payment.subcontract?.CostItem,
                 ContractorOrSupplier = z.payment.subcontract?.ContractorOrSupplier,
-                ContractId = z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.CounterpartyAgreementId
+                ContractId = z.payment.payment.payObjectName.payCostName.payObjectName.payCons.payBill.payMany.CounterpartyAgreementId,
+                ContractNumber = z.payment.subcontract?.Number,
+                Nomenclature = z.payment.payment.payObjectName.payCostName.Description
+            }).OrderBy(x => x.Date).ToList();
+        }
+
+
+
+
+        public async Task<List<Nomenclature>> Nomenclature(Organizations organization) // Проверка заполнения номенклатурных групп
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var nomenclatureGroups = (await gettingData.NomenclatureGroupsAsync()).Value.Where(x => x.DeletionMark == false); ;
+            var constructionProjects = await gettingData.ConstructionProjectsAsync();
+
+            var plusConstructionObjectName = from payObjectName in nomenclatureGroups
+                                             join objectName in constructionProjects.Value
+                                             on payObjectName.ConstructionObjectId equals objectName.Ref_Key into tmp
+                                             from subObjectName in tmp.DefaultIfEmpty()
+                                             select new { payObjectName, subObjectName?.Description };
+
+
+            return plusConstructionObjectName.Select(z => new Nomenclature
+            {
+                ConstructionName = z.Description,
+                Description = z.payObjectName.Description
             }).ToList();
         }
+
+
+
+
     }
 }

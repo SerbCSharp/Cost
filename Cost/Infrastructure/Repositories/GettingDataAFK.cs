@@ -58,14 +58,16 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<Receipts> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
         {
-            var receiptsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key";
+            var receiptsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json"
+                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key";
             using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
             return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
         }
 
         public async Task<Payments> PaymentsAsync() // Списание с расчетного счета
         {
-            var paymentsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа";
+            var paymentsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json"
+                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа,НазначениеПлатежа,Number";
             using HttpResponseMessage paymentsResponse = await httpClient.GetAsync(paymentsUrl);
             return await paymentsResponse.Content.ReadFromJsonAsync<Payments>();
         }
@@ -272,10 +274,50 @@ namespace Cost.Infrastructure.Repositories
             }).ToList();
         }
 
+        public List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments() // Литер и статья затрат в оплатах
+        {
+            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\AFK\\Catalogs.xlsx";
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            FileInfo fileInfo = new FileInfo(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "Payments"];
+            DataTable dataTable = new DataTable();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                if (sheet.Cells[1, i].Value.ToString() == "Date")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
+                else if (sheet.Cells[1, i].Value.ToString() == "PaymentAmount")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new LiterAndCostItemInPayments
+            {
+                Liter = row.Field<string>("Liter"),
+                CostItems = row.Field<string>("CostItems"),
+                PaymentId = row.Field<string>("PaymentId"),
+                Date = row.Field<DateTime>("Date"),
+                Number = row.Field<string>("Number"),
+                PaymentAmount = row.Field<decimal>("PaymentAmount"),
+                PurposePayment = row.Field<string>("PurposePayment"),
+            }).ToList();
+        }
+
         public async Task<string> TmpAsync()
         {
-            //var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_КорректировкаПоступления?$format=json";
-            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json";
+            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Catalog_НоменклатурныеГруппы?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);
@@ -289,14 +331,11 @@ namespace Cost.Infrastructure.Repositories
             return await operationResponse.Content.ReadFromJsonAsync<OperationsTmp>();
         }
 
-        public Task<BillPayment> BillPaymentAsync()
+        public async Task<BillPayment> BillPaymentAsync() // Оплата счетов
         {
-            throw new NotImplementedException();
-        }
-
-        public List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments()
-        {
-            throw new NotImplementedException();
+            var billPaymentUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/AccumulationRegister_ОплатаСчетов?$format=json";
+            using HttpResponseMessage billPaymentResponse = await httpClient.GetAsync(billPaymentUrl);
+            return await billPaymentResponse.Content.ReadFromJsonAsync<BillPayment>();
         }
     }
 }

@@ -15,5 +15,7 @@
         public string LiterInAgreement { get; set; }
         public string ContractorOrSupplier { get; set; }
         public string ContractId { get; set; }
+        public string ContractNumber { get; set; }
+        public string Nomenclature { get; set; }
     }
 }

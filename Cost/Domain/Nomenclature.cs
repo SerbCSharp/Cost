@@ -1,14 +1,13 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Cost.Infrastructure.Repositories.Models.NomenclatureGroups
+namespace Cost.Domain
 {
-    public class NomenclatureGroupsValue
+    public class Nomenclature
     {
-        public string Ref_Key { get; set; }
         public string Description { get; set; }
 
         [JsonPropertyName("ОбъектСтроительстваС_Key")]
         public string ConstructionObjectId { get; set; }
-        public bool DeletionMark { get; set; }
+        public string ConstructionName { get; set; }
     }
 }
