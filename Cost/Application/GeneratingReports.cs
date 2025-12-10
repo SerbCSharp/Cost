@@ -246,6 +246,9 @@ namespace Cost.Application
                                               Name = con.Name,
                                               NumberAA = con.NumberAA
                                           };
+            var serb = contractsPlusContractor.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(z => new { z.Key, count = z.Count()})
+                .OrderBy(o => o.count).ToList();
+
             var result = contractsPlusContractor.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(y => new Domain.Cost
             {
                 ContractId = y?.FirstOrDefault(z => string.IsNullOrEmpty(z?.NumberAA))?.ContractId,
