@@ -246,8 +246,9 @@ namespace Cost.Application
                                               Name = con.Name,
                                               NumberAA = con.NumberAA
                                           };
-            var serb = contractsPlusContractor.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(z => new { z.Key, count = z.Count()})
-                .OrderBy(o => o.count).ToList();
+            var serb = contractsPlusContractor.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number)
+                .Select(z => new { z.Key, count = z.Count(), serbius = z.OrderBy(n => n.NumberAA).FirstOrDefault().NumberAA})
+                .OrderBy(x => x.count).ThenByDescending(z => z.serbius).ToList();
 
             var result = contractsPlusContractor.Where(y => y.NumberAA != "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(y => new Domain.Cost
             {
