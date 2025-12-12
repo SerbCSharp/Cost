@@ -142,7 +142,7 @@ namespace Cost.Infrastructure.Repositories
             return await invoiceReceivedResponse.Content.ReadFromJsonAsync<InvoiceReceived>();
         }
 
-        public List<Facility> GetFacility() // Объекты строительства
+        public List<Facility> GetFacility() // Площади объектов строительства
         {
             string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\AFKDevelopment\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
