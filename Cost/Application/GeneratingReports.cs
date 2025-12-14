@@ -755,10 +755,10 @@ namespace Cost.Application
                                from subcost in tmp.DefaultIfEmpty()
                                select new { payment, subcost };
 
-            return paymentCosts.Select(z => new LiterAndCostItemInPayments
+            var result = paymentCosts.Select(z => new LiterAndCostItemInPayments
             {
-                Liter = string.IsNullOrEmpty(z.payment.payment.payCostName.Description) ? z.subcost?.Liter : z.payment.payment.payCostName.Description,
-                CostItems = string.IsNullOrEmpty(z.payment.payment.Description) ? z.subcost?.CostItems : z.payment.payment.Description,
+                Liter = string.IsNullOrEmpty(z.subcost?.Liter) ? z.payment.payment.payCostName.Description : z.subcost?.Liter,
+                CostItems = string.IsNullOrEmpty(z.subcost?.CostItems) ? z.payment.payment.Description : z.subcost?.CostItems,
                 PaymentId = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentId,
                 PaymentAmount = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.DocumentAmount,
                 PaymentNDSAmount = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentNDSAmount,
@@ -774,6 +774,12 @@ namespace Cost.Application
                 ContractNumber = z.payment.subcontract?.Number,
                 //Nomenclature = z.payment.payment.payCostName.Description
             }).OrderBy(x => x.Date).ToList();
+
+            var paymentsGrouped = result.GroupBy(y => y.Contractor).Select(x => new LiterAndCostItemInPayments { Contractor = x.Key, PaymentAmount = x.Sum(z => z.PaymentAmount) })
+                .OrderByDescending(o => o.PaymentAmount).ToList();
+
+            return paymentsGrouped;
+
         }
 
 
