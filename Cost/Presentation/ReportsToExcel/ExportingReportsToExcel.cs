@@ -441,8 +441,9 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 10].Value = "Литер из договора";
             sheet.Cells[1, 11].Value = "Статья затрат из договора";
             sheet.Cells[1, 12].Value = "Подрядчик/Поставщик";
-            sheet.Cells[1, 1, 1, 12].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 12].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[1, 13].Value = "ContractId";
+            sheet.Cells[1, 1, 1, 13].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 13].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             var row = 2;
             var column = 0;
@@ -460,11 +461,12 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 10].Value = item.LiterInAgreement;
                 sheet.Cells[row, column + 11].Value = item.CostItemsInAgreement;
                 sheet.Cells[row, column + 12].Value = item.ContractorOrSupplier;
+                sheet.Cells[row, column + 13].Value = item.ContractId;
                 row++;
             }
             sheet.Cells[row, column + 4].Formula = $"=SUBTOTAL(9,D2:D{row - 1})";
-            sheet.Cells[row, 2, row, 12].Style.Font.Bold = true;
-            sheet.Cells[1, 1, row, 12].AutoFitColumns();
+            sheet.Cells[row, 2, row, 13].Style.Font.Bold = true;
+            sheet.Cells[1, 1, row, 13].AutoFitColumns();
             sheet.Column(1).Hidden = true;
             sheet.Column(5).Width = 30;
             sheet.Column(6).Width = 50;
@@ -472,7 +474,7 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Column(8).Width = 30;
             sheet.Column(9).Width = 30;
 
-            var range = sheet.Cells[1, 1, row - 1, 12];
+            var range = sheet.Cells[1, 1, row - 1, 13];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;

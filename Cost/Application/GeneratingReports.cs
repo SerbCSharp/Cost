@@ -4,6 +4,7 @@ using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using Cost.Infrastructure.Repositories.Models.Payments;
 using Cost.Presentation.DTO.Request;
+using System.Linq.Expressions;
 
 namespace Cost.Application
 {
@@ -762,8 +763,8 @@ namespace Cost.Application
                 PaymentId = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentId,
                 PaymentAmount = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.DocumentAmount,
                 PaymentNDSAmount = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentNDSAmount,
-                PurposePayment = string.IsNullOrEmpty(z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentPurpose) 
-                    ? z.subcost?.PurposePayment : z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentPurpose,
+                PurposePayment = string.IsNullOrEmpty(z.subcost?.PurposePayment) 
+                    ? z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentPurpose : z.subcost?.PurposePayment,
                 Date = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.Date,
                 Number = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.Number,
                 Contractor = z.payment.subcontract?.Contractor,
@@ -775,10 +776,10 @@ namespace Cost.Application
                 //Nomenclature = z.payment.payment.payCostName.Description
             }).OrderBy(x => x.Date).ToList();
 
-            var paymentsGrouped = result.GroupBy(y => y.Contractor).Select(x => new LiterAndCostItemInPayments { Contractor = x.Key, PaymentAmount = x.Sum(z => z.PaymentAmount) })
+            var paymentsGrouped = result.Where(w => w.Date >= new DateTime(2024, 1, 1)).GroupBy(y => y.Contractor).Select(x => new LiterAndCostItemInPayments { Contractor = x.Key, PaymentAmount = x.Sum(z => z.PaymentAmount) })
                 .OrderByDescending(o => o.PaymentAmount).ToList();
 
-            return paymentsGrouped;
+            return result;
 
         }
 
