@@ -11,7 +11,7 @@ namespace Cost.Presentation.ReportsToExcel
     {
         public void Cost(List<Domain.Cost> cost) // Стоимость строительства
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\CostTmp.xlsx";
+            string filePath = "C:\\Cost\\CostTmp.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -106,7 +106,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void WeDoNotHaveTheseContracts(IEnumerable<Contracts> contracts)
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\WeDoNotHaveTheseContracts.xlsx";
+            string filePath = "C:\\Cost\\WeDoNotHaveTheseContracts.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -159,7 +159,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void ReconciliationStatement(List<ReconciliationStatement> reconciliationStatement)
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Transcript.xlsx";
+            string filePath = "C:\\Cost\\Transcript.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -221,7 +221,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void IncomeAndExpenses(List<IncomeAndExpenses> incomeAndExpenses)
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\IncomeAndExpensesTmp.xlsx";
+            string filePath = "C:\\Cost\\IncomeAndExpensesTmp.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -298,7 +298,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void ContractsFrom1C(List<ContractsCounterpartiesValue> Contracts) // 
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Contracts.xlsx";
+            string filePath = "C:\\Cost\\Contracts.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -369,7 +369,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void Operations(List<OperationsTmpValue> operations)
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Operations.xlsx";
+            string filePath = "C:\\Cost\\Operations.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -420,7 +420,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void Payments(List<LiterAndCostItemInPayments> payments) // Оплаты
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Payments.xlsx";
+            string filePath = "C:\\Cost\\Payments.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -500,7 +500,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void Nomenclature(List<Nomenclature> nomenclature) // Проверка заполнения номенклатурных групп
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\Nomenclature.xlsx";
+            string filePath = "C:\\Cost\\Nomenclature.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 

@@ -144,7 +144,7 @@ namespace Cost.Infrastructure.Repositories
 
         public List<Facility> GetFacility() // Объекты строительства
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\AFKDevelopment\\Catalogs.xlsx";
+            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             FileInfo fileInfo = new FileInfo(filePath);
             using var package = new ExcelPackage(fileInfo);
@@ -180,7 +180,7 @@ namespace Cost.Infrastructure.Repositories
 
         public List<Contracts> GetContracts() // Договора
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\AFK\\Catalogs.xlsx";
+            string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             FileInfo fileInfo = new FileInfo(filePath);
             using var package = new ExcelPackage(fileInfo);
@@ -234,7 +234,7 @@ namespace Cost.Infrastructure.Repositories
 
         public List<Operations> GetOperations() // Бухгалтерские операции
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\AFK\\Catalogs.xlsx";
+            string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             FileInfo fileInfo = new FileInfo(filePath);
             using var package = new ExcelPackage(fileInfo);
@@ -276,7 +276,7 @@ namespace Cost.Infrastructure.Repositories
 
         public List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments() // Литер и статья затрат в оплатах
         {
-            string filePath = "\\\\AFK-Nas1\\Share\\ВЕГА1\\Кагерман\\Сергей\\AFK\\Catalogs.xlsx";
+            string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             FileInfo fileInfo = new FileInfo(filePath);
             using var package = new ExcelPackage(fileInfo);
