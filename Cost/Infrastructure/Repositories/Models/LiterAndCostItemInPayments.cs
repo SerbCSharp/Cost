@@ -17,5 +17,16 @@
         public string ContractId { get; set; }
         public string ContractNumber { get; set; }
         public string Nomenclature { get; set; }
+
+        public bool Equals(LiterAndCostItemInPayments other)
+        {
+            if (other is null)
+                return false;
+
+            return this.PaymentId == other.PaymentId;
+        }
+
+        public override bool Equals(object obj) => Equals(obj as LiterAndCostItemInPayments);
+        public override int GetHashCode() => PaymentId.GetHashCode();
     }
 }

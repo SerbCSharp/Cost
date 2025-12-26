@@ -90,13 +90,13 @@ namespace Cost.Presentation.Controllers
 
         }
 
-        /// <summary>Проверка заполнения номенклатурных групп</summary>
-        /// <response>Записывает информацию в Nomenclature.xlsx</response>
-        [HttpGet("Nomenclature")]
-        public async Task<IActionResult> NomenclatureAsync([Required] Organizations Organization)
+        /// <summary>Отсутствующие у нас оплаты</summary>
+        /// <response>Записывает информацию в Payments.xlsx</response>
+        [HttpGet("WeDoNotHaveThesePayments")]
+        public async Task<IActionResult> WeDoNotHaveThesePaymentsAsync([Required] Organizations Organization)
         {
-            var nomenclature = await _generatingReports.Nomenclature(Organization);
-            _exportingReportsToExcel.Nomenclature(nomenclature);
+            var noPayments = await _generatingReports.WeDoNotHaveThesePaymentsAsync(Organization);
+            _exportingReportsToExcel.Payments(noPayments.ToList());
             return NoContent();
         }
     }

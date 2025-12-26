@@ -671,14 +671,11 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            //var serb = await gettingData.TmpAsync();
-
             var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
             var billPayment = await gettingData.BillPaymentAsync();
             var additionalInformation = await gettingData.AdditionalInformationAsync();
             var nomenclatureGroups = (await gettingData.NomenclatureGroupsAsync()).Value.Where(x => x.DeletionMark == false); ;
             var costItems = await gettingData.CostItemsAsync();
-            //var constructionProjects = await gettingData.ConstructionProjectsAsync();
 
             var paymentMany = payments.Where(x => x.PaymentDecryption.Length > 0)
                 .SelectMany(y => y.PaymentDecryption, (x, y) => new { payment = x, paymentDecryption = y })
@@ -730,12 +727,6 @@ namespace Cost.Application
                                                                               from subCostName in tmp.DefaultIfEmpty()
                                                                               select new { payCostName, subCostName?.Description };
 
-            //var plusConstructionObjectName = from payObjectName in paymentsPlusCashFlowArticlesPlusBillPaymentPlusCostItemName
-            //                                 join objectName in constructionProjects.Value
-            //                                 on payObjectName.payCostName.ConstructionObjectId equals objectName.Ref_Key into tmp
-            //                                 from subObjectName in tmp.DefaultIfEmpty()
-            //                                 select new { subObjectName?.Description, payObjectName };
-
             var contracts = gettingData.GetContracts();
 
             // Оплата + поставщики + договора
@@ -773,42 +764,22 @@ namespace Cost.Application
                 ContractorOrSupplier = z.payment.subcontract?.ContractorOrSupplier,
                 ContractId = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.CounterpartyAgreementId,
                 ContractNumber = z.payment.subcontract?.Number,
-                //Nomenclature = z.payment.payment.payCostName.Description
             }).OrderBy(x => x.Date).ToList();
 
             var paymentsGrouped = result.Where(w => w.Date >= new DateTime(2024, 1, 1)).GroupBy(y => y.Contractor).Select(x => new LiterAndCostItemInPayments { Contractor = x.Key, PaymentAmount = x.Sum(z => z.PaymentAmount) })
                 .OrderByDescending(o => o.PaymentAmount).ToList();
 
             return result;
-
         }
 
-
-
-
-        public async Task<List<Nomenclature>> Nomenclature(Organizations organization) // Проверка заполнения номенклатурных групп
+        public async Task<IEnumerable<LiterAndCostItemInPayments>> WeDoNotHaveThesePaymentsAsync(Organizations organization) // Отсутствующие у нас оплаты
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+            var paymentsFrom1C = (await PaymentsAsync(organization)).Where(x => x.Date >= new DateTime(2025, 12, 1));
 
-            var nomenclatureGroups = (await gettingData.NomenclatureGroupsAsync()).Value.Where(x => x.DeletionMark == false); ;
-            var constructionProjects = await gettingData.ConstructionProjectsAsync();
+            var paymentsFromExcel = gettingData.GetLiterAndCostItemInPayments();
 
-            var plusConstructionObjectName = from payObjectName in nomenclatureGroups
-                                             join objectName in constructionProjects.Value
-                                             on payObjectName.ConstructionObjectId equals objectName.Ref_Key into tmp
-                                             from subObjectName in tmp.DefaultIfEmpty()
-                                             select new { payObjectName, subObjectName?.Description };
-
-
-            return plusConstructionObjectName.Select(z => new Nomenclature
-            {
-                ConstructionName = z.Description,
-                Description = z.payObjectName.Description
-            }).ToList();
+            return paymentsFrom1C.Except(paymentsFromExcel);
         }
-
-
-
-
     }
 }
