@@ -1,10 +1,14 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
+using Cost.Infrastructure.Repositories.Models.CostItems;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using Cost.Infrastructure.Repositories.Models.Payments;
+using Cost.Infrastructure.Repositories.Models.Receipts;
 using Cost.Presentation.DTO.Request;
-using System.Linq.Expressions;
+using System.Diagnostics.Contracts;
+using System.Xml.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Cost.Application
 {
@@ -267,6 +271,25 @@ namespace Cost.Application
                 WarrantyLien = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).WarrantyLien,
                 TotalArea = y.FirstOrDefault(z => string.IsNullOrEmpty(z.NumberAA)).TotalArea
             }).ToList();
+            //var result = contractsPlusContractor.Where(y => y.NumberAA == "Гарантийное удержание").GroupBy(x => x.Contractor + x.Number).Select(y => new Domain.Cost
+            //{
+            //    ContractId = y?.FirstOrDefault().ContractId,
+            //    Contractor = y.FirstOrDefault().Contractor,
+            //    Number = y.FirstOrDefault().Number,
+            //    Date = y.FirstOrDefault().Date,
+            //    Sum = y.Sum(z => z.Sum),
+            //    ConstructionObject = y.FirstOrDefault().ConstructionObject,
+            //    CostItem = y.FirstOrDefault().CostItem,
+            //    Receipt = y.Sum(z => z.Receipt),
+            //    Payment = y.Sum(z => z.Payment),
+            //    ContractClosed = y.FirstOrDefault().ContractClosed,
+            //    ContractorOrSupplier = y.FirstOrDefault().ContractorOrSupplier,
+            //    GeneralContracting = y.FirstOrDefault().GeneralContracting,
+            //    RateNDS = y.FirstOrDefault().RateNDS,
+            //    Name = y.FirstOrDefault().Name,
+            //    WarrantyLien = y.FirstOrDefault().WarrantyLien,
+            //    TotalArea = y.FirstOrDefault().TotalArea
+            //}).ToList();
 
             result.ForEach(item =>
             {
