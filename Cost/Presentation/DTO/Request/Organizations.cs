@@ -4,6 +4,7 @@
     {
         AFKDevelopment,
         Vega,
-        AFK
+        AFK,
+        Parma
     }
 }

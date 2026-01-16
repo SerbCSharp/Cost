@@ -20,6 +20,7 @@ builder.Services.Configure<Base1CConfiguration>(builder.Configuration.GetSection
 builder.Services.AddScoped<GettingDataAFKDevelopment>();
 builder.Services.AddScoped<GettingDataAFK>();
 builder.Services.AddScoped<GettingDataVega>();
+builder.Services.AddScoped<GettingDataParma>();
 builder.Services.AddScoped<IGettingDataFactory, GettingDataFactory>();
 
 var app = builder.Build();

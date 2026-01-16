@@ -90,7 +90,7 @@ namespace Cost.Presentation.Controllers
 
         }
 
-        /// <summary>Отсутствующие у нас оплаты</summary>
+        /// <summary>Отсутствующие у нас договора по которым есть оплаты</summary>
         /// <response>Записывает информацию в Payments.xlsx</response>
         [HttpGet("WeDoNotHaveThesePayments")]
         public async Task<IActionResult> WeDoNotHaveThesePaymentsAsync([Required] Organizations Organization)

@@ -1,14 +1,9 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
-using Cost.Infrastructure.Repositories.Models.CostItems;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using Cost.Infrastructure.Repositories.Models.Payments;
-using Cost.Infrastructure.Repositories.Models.Receipts;
 using Cost.Presentation.DTO.Request;
-using System.Diagnostics.Contracts;
-using System.Xml.Linq;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Cost.Application
 {
@@ -25,7 +20,8 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
             var contractsCounterpartiesValue = (await gettingData.ContractsCounterpartiesAsync()).Value
-                .Where(x => x.TypeAgreement == "СПоставщиком" && x.Date?.Year > 2024 && x.DeletionMark == false);
+            .Where(x => x.TypeAgreement == "СПоставщиком" && x.Date?.Year > 2024 && x.DeletionMark == false);
+            //.Where(x => x.DeletionMark == false);
 
             // Поставщики + договора
             var counterparties = await gettingData.CounterpartiesAsync();
@@ -795,14 +791,10 @@ namespace Cost.Application
             return result;
         }
 
-        public async Task<IEnumerable<LiterAndCostItemInPayments>> WeDoNotHaveThesePaymentsAsync(Organizations organization) // Отсутствующие у нас оплаты
+        public async Task<IEnumerable<LiterAndCostItemInPayments>> WeDoNotHaveThesePaymentsAsync(Organizations organization) // Отсутствующие у нас договора по которым есть оплаты
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
-            var paymentsFrom1C = (await PaymentsAsync(organization)).Where(x => x.Date >= new DateTime(2025, 12, 1));
-
-            var paymentsFromExcel = gettingData.GetLiterAndCostItemInPayments();
-
-            return paymentsFrom1C.Except(paymentsFromExcel);
+            return (await PaymentsAsync(organization)).Where(x => string.IsNullOrEmpty(x.Contractor) && x.ContractId != "00000000-0000-0000-0000-000000000000");
         }
     }
 }
