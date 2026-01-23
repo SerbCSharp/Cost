@@ -99,5 +99,16 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.Payments(noPayments.ToList());
             return NoContent();
         }
+
+        /// <summary>Оплаты отличающиеся от счетов на оплату</summary>
+        /// <response>Записывает информацию в Payments.xlsx</response>
+        [HttpGet("ComparisonPaymentsAndInvoices")]
+        public async Task<IActionResult> ComparisonPaymentsAndInvoicesAsync([Required] Organizations Organization)
+        {
+            var payments = await _generatingReports.ComparisonPaymentsAndInvoicesAsync(Organization);
+            _exportingReportsToExcel.Payments(payments);
+            return NoContent();
+
+        }
     }
 }
