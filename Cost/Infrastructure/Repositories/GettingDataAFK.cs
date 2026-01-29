@@ -269,8 +269,8 @@ namespace Cost.Infrastructure.Repositories
                 Sum = row.Field<decimal>("Сумма"),
                 ContractDebit = row.Field<string>("Договор Дебет"),
                 ContractCredit = row.Field<string>("Договор Кредит"),
-                ContractorDebit = row.Field<string>("Контрагент Дебет"),
-                ContractorCredit = row.Field<string>("Контрагент Кредит"),
+                //ContractorDebit = row.Field<string>("Контрагент Дебет"),
+                //ContractorCredit = row.Field<string>("Контрагент Кредит"),
             }).ToList();
         }
 
@@ -317,7 +317,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Catalog_НоменклатурныеГруппы?$format=json";
+            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ИмпПриемкаСтроительныхРаботУслуг?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);

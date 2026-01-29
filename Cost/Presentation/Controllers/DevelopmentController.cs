@@ -100,15 +100,14 @@ namespace Cost.Presentation.Controllers
             return NoContent();
         }
 
-        /// <summary>Оплаты отличающиеся от счетов на оплату</summary>
-        /// <response>Записывает информацию в Payments.xlsx</response>
-        [HttpGet("ComparisonPaymentsAndInvoices")]
-        public async Task<IActionResult> ComparisonPaymentsAndInvoicesAsync([Required] Organizations Organization)
+        /// <summary>Номенклатура</summary>
+        /// <response>Записывает информацию в Nomenclature.xlsx</response>
+        [HttpGet("Nomenclature")]
+        public async Task<IActionResult> NomenclatureAsync([Required] Organizations Organization)
         {
-            var payments = await _generatingReports.ComparisonPaymentsAndInvoicesAsync(Organization);
-            _exportingReportsToExcel.Payments(payments);
+            var noPayments = await _generatingReports.NomenclatureAsync(Organization);
+            _exportingReportsToExcel.Nomenclature(noPayments);
             return NoContent();
-
         }
     }
 }

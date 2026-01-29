@@ -65,6 +65,7 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 17].Formula = $"O{row}*(1.2-K{row})";
                 sheet.Cells[row, column + 18].Formula = $"IF(J{row}=\"Подрядчик\",F{row}-E{row}*(L{row}+M{row}),0)";
                 sheet.Cells[row, column + 19].Formula = $"=IF(J{row}=\"Подрядчик\",O{row}-O{row}*(L{row}+M{row})-R{row},0)";
+                sheet.Cells[row, column + 20].Value = item.ContractId;
                 row++;
             }
 
@@ -266,6 +267,7 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 11].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*H{row},0)";
                 sheet.Cells[row, column + 12].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*J{row}/(1+J{row}),0)";
                 sheet.Cells[row, column + 13].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*(0.2-J{row}),0)";
+                sheet.Cells[row, column + 14].Value = item.ContractorOrSupplier;
                 row++;
             }
             sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B2:B{row - 1})";
@@ -489,15 +491,6 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
-
-
-
-
-
-
-
-
-
         public void Nomenclature(List<Nomenclature> nomenclature) // Проверка заполнения номенклатурных групп
         {
             string filePath = "C:\\Cost\\Nomenclature.xlsx";
@@ -536,18 +529,5 @@ namespace Cost.Presentation.ReportsToExcel
 
             package.SaveAs(new FileInfo(filePath));
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 }
