@@ -22,6 +22,8 @@ namespace Cost.Domain
         public string TypeAgreement { get; set; }
         public decimal GeneralContracting { get; set; }
         public decimal WarrantyLien { get; set; }
+        public decimal AmountUntil2026 { get; set; }
+        public decimal RateNDS2026 { get; set; }
 
         public bool Equals(Contracts other)
         {

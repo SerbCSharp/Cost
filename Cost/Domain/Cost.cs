@@ -27,5 +27,9 @@
         //public decimal SumDebit { get; set; }
         //public decimal SumCredit { get; set; }
         public decimal ConstructionCost { get; set; }
+        public decimal AmountUntil2026 { get; set; }
+        public decimal RateNDS2026 { get; set; }
+        public int Year { get; set; }
+        public decimal ConstructionCostNDS { get; set; }
     }
 }

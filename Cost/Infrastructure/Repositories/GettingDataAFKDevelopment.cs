@@ -199,6 +199,10 @@ namespace Cost.Infrastructure.Repositories
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "Ставка НДС")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "AmountUntil2026")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "RateNDS2026")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
             }
@@ -228,7 +232,9 @@ namespace Cost.Infrastructure.Repositories
                 ConstructionObject = row.Field<string>("Литер"),
                 CostItem = row.Field<string>("Статья затрат"),
                 Name = row.Field<string>("Наименование"),
-                ContractClosed = row.Field<string>("Статус")
+                ContractClosed = row.Field<string>("Статус"),
+                AmountUntil2026 = row.Field<decimal>("AmountUntil2026"),
+                RateNDS2026 = row.Field<decimal>("RateNDS2026"),
             }).ToList();
         }
 

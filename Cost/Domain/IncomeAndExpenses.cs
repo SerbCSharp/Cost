@@ -10,6 +10,7 @@
         public string Contractor { get; set; }
         public string Number { get; set; }
         public decimal RateNDS { get; set; }
+        public decimal RateNDS2026 { get; set; }
         public decimal GeneralContracting { get; set; }
         public decimal? DocumentAmount { get; set; }
         public decimal? DocumentNDSAmount { get; set; }

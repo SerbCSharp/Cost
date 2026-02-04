@@ -39,8 +39,12 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 17].Value = "Стоимость строительства с ∆НДС";
             sheet.Cells[1, 18].Value = "Оплата фактическая";
             sheet.Cells[1, 19].Value = "Остаток оплат до сдачи объекта";
-            sheet.Cells[1, 1, 1, 19].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 19].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[1, 20].Value = "ContractId";
+            sheet.Cells[1, 21].Value = "AmountUntil2026";
+            sheet.Cells[1, 22].Value = "RateNDS2026";
+            sheet.Cells[1, 23].Value = "Year";
+            sheet.Cells[1, 1, 1, 23].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 23].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             var row = 2;
             var column = 0;
@@ -62,10 +66,14 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 14].Value = item.TotalArea;
                 sheet.Cells[row, column + 15].Value = item.ConstructionCost;
                 sheet.Cells[row, column + 16].Value = item.Name;
-                sheet.Cells[row, column + 17].Formula = $"O{row}*(1.2-K{row})";
+                sheet.Cells[row, column + 17].Value = item.ConstructionCostNDS;
+                //sheet.Cells[row, column + 17].Formula = $"O{row}*(1.2-K{row})";
                 sheet.Cells[row, column + 18].Formula = $"IF(J{row}=\"Подрядчик\",F{row}-E{row}*(L{row}+M{row}),0)";
                 sheet.Cells[row, column + 19].Formula = $"=IF(J{row}=\"Подрядчик\",O{row}-O{row}*(L{row}+M{row})-R{row},0)";
                 sheet.Cells[row, column + 20].Value = item.ContractId;
+                sheet.Cells[row, column + 21].Value = item.AmountUntil2026;
+                sheet.Cells[row, column + 22].Value = item.RateNDS2026;
+                sheet.Cells[row, column + 23].Value = item.Year;
                 row++;
             }
 
@@ -78,15 +86,19 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[row, 2, row, 19].Style.Font.Bold = true;
 
 
-            sheet.Cells[1, 1, row, 19].AutoFitColumns();
+            sheet.Cells[1, 1, row, 23].AutoFitColumns();
             sheet.Column(1).Width = 50;
             sheet.Column(2).Width = 50;
             sheet.Column(7).Width = 50;
             sheet.Column(8).Width = 50;
             sheet.Column(16).Hidden = true;
             sheet.Column(18).Hidden = true;
+            sheet.Column(20).Hidden = true;
+            sheet.Column(21).Hidden = true;
+            sheet.Column(22).Hidden = true;
+            sheet.Column(23).Hidden = true;
 
-            var range = sheet.Cells[1, 1, row - 1, 19];
+            var range = sheet.Cells[1, 1, row - 1, 23];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -97,6 +109,8 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[2, 11, row, 13].Style.Numberformat.Format = "0%";
             sheet.Cells[2, 14, row, 15].Style.Numberformat.Format = "### ### ### ##0.00";
             sheet.Cells[2, 17, row, 19].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 21, row, 21].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 22, row, 22].Style.Numberformat.Format = "0%";
 
             sheet.View.FreezePanes(2, 1);
 
@@ -247,8 +261,10 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 11].Value = "Расчетные ГП";
             sheet.Cells[1, 12].Value = "Расчетная НДС";
             sheet.Cells[1, 13].Value = "НДС к уплате (расчетный)";
-            sheet.Cells[1, 1, 1, 13].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 13].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[1, 14].Value = "DocumentNDSAmount";
+            sheet.Cells[1, 15].Value = "InvoiceReceivedNDS";
+            sheet.Cells[1, 1, 1, 15].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 15].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             var row = 2;
             var column = 0;
@@ -267,7 +283,8 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 11].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*H{row},0)";
                 sheet.Cells[row, column + 12].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*J{row}/(1+J{row}),0)";
                 sheet.Cells[row, column + 13].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*(0.2-J{row}),0)";
-                sheet.Cells[row, column + 14].Value = item.ContractorOrSupplier;
+                sheet.Cells[row, column + 14].Value = item.DocumentNDSAmount;
+                sheet.Cells[row, column + 15].Value = item.InvoiceReceivedNDS;
                 row++;
             }
             sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B2:B{row - 1})";
@@ -277,11 +294,11 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[row, column + 13].Formula = $"=SUBTOTAL(9,M2:M{row - 1})";
 
             sheet.Cells[row, 2, row, 13].Style.Font.Bold = true;
-            sheet.Cells[1, 1, row, 13].AutoFitColumns();
+            sheet.Cells[1, 1, row, 15].AutoFitColumns();
             sheet.Column(5).Hidden = true;
             sheet.Column(6).Width = 50;
 
-            var range = sheet.Cells[1, 1, row - 1, 13];
+            var range = sheet.Cells[1, 1, row - 1, 15];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
