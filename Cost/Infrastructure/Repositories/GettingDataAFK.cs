@@ -317,7 +317,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ИмпПриемкаСтроительныхРаботУслуг?$format=json";
+            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Catalog_ДоговорыКонтрагентов?$format=json&$select=Дата,Code";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);

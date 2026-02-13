@@ -281,7 +281,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            var operationUrl = "http://localhost/PARMA/odata/standard.odata/Document_ИмпПриемкаСтроительныхРаботУслуг?$format=json";
+            var operationUrl = "http://localhost/PARMA/odata/standard.odata/Catalog_ДоговорыКонтрагентов?$format=json&$select=Дата,Code";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);

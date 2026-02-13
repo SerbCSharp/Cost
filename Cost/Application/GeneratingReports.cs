@@ -20,14 +20,14 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            var contractsCounterpartiesValue = (await gettingData.ContractsCounterpartiesAsync()).Value
-            .Where(x => x.TypeAgreement == "СПоставщиком" && (x.Date?.Year > 2024 || x.Date?.Year == 1900) && x.DeletionMark == false);
-            //.Where(x => x.TypeAgreement == "СПоставщиком" && x.DeletionMark == false);
+            var contractsCounterparties = (await gettingData.ContractsCounterpartiesAsync());
+            var contractsCounterpartiesValue = contractsCounterparties.Value
+            .Where(x => x.DeletionMark == false && int.Parse(x.Code.Substring(x.Code.Length - 6)) > contractsCounterparties.CodeContract);
 
             // Поставщики + договора
             var counterparties = await gettingData.CounterpartiesAsync();
             var contractorPlusContract = counterparties.Value.Join(contractsCounterpartiesValue, p1 => p1.Ref_Key, c1 => c1.ContractorId,
-                (p2, c2) => new { p2, c2 }).Where(x => x.p2.Description != "СЗ ЛЕГИС ООО");
+                (p2, c2) => new { p2, c2 });
 
             var contractsFrom1C = contractorPlusContract.Select(x => new Contracts
             {
@@ -36,7 +36,8 @@ namespace Cost.Application
                 Number = x.c2.Number,
                 Name = x.c2.Name,
                 Date = x.c2.Date,
-                Sum = x.c2.Sum
+                Sum = x.c2.Sum,
+                Code = x.c2.Code
             });
 
             var contractsFromExcel = gettingData.GetContracts();
@@ -44,10 +45,11 @@ namespace Cost.Application
             return contractsFrom1C.Except(contractsFromExcel);
         }
 
-        public async Task<List<ReconciliationStatement>> ReconciliationStatementAsync(string contractName, Organizations organization) // Акт сверки
+        public async Task<List<ReconciliationStatement>> ReconciliationStatementAsync(string contractName, Organizations organization, string contractor) // Акт сверки
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
-            var contract = gettingData.GetContracts().FirstOrDefault(x => x.Name == contractName);
+            var contract = string.IsNullOrEmpty(contractor) ? gettingData.GetContracts().FirstOrDefault(x => x.Name == contractName) :
+                                                              gettingData.GetContracts().FirstOrDefault(x => x.Contractor == contractor && x.Name == contractName);
             var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false
                 && x.CounterpartyAgreementId == contract.ContractId)
                                 .Select(y => new ReconciliationStatement
@@ -379,19 +381,19 @@ namespace Cost.Application
             var Payments = from p in plusLiterAndCostItemInPayments
                            join c in paymentsNDS
                                on p.PaymentId equals c.DocumentId into tmp
-                               from subC in tmp.DefaultIfEmpty()
-                               select new IncomeAndExpenses()
-                               { 
-                                   Date = p.Date, 
-                                   Payment = p.DocumentAmount,
-                                   ContractId = p.CounterpartyAgreementId,
-                                   DocumentAmount = p.DocumentAmount,
-                                   DocumentNDSAmount = p.PaymentNDSAmount,
-                                   InvoiceReceivedNDS = subC?.DocumentNDSAmount,
-                                   LiterPayment = p.Liter,
-                                   CostItemPayment = p.CostItems,
-                                   DocumentName = "Списание с расчетного счета"
-                               };
+                           from subC in tmp.DefaultIfEmpty()
+                           select new IncomeAndExpenses()
+                           {
+                               Date = p.Date,
+                               Payment = p.DocumentAmount,
+                               ContractId = p.CounterpartyAgreementId,
+                               DocumentAmount = p.DocumentAmount,
+                               DocumentNDSAmount = p.PaymentNDSAmount,
+                               InvoiceReceivedNDS = subC?.DocumentNDSAmount,
+                               LiterPayment = p.Liter,
+                               CostItemPayment = p.CostItems,
+                               DocumentName = "Списание с расчетного счета"
+                           };
 
             var receiptGoodsServicesNDS = invoiceReceived.Where(x => x.DocumentType == "StandardODATA.Document_ПоступлениеТоваровУслуг");
             var receiptGoodsServices = (await gettingData.ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true && x.Date >= date);
@@ -414,16 +416,16 @@ namespace Cost.Application
             var ReceiptProcessing = from p in receiptProcessing
                                     join c in receiptProcessingNDS
                                        on p.ReceiptId equals c.DocumentId into tmp
-                                       from subC in tmp.DefaultIfEmpty()
-                                       select new IncomeAndExpenses()
-                                       {
-                                           Date = p.Date,
-                                           Receipt = p.DocumentAmount,
-                                           ContractId = p.ContractId,
-                                           DocumentAmount = p.DocumentAmount,
-                                           InvoiceReceivedNDS = subC?.DocumentNDSAmount,
-                                           DocumentName = "Поступление из переработки"
-                                       };
+                                    from subC in tmp.DefaultIfEmpty()
+                                    select new IncomeAndExpenses()
+                                    {
+                                        Date = p.Date,
+                                        Receipt = p.DocumentAmount,
+                                        ContractId = p.ContractId,
+                                        DocumentAmount = p.DocumentAmount,
+                                        InvoiceReceivedNDS = subC?.DocumentNDSAmount,
+                                        DocumentName = "Поступление из переработки"
+                                    };
 
             var paymentsPlusreceiptGoodsServices = Payments.Concat(ReceiptGoodsServices);
             var plusReceiptProcessing = paymentsPlusreceiptGoodsServices.Concat(ReceiptProcessing);
@@ -553,7 +555,7 @@ namespace Cost.Application
 
             var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
 
-            var contract = gettingData.GetContracts();
+            var contract = gettingData.GetContracts().Where(x => x.ContractorOrSupplier != "Покупатель");
             var plusContract = from p in plusOperationCredit
                                join c in contract
                                on p.ContractId equals c.ContractId into tmp
@@ -590,20 +592,18 @@ namespace Cost.Application
             return incomeAndExpenses.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Date).ToList();
         }
 
-        public async Task<List<ContractsCounterpartiesValue>> ContractsFrom1CAsync(string typeAgreement, Organizations organization) // Договора из 1С
+        public async Task<List<ContractsCounterpartiesValue>> ContractsFrom1CAsync(Organizations organization) // Договора из 1С
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
             var contractsCounterpartiesValue = (await gettingData.ContractsCounterpartiesAsync()).Value;
-                //.Where(x => x.TypeAgreement == typeAgreement).ToList();
 
             List<ContractsCounterpartiesValue> contractsCounterparties = null;
 
             var additionalInformation = await gettingData.AdditionalInformationAsync();
-            
+
             contractsCounterparties = contractsCounterpartiesValue.ToList();
 
             var nomenclatureGroups = (await gettingData.NomenclatureGroupsAsync()).Value.Where(x => x.DeletionMark == false);
-            //var constructionProjects = await gettingData.ConstructionProjectsAsync();
             var typesCalculations = await gettingData.TypesCalculationsAsync();
             var costItems = await gettingData.CostItemsAsync();
 
@@ -629,12 +629,6 @@ namespace Cost.Application
                                                        on c1.NomenclatureGroupsId equals nomenclatureGroup.Ref_Key into tmp
                                                 from subNomenclatureGroup in tmp.DefaultIfEmpty()
                                                 select new { c1, subNomenclatureGroup?.ConstructionObjectId, subNomenclatureGroup?.Description };
-
-            //var contractPlusNomenclatureGroupPlusConstruction = from c2 in contractPlusNomenclatureGroup
-            //                                                    join construction in constructionProjects.Value
-            //                                                           on c2.ConstructionObjectId equals construction.Ref_Key into tmp
-            //                                                    from subConstruction in tmp.DefaultIfEmpty()
-            //                                                    select new { c2, subConstruction?.Description };
 
             var contractPlusNomenclatureGroupPlusConstructionPlusTypesCalculation = from c3 in contractPlusNomenclatureGroup
                                                                                     join calculation in typesCalculations.Value
@@ -771,7 +765,7 @@ namespace Cost.Application
                 PaymentId = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentId,
                 PaymentAmount = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.DocumentAmount,
                 PaymentNDSAmount = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentNDSAmount,
-                PurposePayment = string.IsNullOrEmpty(z.subcost?.PurposePayment) 
+                PurposePayment = string.IsNullOrEmpty(z.subcost?.PurposePayment)
                     ? z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.PaymentPurpose : z.subcost?.PurposePayment,
                 Date = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.Date,
                 Number = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.Number,
@@ -802,6 +796,20 @@ namespace Cost.Application
             var nomenclature = nomenclatureGroups.Select(x => new Nomenclature(x)).ToList();
 
             return nomenclature;
+        }
+
+        public async Task<IEnumerable<Contracts>> MovementUnderContractsAsync(Organizations organization) // Движение по договорам
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateTime()); // Убрать фильтр по покупателям
+            var contracts = incomeAndExpenses.GroupBy(x => x.ContractId).Select(y => new Contracts
+            {
+                ContractId = y.Key,
+                Sum = y.Sum(z => z.Payment + z.Receipt)
+            });
+
+            return contracts;
         }
     }
 }

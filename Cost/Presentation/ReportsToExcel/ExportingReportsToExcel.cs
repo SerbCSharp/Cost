@@ -11,7 +11,7 @@ namespace Cost.Presentation.ReportsToExcel
     {
         public void Cost(List<Domain.Cost> cost) // Стоимость строительства
         {
-            string filePath = "C:\\Cost\\CostTmp.xlsx";
+            string filePath = "C:\\Cost\\Cost.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
@@ -154,6 +154,7 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 5].Value = item.Name;
                 sheet.Cells[row, column + 6].Value = item.Date;
                 sheet.Cells[row, column + 7].Value = item.Sum;
+                sheet.Cells[row, column + 8].Value = item.Code;
                 row++;
             }
             sheet.Cells[1, 1, row, 7].AutoFitColumns();
@@ -236,7 +237,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void IncomeAndExpenses(List<IncomeAndExpenses> incomeAndExpenses)
         {
-            string filePath = "C:\\Cost\\IncomeAndExpensesTmp.xlsx";
+            string filePath = "C:\\Cost\\IncomeAndExpenses.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 

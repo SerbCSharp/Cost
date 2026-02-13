@@ -6,5 +6,6 @@ namespace Cost.Infrastructure.Repositories.Models.ContractsCounterparties
     {
         [JsonPropertyName("value")]
         public ContractsCounterpartiesValue[] Value { get; set; }
+        public int CodeContract { get; set; }
     }
 }

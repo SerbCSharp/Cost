@@ -21,10 +21,10 @@ namespace Cost.Presentation.Controllers
         /// <summary>Акт сверки</summary>
         /// <response>Записывает информацию в Transcript.xlsx</response>
         [HttpGet("ReconciliationStatement")]
-        public async Task<IActionResult> ReconciliationStatementAsync([Required] Organizations Organization, [Required] string ContractName)
+        public async Task<IActionResult> ReconciliationStatementAsync([Required] Organizations Organization, [Required] string ContractName, string Contractor)
         {
             //  добавить string
-            var reconciliationStatement = await _generatingReports.ReconciliationStatementAsync(ContractName, Organization);
+            var reconciliationStatement = await _generatingReports.ReconciliationStatementAsync(ContractName, Organization, Contractor);
             _exportingReportsToExcel.ReconciliationStatement(reconciliationStatement);
             return NoContent();
         }
@@ -64,7 +64,7 @@ namespace Cost.Presentation.Controllers
         [HttpGet("ContractsFrom1C")]
         public async Task<IActionResult> ContractsFrom1CAsync([Required] Organizations Organization)
         {
-            var contractsFrom1C = await _generatingReports.ContractsFrom1CAsync("СПоставщиком", Organization);
+            var contractsFrom1C = await _generatingReports.ContractsFrom1CAsync(Organization);
             _exportingReportsToExcel.ContractsFrom1C(contractsFrom1C);
             return NoContent();
         }
@@ -107,6 +107,16 @@ namespace Cost.Presentation.Controllers
         {
             var noPayments = await _generatingReports.NomenclatureAsync(Organization);
             _exportingReportsToExcel.Nomenclature(noPayments);
+            return NoContent();
+        }
+
+        /// <summary>Движение по договорам</summary>
+        /// <response>Записывает информацию в WeDoNotHaveTheseContracts.xlsx</response>
+        [HttpGet("MovementUnderContracts")]
+        public async Task<IActionResult> MovementUnderContractsAsync([Required] Organizations Organization)
+        {
+            var contracts = await _generatingReports.MovementUnderContractsAsync(Organization);
+            _exportingReportsToExcel.WeDoNotHaveTheseContracts(contracts);
             return NoContent();
         }
     }

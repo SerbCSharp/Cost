@@ -49,7 +49,6 @@ namespace Cost.Infrastructure.Repositories.Models.ContractsCounterparties
         public string TypeAgreement { get; set; }
         public bool? DeletionMark { get; set; }
         public string Contractor { get; set; }
-
-
+        public string Code { get; set; }
     }
 }
