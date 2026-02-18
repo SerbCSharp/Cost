@@ -11,7 +11,7 @@
         public string CostItem { get; set; }
         public string ContractorOrSupplier { get; set; }
         public decimal TotalArea { get; set; }
-        public decimal? Receipt { get; set; }
+        public decimal Receipt { get; set; }
         public decimal Payment { get; set; }
         public string ContractClosed { get; set; }
         public decimal RateNDS { get; set; }
@@ -24,5 +24,7 @@
         public decimal RateNDS2026 { get; set; }
         public int Year { get; set; }
         public decimal ConstructionCostNDS { get; set; }
+        public decimal InputNDS { get; set; }
+        public decimal Expenses { get; set; }
     }
 }

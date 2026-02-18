@@ -8,6 +8,7 @@ using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.CostItems;
 using Cost.Infrastructure.Repositories.Models.Counterparties;
 using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
+using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
 using Cost.Infrastructure.Repositories.Models.InvoiceReceived;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
@@ -317,7 +318,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Catalog_ДоговорыКонтрагентов?$format=json&$select=Дата,Code";
+            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);
@@ -336,6 +337,13 @@ namespace Cost.Infrastructure.Repositories
             var billPaymentUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/AccumulationRegister_ОплатаСчетов?$format=json";
             using HttpResponseMessage billPaymentResponse = await httpClient.GetAsync(billPaymentUrl);
             return await billPaymentResponse.Content.ReadFromJsonAsync<BillPayment>();
+        }
+
+        public async Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync() // Реализация строительных работ
+        {
+            var sellingUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
+            using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
+            return await sellingResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
         }
     }
 }

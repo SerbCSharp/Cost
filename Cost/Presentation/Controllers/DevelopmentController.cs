@@ -1,4 +1,5 @@
 using Cost.Application;
+using Cost.Domain;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.ReportsToExcel;
 using Microsoft.AspNetCore.Mvc;
@@ -49,7 +50,7 @@ namespace Cost.Presentation.Controllers
             return NoContent();
         }
 
-        /// <summary>Генподрядные, НДС за период</summary>
+        /// <summary>Доходы и расходы</summary>
         /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
         [HttpGet("IncomeAndExpenses")]
         public async Task<IActionResult> IncomeAndExpensesAsync([Required] Organizations Organization, DateTime date)
@@ -117,6 +118,33 @@ namespace Cost.Presentation.Controllers
         {
             var contracts = await _generatingReports.MovementUnderContractsAsync(Organization);
             _exportingReportsToExcel.WeDoNotHaveTheseContracts(contracts);
+            return NoContent();
+        }
+
+        /// <summary>Выполнения до 2026 года</summary>
+        /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
+        [HttpGet("IncomeAndExpensesTmp")]
+        public async Task<IActionResult> IncomeAndExpensesTmpAsync([Required] Organizations Organization, DateTime date)
+        {
+            var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization, date);
+            var result = incomeAndExpenses.Where(w => w.Date.Year != 2026).GroupBy(x => x.ContractId).Select(y => new IncomeAndExpenses
+            {
+                ContractId = y.Key,
+                Receipt = y.Sum(z => z.Receipt),
+                Payment = y.Sum(z => z.Payment)
+            }).ToList();
+
+            _exportingReportsToExcel.IncomeAndExpenses(result);
+            return NoContent();
+        }
+
+        /// <summary>Отчет о доходах от строительства объектов</summary>
+        /// <response>Записывает информацию в Cost.xlsx</response>
+        [HttpGet("Income")]
+        public async Task<IActionResult> IncomeAsync([Required] Organizations Organization)
+        {
+            var income = await _generatingReports.IncomeAsync(Organization);
+            _exportingReportsToExcel.Income(income);
             return NoContent();
         }
     }

@@ -16,6 +16,7 @@ using Cost.Infrastructure.Repositories.Models.ReceiptToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.Selling;
 using Cost.Infrastructure.Repositories.Models.TypesCalculations;
 using Cost.Infrastructure.Repositories.Models.BillPayment;
+using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
 using Microsoft.Extensions.Options;
 using OfficeOpenXml;
 using System.Data;
@@ -128,6 +129,13 @@ namespace Cost.Infrastructure.Repositories
             var sellingUrl = "http://localhost/afk_de/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json";
             using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
             return await sellingResponse.Content.ReadFromJsonAsync<Selling>();
+        }
+
+        public async Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync() // Реализация строительных работ
+        {
+            var sellingUrl = "http://localhost/afk_de/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
+            using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
+            return await sellingResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
         }
 
         public async Task<AdditionalInformation> AdditionalInformationAsync() // Дополнительные сведения
@@ -325,7 +333,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            var operationUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_ДоговорыКонтрагентов?$format=json&$select=Дата,Code";
+            var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);

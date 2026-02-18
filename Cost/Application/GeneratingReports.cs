@@ -48,6 +48,9 @@ namespace Cost.Application
         public async Task<List<ReconciliationStatement>> ReconciliationStatementAsync(string contractName, Organizations organization, string contractor) // Акт сверки
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            //var serb = await gettingData.TmpAsync();
+
             var contract = string.IsNullOrEmpty(contractor) ? gettingData.GetContracts().FirstOrDefault(x => x.Name == contractName) :
                                                               gettingData.GetContracts().FirstOrDefault(x => x.Contractor == contractor && x.Name == contractName);
             var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false
@@ -87,7 +90,7 @@ namespace Cost.Application
                                 {
                                     Date = y.Date,
                                     Debit = y.DocumentAmount,
-                                    DocumentName = "Реализация"
+                                    DocumentName = "Реализация товаров и услуг"
                                 });
 
             var plusSelling = plusReceiptProcessing.Concat(selling);
@@ -196,7 +199,18 @@ namespace Cost.Application
 
             var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
 
-            var reconciliationStatement = plusOperationCredit.OrderBy(x => x.Date).ToList();
+            var implementationConstructionWorks = (await gettingData.ImplementationConstructionWorksAsync()).Value
+                    .Where(x => x.Posted == true && x.ContractId == contract.ContractId)
+                    .Select(y => new ReconciliationStatement
+                    {
+                        Date = y.Date,
+                        Debit = y.DocumentAmount,
+                        DocumentName = "Реализация строительных работ и услуг"
+                    });
+
+            var plusImplementationConstructionWorks = plusOperationCredit.Concat(implementationConstructionWorks);
+
+            var reconciliationStatement = plusImplementationConstructionWorks.OrderBy(x => x.Date).ToList();
             reconciliationStatement.ForEach(item => { item.Contractor = contract.Contractor; item.Sum = contract.Sum; item.Name = contract.Name; });
             return reconciliationStatement;
         }
@@ -205,7 +219,7 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateTime());
+            var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateTime(), "Затраты");
 
             var contractor = incomeAndExpenses.Where(x => x.ContractorOrSupplier == "Подрядчик").GroupBy(y => y.ContractId).Select(z => new Domain.Cost
             {
@@ -234,7 +248,7 @@ namespace Cost.Application
                                           select new Domain.Cost
                                           {
                                               ContractId = con.ContractId,
-                                              Receipt = subIncome?.Receipt,
+                                              Receipt = subIncome?.Receipt ?? 0,
                                               Payment = subIncome?.Payment ?? 0,
                                               Contractor = con.Contractor,
                                               Number = con.Number,
@@ -279,7 +293,7 @@ namespace Cost.Application
             {
                 if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут" || item.Receipt > item.Sum)
                 {
-                    item.ConstructionCost = item.Receipt ?? 0;
+                    item.ConstructionCost = item.Receipt;
                 }
                 else
                 {
@@ -287,13 +301,15 @@ namespace Cost.Application
                 }
 
                 item.ConstructionCostNDS = item.AmountUntil2026 * (1.2M - item.RateNDS) + (item.ConstructionCost - item.AmountUntil2026) * (1.22M - item.RateNDS2026);
+                item.InputNDS = item.AmountUntil2026 * item.RateNDS / (1 + item.RateNDS) + (item.Receipt - item.AmountUntil2026) * item.RateNDS2026 / (1 + item.RateNDS2026);
+                item.Expenses = item.Receipt - item.Receipt * item.GeneralContracting - item.InputNDS;
             });
 
             var supplierAll = incomeAndExpenses.Where(x => x.ContractorOrSupplier == "Поставщик")
                 .GroupBy(y => new { y.ContractId, y.LiterPayment, y.CostItemPayment, y.Date.Year }).Where(w => !string.IsNullOrEmpty(w.Key.LiterPayment)).Select(z => new Domain.Cost
                 {
                     ContractId = z.Key.ContractId,
-                    Receipt = null,
+                    Receipt = 0,
                     Payment = z.Sum(s => s.Payment),
                     Contractor = z.FirstOrDefault().Contractor,
                     Number = z.FirstOrDefault().Number,
@@ -313,9 +329,19 @@ namespace Cost.Application
                 }).Where(w => w.Payment != 0).ToList();
 
             var supplierOld = supplierAll.Where(x => x.Year < 2026).ToList();
-            supplierOld.ForEach(item => item.ConstructionCostNDS = item.ConstructionCost * (1.2M - item.RateNDS));
+            supplierOld.ForEach(item =>
+            {
+                item.ConstructionCostNDS = item.ConstructionCost * (1.2M - item.RateNDS);
+                item.InputNDS = item.Payment * item.RateNDS / (1 + item.RateNDS);
+                item.Expenses = item.Payment - item.InputNDS;
+            });
             var supplierNew = supplierAll.Where(x => x.Year >= 2026).ToList();
-            supplierNew.ForEach(item => item.ConstructionCostNDS = item.ConstructionCost * (1.22M - item.RateNDS2026));
+            supplierNew.ForEach(item =>
+            {
+                item.ConstructionCostNDS = item.ConstructionCost * (1.22M - item.RateNDS2026);
+                item.InputNDS = item.Payment * item.RateNDS2026 / (1 + item.RateNDS2026);
+                item.Expenses = item.Payment - item.InputNDS;
+            });
 
             var supplier = supplierOld.Concat(supplierNew).ToList();
             var contractorOrSupplier = result.Concat(supplier).ToList();
@@ -348,6 +374,8 @@ namespace Cost.Application
                                    TotalArea = subArea?.TotalArea ?? 0,
                                    Year = income.Year,
                                    ConstructionCostNDS = income.ConstructionCostNDS,
+                                   InputNDS = income.InputNDS,
+                                   Expenses = income.Expenses,
                                    AmountUntil2026 = income.AmountUntil2026,
                                    RateNDS2026 = income.RateNDS2026,
                                };
@@ -355,7 +383,68 @@ namespace Cost.Application
             return PlusFacility.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number).ToList();
         }
 
-        public async Task<List<IncomeAndExpenses>> IncomeAndExpensesAsync(Organizations organization, DateTime date)
+        public async Task<List<Income>> IncomeAsync(Organizations organization) // Доходы от строительства объектов
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateTime(), "Доходы");
+
+            var contractor = incomeAndExpenses.GroupBy(y => y.ContractId).Select(z => new Income
+            {
+                ContractId = z.Key,
+                Payment = z.Sum(s => s.Receipt),
+                Receipt = z.Sum(s => s.Payment),
+                Contractor = z.FirstOrDefault().Contractor,
+                Number = z.FirstOrDefault().Number,
+                ConstructionObject = z.FirstOrDefault().ConstructionObject,
+                Date = z.FirstOrDefault().Date,
+                Sum = z.FirstOrDefault().SumContract,
+                Name = z.FirstOrDefault().Name
+            });
+
+            var contracts = gettingData.GetContracts().Where(x => x.ContractorOrSupplier == "Покупатель");
+            var contractsPlusContractor = from con in contracts
+                                          join income in contractor
+                                          on con.ContractId equals income.ContractId into tmp
+                                          from subIncome in tmp.DefaultIfEmpty()
+                                          select new Income
+                                          {
+                                              ContractId = con.ContractId,
+                                              Receipt = subIncome?.Receipt ?? 0,
+                                              Payment = subIncome?.Payment ?? 0,
+                                              Contractor = con.Contractor,
+                                              Number = con.Number,
+                                              ConstructionObject = con.ConstructionObject,
+                                              Date = con.Date,
+                                              Sum = con.Sum,
+                                              Name = con.Name,
+                                              NumberAA = con.NumberAA,
+                                              AmountUntil2026 = con.AmountUntil2026,
+                                          };
+
+            var result = contractsPlusContractor.GroupBy(x => x.Contractor + x.Number).Select(y => new Income
+            {
+                ContractId = y?.FirstOrDefault().ContractId,
+                Contractor = y.FirstOrDefault().Contractor,
+                Number = y.FirstOrDefault().Number,
+                Date = y.FirstOrDefault().Date,
+                Sum = y.Sum(z => z.Sum),
+                ConstructionObject = y.FirstOrDefault()?.ConstructionObject,
+                Receipt = y.Sum(z => z.Receipt),
+                Payment = y.Sum(z => z.Payment),
+                Name = y.FirstOrDefault().Name,
+                AmountUntil2026 = y.Sum(z => z.AmountUntil2026),
+            }).ToList();
+
+            result.ForEach(item =>
+            {
+                item.OutgoingNDS = item.AmountUntil2026 * 0.2M + (item.Receipt - item.AmountUntil2026) * 0.22M;
+            });
+
+            return result.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number).ToList();
+        }
+
+        public async Task<List<IncomeAndExpenses>> IncomeAndExpensesAsync(Organizations organization, DateTime date, string costOrIncome = "") // Доходы и расходы по документам
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
@@ -439,7 +528,7 @@ namespace Cost.Application
                                     Date = y.Date,
                                     Payment = y.DocumentAmount,
                                     ContractId = y.CounterpartyAgreementId,
-                                    DocumentName = "Реализация"
+                                    DocumentName = "Реализация товаров и услуг"
                                 });
 
             var plusSelling = plusReceiptProcessing.Concat(selling);
@@ -555,8 +644,27 @@ namespace Cost.Application
 
             var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
 
-            var contract = gettingData.GetContracts().Where(x => x.ContractorOrSupplier != "Покупатель");
-            var plusContract = from p in plusOperationCredit
+            var implementationConstructionWorks = (await gettingData.ImplementationConstructionWorksAsync()).Value
+                    .Where(x => x.Posted == true && x.Date >= date)
+                    .Select(y => new IncomeAndExpenses
+                    {
+                        Date = y.Date,
+                        Payment = y.DocumentAmount,
+                        ContractId = y.ContractId,
+                        DocumentName = "Реализация строительных работ и услуг"
+                    });
+
+            var plusImplementationConstructionWorks = plusOperationCredit.Concat(implementationConstructionWorks);
+
+            var contract = new List<Contracts>();
+            if (costOrIncome == "Затраты")
+                contract = gettingData.GetContracts().Where(x => x.ContractorOrSupplier != "Покупатель").ToList();
+            else if (costOrIncome == "Доходы")
+                contract = gettingData.GetContracts().Where(x => x.ContractorOrSupplier == "Покупатель").ToList();
+            else
+                contract = gettingData.GetContracts();
+
+            var plusContract = from p in plusImplementationConstructionWorks
                                join c in contract
                                on p.ContractId equals c.ContractId into tmp
                                from subC in tmp.DefaultIfEmpty()
@@ -802,7 +910,7 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateTime()); // Убрать фильтр по покупателям
+            var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateTime());
             var contracts = incomeAndExpenses.GroupBy(x => x.ContractId).Select(y => new Contracts
             {
                 ContractId = y.Key,

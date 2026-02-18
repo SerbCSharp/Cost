@@ -7,6 +7,7 @@ using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.CostItems;
 using Cost.Infrastructure.Repositories.Models.Counterparties;
 using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
+using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
 using Cost.Infrastructure.Repositories.Models.InvoiceReceived;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
@@ -41,6 +42,7 @@ namespace Cost.Application
         Task<OperationsTmp> OperationAsync(); // Операции
         Task<BillPayment> BillPaymentAsync(); // Оплата счетов
         List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments(); // Литер и статья затрат в оплатах
+        Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
         Task<string> TmpAsync();
 
     }
