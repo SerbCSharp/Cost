@@ -147,5 +147,28 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.Income(income);
             return NoContent();
         }
+
+        /// <summary>ДДС с 2026 года</summary>
+        /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
+        [HttpGet("CashFlow")]
+        public async Task<IActionResult> CashFlowAsync([Required] Organizations Organization)
+        {
+            var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization, new DateTime(2026, 1, 1));
+            var result = incomeAndExpenses.Where(w => w.DocumentName == "Списание с расчетного счета" || w.DocumentName == "Поступление на расчетный счет")
+                                          .GroupBy(x => x.ContractId)
+                                          .Select(y => new IncomeAndExpenses
+                                          {
+                                              ContractId = y.Key,
+                                              Receipt = y.Sum(z => z.Receipt),
+                                              Payment = y.Sum(z => z.Payment),
+                                              DocumentName = y.FirstOrDefault().DocumentName,
+                                              Contractor = y.FirstOrDefault().Contractor,
+                                              Number = y.FirstOrDefault().Number,
+                                              Date = y.FirstOrDefault().Date
+                                          }).ToList();
+
+            _exportingReportsToExcel.IncomeAndExpenses(result);
+            return NoContent();
+        }
     }
 }

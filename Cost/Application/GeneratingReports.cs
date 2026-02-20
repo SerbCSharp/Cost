@@ -200,15 +200,16 @@ namespace Cost.Application
             var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
 
             var implementationConstructionWorks = (await gettingData.ImplementationConstructionWorksAsync()).Value
-                    .Where(x => x.Posted == true && x.ContractId == contract.ContractId)
-                    .Select(y => new ReconciliationStatement
+                    ?.Where(x => x.Posted == true && x.ContractId == contract.ContractId)
+                    ?.Select(y => new ReconciliationStatement
                     {
                         Date = y.Date,
                         Debit = y.DocumentAmount,
                         DocumentName = "Реализация строительных работ и услуг"
                     });
 
-            var plusImplementationConstructionWorks = plusOperationCredit.Concat(implementationConstructionWorks);
+            var plusImplementationConstructionWorks = implementationConstructionWorks != null ? plusOperationCredit.Concat(implementationConstructionWorks)
+                                                                                  : plusOperationCredit;
 
             var reconciliationStatement = plusImplementationConstructionWorks.OrderBy(x => x.Date).ToList();
             reconciliationStatement.ForEach(item => { item.Contractor = contract.Contractor; item.Sum = contract.Sum; item.Name = contract.Name; });
@@ -645,8 +646,8 @@ namespace Cost.Application
             var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
 
             var implementationConstructionWorks = (await gettingData.ImplementationConstructionWorksAsync()).Value
-                    .Where(x => x.Posted == true && x.Date >= date)
-                    .Select(y => new IncomeAndExpenses
+                    ?.Where(x => x.Posted == true && x.Date >= date)
+                    ?.Select(y => new IncomeAndExpenses
                     {
                         Date = y.Date,
                         Payment = y.DocumentAmount,
@@ -654,7 +655,8 @@ namespace Cost.Application
                         DocumentName = "Реализация строительных работ и услуг"
                     });
 
-            var plusImplementationConstructionWorks = plusOperationCredit.Concat(implementationConstructionWorks);
+            var plusImplementationConstructionWorks = implementationConstructionWorks != null ? plusOperationCredit.Concat(implementationConstructionWorks)
+                                                                                              : plusOperationCredit;
 
             var contract = new List<Contracts>();
             if (costOrIncome == "Затраты")

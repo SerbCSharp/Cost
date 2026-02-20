@@ -54,7 +54,9 @@ namespace Cost.Infrastructure.Repositories
         {
             var contractsCounterpartiesUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Catalog_ДоговорыКонтрагентов?$format=json";
             using HttpResponseMessage contractsCounterpartiesResponse = await httpClient.GetAsync(contractsCounterpartiesUrl);
-            return await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
+            var result = await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
+            result.CodeContract = 3750;
+            return result;
         }
 
         public async Task<Receipts> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
@@ -270,8 +272,6 @@ namespace Cost.Infrastructure.Repositories
                 Sum = row.Field<decimal>("Сумма"),
                 ContractDebit = row.Field<string>("Договор Дебет"),
                 ContractCredit = row.Field<string>("Договор Кредит"),
-                //ContractorDebit = row.Field<string>("Контрагент Дебет"),
-                //ContractorCredit = row.Field<string>("Контрагент Кредит"),
             }).ToList();
         }
 
