@@ -12,5 +12,8 @@ namespace Cost.Infrastructure.Repositories.Models.ReceiptToCurrentAccount
 
         [JsonPropertyName("ДоговорКонтрагента_Key")]
         public string CounterpartyAgreementId { get; set; }
+
+        [JsonPropertyName("ВидОперации")]
+        public string TypeOperation { get; set; }
     }
 }

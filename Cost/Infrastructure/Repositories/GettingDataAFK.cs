@@ -30,6 +30,9 @@ namespace Cost.Infrastructure.Repositories
         private readonly HttpClient httpClient;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly Base1CConfiguration _base1CConfiguration;
+
+        public decimal StartBalance => 1016806.12M;
+
         public GettingDataAFK(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
         {
             _base1CConfiguration = base1CConfiguration.Value;
@@ -70,7 +73,7 @@ namespace Cost.Infrastructure.Repositories
         public async Task<Payments> PaymentsAsync() // Списание с расчетного счета
         {
             var paymentsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json"
-                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа,НазначениеПлатежа,Number";
+                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа,НазначениеПлатежа,Number,ВидОперации";
             using HttpResponseMessage paymentsResponse = await httpClient.GetAsync(paymentsUrl);
             return await paymentsResponse.Content.ReadFromJsonAsync<Payments>();
         }
@@ -222,7 +225,7 @@ namespace Cost.Infrastructure.Repositories
                 Contractor = row.Field<string>("Подрядчик"),
                 Number = row.Field<string>("Номер договора"),
                 NumberAA = row.Field<string>("Номер ДС"),
-                Date = row.Field<DateTime>("Дата договора"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Дата договора")),
                 Sum = row.Field<decimal>("Сумма договора"),
                 RateNDS = row.Field<decimal>("Ставка НДС"),
                 GeneralContracting = row.Field<decimal>("ГП"),
@@ -231,7 +234,8 @@ namespace Cost.Infrastructure.Repositories
                 ConstructionObject = row.Field<string>("Литер"),
                 CostItem = row.Field<string>("Статья затрат"),
                 Name = row.Field<string>("Наименование"),
-                ContractClosed = row.Field<string>("Статус")
+                ContractClosed = row.Field<string>("Статус"),
+                AreaOfActivity = row.Field<string>("Направление")
             }).ToList();
         }
 
@@ -268,7 +272,7 @@ namespace Cost.Infrastructure.Repositories
             {
                 OperationId = row.Field<string>("Код из 1С"),
                 Number = row.Field<string>("Номер"),
-                Date = row.Field<DateTime>("Дата"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Дата")),
                 Sum = row.Field<decimal>("Сумма"),
                 ContractDebit = row.Field<string>("Договор Дебет"),
                 ContractCredit = row.Field<string>("Договор Кредит"),
@@ -309,7 +313,7 @@ namespace Cost.Infrastructure.Repositories
                 Liter = row.Field<string>("Liter"),
                 CostItems = row.Field<string>("CostItems"),
                 PaymentId = row.Field<string>("PaymentId"),
-                Date = row.Field<DateTime>("Date"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
                 Number = row.Field<string>("Number"),
                 PaymentAmount = row.Field<decimal>("PaymentAmount"),
                 PurposePayment = row.Field<string>("PurposePayment"),
@@ -318,7 +322,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
+            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеНаРасчетныйСчет?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);
@@ -344,6 +348,38 @@ namespace Cost.Infrastructure.Repositories
             var sellingUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
             using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
             return await sellingResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
+        }
+
+        public List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity() // AreaOfActivity по литеру и статье затрат в оплатах
+        {
+            string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            FileInfo fileInfo = new FileInfo(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "AreaOfActivity"];
+            DataTable dataTable = new DataTable();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new AreaOfActivityInPayments
+            {
+                Liter = row.Field<string>("Liter"),
+                CostItems = row.Field<string>("CostItems"),
+                AreaOfActivity = row.Field<string>("AreaOfActivity")
+            }).ToList();
         }
     }
 }

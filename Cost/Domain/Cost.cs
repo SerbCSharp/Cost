@@ -5,7 +5,7 @@
         public string ContractId { get; set; }
         public string Contractor { get; set; }
         public string Number { get; set; }
-        public DateTime? Date { get; set; }
+        public DateOnly Date { get; set; }
         public decimal? Sum { get; set; }
         public string ConstructionObject { get; set; }
         public string CostItem { get; set; }

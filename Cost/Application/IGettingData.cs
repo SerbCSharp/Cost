@@ -21,8 +21,9 @@ namespace Cost.Application
 {
     public interface IGettingData
     {
-        /// Контрагенты
-        Task<Counterparties> CounterpartiesAsync();
+        decimal StartBalance { get; }
+
+        Task<Counterparties> CounterpartiesAsync(); // Контрагенты
         Task<ContractsCounterparties> ContractsCounterpartiesAsync(); // Договоры контрагентов
         Task<Receipts> ReceiptGoodsServicesAsync(); // Поступление товаров и услуг
         Task<Payments> PaymentsAsync(); // Списание с расчетного счета
@@ -43,6 +44,7 @@ namespace Cost.Application
         Task<BillPayment> BillPaymentAsync(); // Оплата счетов
         List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments(); // Литер и статья затрат в оплатах
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
+        List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity(); // AreaOfActivity по литеру и статье затрат в оплатах
         Task<string> TmpAsync();
 
     }

@@ -1,5 +1,6 @@
 using Cost.Application;
 using Cost.Domain;
+using Cost.Infrastructure.Repositories;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.ReportsToExcel;
 using Microsoft.AspNetCore.Mvc;
@@ -53,7 +54,7 @@ namespace Cost.Presentation.Controllers
         /// <summary>Доходы и расходы</summary>
         /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
         [HttpGet("IncomeAndExpenses")]
-        public async Task<IActionResult> IncomeAndExpensesAsync([Required] Organizations Organization, DateTime date)
+        public async Task<IActionResult> IncomeAndExpensesAsync([Required] Organizations Organization, DateOnly date)
         {
             var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization, date);
             _exportingReportsToExcel.IncomeAndExpenses(incomeAndExpenses);
@@ -124,7 +125,7 @@ namespace Cost.Presentation.Controllers
         /// <summary>Выполнения до 2026 года</summary>
         /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
         [HttpGet("IncomeAndExpensesTmp")]
-        public async Task<IActionResult> IncomeAndExpensesTmpAsync([Required] Organizations Organization, DateTime date)
+        public async Task<IActionResult> IncomeAndExpensesTmpAsync([Required] Organizations Organization, DateOnly date)
         {
             var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization, date);
             var result = incomeAndExpenses.Where(w => w.Date.Year != 2026).GroupBy(x => x.ContractId).Select(y => new IncomeAndExpenses
@@ -139,7 +140,7 @@ namespace Cost.Presentation.Controllers
         }
 
         /// <summary>Отчет о доходах от строительства объектов</summary>
-        /// <response>Записывает информацию в Cost.xlsx</response>
+        /// <response>Записывает информацию в Income.xlsx</response>
         [HttpGet("Income")]
         public async Task<IActionResult> IncomeAsync([Required] Organizations Organization)
         {
@@ -148,26 +149,16 @@ namespace Cost.Presentation.Controllers
             return NoContent();
         }
 
-        /// <summary>ДДС с 2026 года</summary>
-        /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
+        /// <summary>ДДС</summary>
+        /// <response>Записывает информацию в CashFlow.xlsx</response>
         [HttpGet("CashFlow")]
-        public async Task<IActionResult> CashFlowAsync([Required] Organizations Organization)
+        public async Task<IActionResult> CashFlowAsync([Required] Organizations Organization, DateOnly startDate, DateOnly endDate)
         {
-            var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization, new DateTime(2026, 1, 1));
-            var result = incomeAndExpenses.Where(w => w.DocumentName == "Списание с расчетного счета" || w.DocumentName == "Поступление на расчетный счет")
-                                          .GroupBy(x => x.ContractId)
-                                          .Select(y => new IncomeAndExpenses
-                                          {
-                                              ContractId = y.Key,
-                                              Receipt = y.Sum(z => z.Receipt),
-                                              Payment = y.Sum(z => z.Payment),
-                                              DocumentName = y.FirstOrDefault().DocumentName,
-                                              Contractor = y.FirstOrDefault().Contractor,
-                                              Number = y.FirstOrDefault().Number,
-                                              Date = y.FirstOrDefault().Date
-                                          }).ToList();
+            startDate = startDate.Year == 1 ? new DateOnly(2026, 1, 1) : startDate;
+            endDate = endDate.Year == 1 ? DateOnly.FromDateTime(DateTime.Now) : endDate;
 
-            _exportingReportsToExcel.IncomeAndExpenses(result);
+            var cashFlow = await _generatingReports.CashFlowAsync(Organization, startDate, endDate);
+            _exportingReportsToExcel.CashFlow(cashFlow);
             return NoContent();
         }
     }

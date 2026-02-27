@@ -27,7 +27,9 @@ namespace Cost.Infrastructure.Repositories.Models.Payments
 
         [JsonPropertyName("НазначениеПлатежа")]
         public string PaymentPurpose { get; set; }
-
         public string Number { get; set; }
+
+        [JsonPropertyName("ВидОперации")]
+        public string TypeOperation { get; set; }
     }
 }

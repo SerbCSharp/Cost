@@ -7,7 +7,7 @@ namespace Cost.Domain
         public string ContractId { get; set; }
         public string Number { get; set; }
         public string NumberAA { get; set; }
-        public DateTime? Date { get; set; }
+        public DateOnly Date { get; set; }
         public decimal? Sum { get; set; }
         public string Contractor { get; set; }
         public string Name { get; set; }
@@ -25,6 +25,7 @@ namespace Cost.Domain
         public decimal AmountUntil2026 { get; set; }
         public decimal RateNDS2026 { get; set; }
         public string Code { get; set; }
+        public string AreaOfActivity { get; set; }
 
         public bool Equals(Contracts other)
         {

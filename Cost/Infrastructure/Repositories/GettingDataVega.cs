@@ -31,6 +31,8 @@ namespace Cost.Infrastructure.Repositories
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly Base1CConfiguration _base1CConfiguration;
 
+        public decimal StartBalance => 2122997.74M;
+
         public GettingDataVega(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
         {
             _base1CConfiguration = base1CConfiguration.Value;
@@ -69,7 +71,7 @@ namespace Cost.Infrastructure.Repositories
         public async Task<Payments> PaymentsAsync() // Списание с расчетного счета
         {
             var paymentsUrl = "http://localhost/vega/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json"
-                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа,НазначениеПлатежа,Number";
+                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа,НазначениеПлатежа,Number,ВидОперации";
             using HttpResponseMessage paymentsResponse = await httpClient.GetAsync(paymentsUrl);
             return await paymentsResponse.Content.ReadFromJsonAsync<Payments>();
         }
@@ -221,7 +223,7 @@ namespace Cost.Infrastructure.Repositories
                 Contractor = row.Field<string>("Подрядчик"),
                 Number = row.Field<string>("Номер договора"),
                 NumberAA = row.Field<string>("Номер ДС"),
-                Date = row.Field<DateTime>("Дата договора"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Дата договора")),
                 Sum = row.Field<decimal>("Сумма договора"),
                 RateNDS = row.Field<decimal>("Ставка НДС"),
                 GeneralContracting = row.Field<decimal>("ГП"),
@@ -267,7 +269,7 @@ namespace Cost.Infrastructure.Repositories
             {
                 OperationId = row.Field<string>("Код из 1С"),
                 Number = row.Field<string>("Номер"),
-                Date = row.Field<DateTime>("Дата"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Дата")),
                 Sum = row.Field<decimal>("Сумма"),
                 ContractDebit = row.Field<string>("Договор Дебет"),
                 ContractCredit = row.Field<string>("Договор Кредит"),
@@ -310,7 +312,7 @@ namespace Cost.Infrastructure.Repositories
                 Liter = row.Field<string>("Liter"),
                 CostItems = row.Field<string>("CostItems"),
                 PaymentId = row.Field<string>("PaymentId"),
-                Date = row.Field<DateTime>("Date"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
                 Number = row.Field<string>("Number"),
                 PaymentAmount = row.Field<decimal>("PaymentAmount"),
                 PurposePayment = row.Field<string>("PurposePayment"),
@@ -345,6 +347,11 @@ namespace Cost.Infrastructure.Repositories
             var sellingUrl = "http://localhost/vega/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
             using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
             return await sellingResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
+        }
+
+        public List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity()
+        {
+            throw new NotImplementedException();
         }
     }
 }
