@@ -1032,7 +1032,7 @@ namespace Cost.Application
             return result;
         }
 
-        public async Task<List<Domain.Cost>> CurrentDebtAsync(Organizations organization) // Текущая задолженность
+        public async Task<IEnumerable<Domain.Cost>> CurrentDebtAsync(Organizations organization) // Текущая задолженность
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
@@ -1042,11 +1042,25 @@ namespace Cost.Application
                 if (item.ConstructionObject.Contains("Смородина", StringComparison.OrdinalIgnoreCase))
                 {
                     item.ResidentialComplex = "Смородина";
+                    if (item.ContractorOrSupplier == "Подрядчик")
+                    {
+                        if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")
+                            item.CurrentDebt = (item.Receipt - item.Receipt * item.GeneralContracting) - item.Payment;
+                        else
+                            item.CurrentDebt = (item.Receipt - item.Receipt * (item.GeneralContracting + item.WarrantyLien)) - item.Payment;
+                    }
                 }
 
                 if (item.ConstructionObject.Contains("Кипарис", StringComparison.OrdinalIgnoreCase))
                 {
                     item.ResidentialComplex = "Кипарис";
+                    if (item.ContractorOrSupplier == "Подрядчик")
+                    {
+                        if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")
+                            item.CurrentDebt = (item.Receipt - item.Receipt * item.GeneralContracting) - item.Payment;
+                        else
+                            item.CurrentDebt = (item.Receipt - item.Receipt * (item.GeneralContracting + item.WarrantyLien)) - item.Payment;
+                    }
                 }
             }
 
@@ -1066,8 +1080,7 @@ namespace Cost.Application
                        .OrderBy(y => y.ResidentialComplex)
                        .ThenBy(z => z.ContractorOrSupplier)
                        .ThenBy(t => t.ConstructionObject)
-                       .ThenBy(o => o.CostItem)
-                       .ToList();
+                       .ThenBy(o => o.CostItem);
         }
     }
 }

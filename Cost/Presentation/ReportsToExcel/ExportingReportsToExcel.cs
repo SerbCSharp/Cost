@@ -716,7 +716,7 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
-        public void CurrentDebt(List<Domain.Cost> cost) // Текущая задолженность
+        public void CurrentDebt(IEnumerable<Domain.Cost> cost) // Текущая задолженность
         {
             string filePath = "C:\\Cost\\CurrentDebt.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
