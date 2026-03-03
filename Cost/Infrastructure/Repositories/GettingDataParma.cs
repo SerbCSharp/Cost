@@ -31,7 +31,8 @@ namespace Cost.Infrastructure.Repositories
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly Base1CConfiguration _base1CConfiguration;
 
-        public decimal StartBalance => 276314.18M;
+        public decimal StartBalance => 0.0M;
+        public DateOnly StartDate => new DateOnly(2025, 1, 1);
 
         public GettingDataParma(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
         {
@@ -205,6 +206,10 @@ namespace Cost.Infrastructure.Repositories
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "Ставка НДС")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "AmountUntil2026")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "RateNDS2026")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
             }
@@ -234,7 +239,10 @@ namespace Cost.Infrastructure.Repositories
                 ConstructionObject = row.Field<string>("Литер"),
                 CostItem = row.Field<string>("Статья затрат"),
                 Name = row.Field<string>("Наименование"),
-                ContractClosed = row.Field<string>("Статус")
+                ContractClosed = row.Field<string>("Статус"),
+                AmountUntil2026 = row.Field<decimal>("AmountUntil2026"),
+                RateNDS2026 = row.Field<decimal>("RateNDS2026"),
+                AreaOfActivity = row.Field<string>("Направление")
             }).ToList();
         }
 
@@ -275,8 +283,6 @@ namespace Cost.Infrastructure.Repositories
                 Sum = row.Field<decimal>("Сумма"),
                 ContractDebit = row.Field<string>("Договор Дебет"),
                 ContractCredit = row.Field<string>("Договор Кредит"),
-                ContractorDebit = row.Field<string>("Контрагент Дебет"),
-                ContractorCredit = row.Field<string>("Контрагент Кредит"),
             }).ToList();
         }
 
@@ -315,9 +321,36 @@ namespace Cost.Infrastructure.Repositories
             return await sellingResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
         }
 
-        public List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity()
+        public List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity() // AreaOfActivity по литеру и статье затрат в оплатах
         {
-            throw new NotImplementedException();
+            string filePath = "C:\\Cost\\Parma\\Catalogs.xlsx";
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            FileInfo fileInfo = new FileInfo(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "AreaOfActivity"];
+            DataTable dataTable = new DataTable();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new AreaOfActivityInPayments
+            {
+                Liter = row.Field<string>("Liter"),
+                CostItems = row.Field<string>("CostItems"),
+                AreaOfActivity = row.Field<string>("AreaOfActivity")
+            }).ToList();
         }
     }
 }

@@ -1,11 +1,9 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
-using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using Cost.Infrastructure.Repositories.Models.Payments;
 using Cost.Presentation.DTO.Request;
-using System.Net.WebSockets;
 
 namespace Cost.Application
 {
@@ -893,7 +891,7 @@ namespace Cost.Application
                 ContractId = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.CounterpartyAgreementId,
                 ContractNumber = z.payment.subcontract?.Number,
                 TypeOperation = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.TypeOperation
-            }).OrderBy(x => x.Date).ToList();
+            }).OrderByDescending(x => x.Date).ToList();
 
             var paymentsGrouped = result.Where(w => w.Date >= new DateOnly(2024, 1, 1)).GroupBy(y => y.Contractor).Select(x => new LiterAndCostItemInPayments { Contractor = x.Key, PaymentAmount = x.Sum(z => z.PaymentAmount) })
                 .OrderByDescending(o => o.PaymentAmount).ToList();
@@ -920,7 +918,7 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateOnly());
+            var incomeAndExpenses = await IncomeAndExpensesAsync(organization, new DateOnly(2023, 1, 1));
             var contracts = incomeAndExpenses.GroupBy(x => x.ContractId).Select(y => new Contracts
             {
                 ContractId = y.Key,
@@ -934,7 +932,7 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            var incomeAndExpenses = (await IncomeAndExpensesAsync(organization, new DateOnly(2026, 1, 1)))
+            var incomeAndExpenses = (await IncomeAndExpensesAsync(organization, gettingData.StartDate))
                 .Where(w => (w.DocumentName == "Списание с расчетного счета" || w.DocumentName == "Поступление на расчетный счет")).ToList();
             var literAndCostItemInAreaOfActivity = gettingData.GetLiterAndCostItemInAreaOfActivity();
 
@@ -998,6 +996,78 @@ namespace Cost.Application
             cashFlow[0].StartBalance = startBalance;
 
             return cashFlow;
+        }
+
+        public async Task<List<IncomeAndExpenses>> NoAreaOfActivityAsync(Organizations organization, DateOnly startDate, DateOnly endDate) // ДДС
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var incomeAndExpenses = (await IncomeAndExpensesAsync(organization, new DateOnly(2026, 1, 1)))
+                .Where(w => (w.DocumentName == "Списание с расчетного счета" || w.DocumentName == "Поступление на расчетный счет")).ToList();
+            var literAndCostItemInAreaOfActivity = gettingData.GetLiterAndCostItemInAreaOfActivity();
+
+            var incomeAndExpensesNotEmpty = incomeAndExpenses.Where(x => !string.IsNullOrEmpty(x.AreaOfActivity));
+            var incomeAndExpensesEmpty = incomeAndExpenses.Where(x => string.IsNullOrEmpty(x.AreaOfActivity));
+            var incomeAndExpensesEmptyPlusAreaOfActivity = from income in incomeAndExpensesEmpty
+                                                           join areaOfActivity in literAndCostItemInAreaOfActivity
+                                                           on income.LiterPayment + income.CostItemPayment equals areaOfActivity.Liter + areaOfActivity.CostItems
+                                                           into tmp
+                                                           from subareaOfActivity in tmp.DefaultIfEmpty()
+                                                           select new IncomeAndExpenses
+                                                           {
+                                                               Date = income.Date,
+                                                               Receipt = income.Receipt,
+                                                               Payment = income.Payment,
+                                                               TypeOperation = income.TypeOperation,
+                                                               AreaOfActivity = subareaOfActivity != null ? subareaOfActivity.AreaOfActivity : income.TypeOperation,
+                                                               LiterPayment = income.LiterPayment,
+                                                               CostItemPayment = income.CostItemPayment,
+                                                               DocumentName = income.DocumentName,
+                                                               Contractor = income.Contractor,
+                                                               Number = income.Number,
+                                                               ContractId = income.ContractId
+                                                           };
+
+            var result = incomeAndExpensesNotEmpty.Concat(incomeAndExpensesEmptyPlusAreaOfActivity).ToList();
+            return result;
+        }
+
+        public async Task<List<Domain.Cost>> CurrentDebtAsync(Organizations organization) // Текущая задолженность
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var cost = await CostAsync(organization);
+            foreach (var item in cost)
+            {
+                if (item.ConstructionObject.Contains("Смородина", StringComparison.OrdinalIgnoreCase))
+                {
+                    item.ResidentialComplex = "Смородина";
+                }
+
+                if (item.ConstructionObject.Contains("Кипарис", StringComparison.OrdinalIgnoreCase))
+                {
+                    item.ResidentialComplex = "Кипарис";
+                }
+            }
+
+            return cost.Where(x => !string.IsNullOrEmpty(x.ResidentialComplex))
+                       .GroupBy(g => new { g.ResidentialComplex, g.ContractorOrSupplier, g.ConstructionObject, g.CostItem})
+                       .Select(s => new Domain.Cost
+                       {
+                           ResidentialComplex = s.Key.ResidentialComplex,
+                           ContractorOrSupplier = s.Key.ContractorOrSupplier,
+                           ConstructionObject = s.Key.ConstructionObject,
+                           CostItem = s.Key.CostItem,
+                           Sum = s.Sum(su => su.Sum),
+                           Receipt = s.Sum(r => r.Receipt),
+                           Payment = s.Sum(p => p.Payment),
+                           CurrentDebt = s.Sum(cd => cd.CurrentDebt)
+                       })
+                       .OrderBy(y => y.ResidentialComplex)
+                       .ThenBy(z => z.ContractorOrSupplier)
+                       .ThenBy(t => t.ConstructionObject)
+                       .ThenBy(o => o.CostItem)
+                       .ToList();
         }
     }
 }

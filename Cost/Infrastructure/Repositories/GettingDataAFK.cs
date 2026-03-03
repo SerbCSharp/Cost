@@ -32,6 +32,7 @@ namespace Cost.Infrastructure.Repositories
         private readonly Base1CConfiguration _base1CConfiguration;
 
         public decimal StartBalance => 1016806.12M;
+        public DateOnly StartDate => new DateOnly(2026, 1, 1);
 
         public GettingDataAFK(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
         {
@@ -58,14 +59,14 @@ namespace Cost.Infrastructure.Repositories
             var contractsCounterpartiesUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Catalog_ДоговорыКонтрагентов?$format=json";
             using HttpResponseMessage contractsCounterpartiesResponse = await httpClient.GetAsync(contractsCounterpartiesUrl);
             var result = await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
-            result.CodeContract = 3750;
+            result.CodeContract = 3760;
             return result;
         }
 
         public async Task<Receipts> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
         {
             var receiptsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json"
-                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key";
+                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key&$filter=year(Date) ge 2023";
             using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
             return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
         }
@@ -73,14 +74,17 @@ namespace Cost.Infrastructure.Repositories
         public async Task<Payments> PaymentsAsync() // Списание с расчетного счета
         {
             var paymentsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json"
-                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа,НазначениеПлатежа,Number,ВидОперации";
+                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа,НазначениеПлатежа,Number,ВидОперации"
+                + "&$filter=year(Date) ge 2023";
+
             using HttpResponseMessage paymentsResponse = await httpClient.GetAsync(paymentsUrl);
             return await paymentsResponse.Content.ReadFromJsonAsync<Payments>();
         }
 
         public async Task<ReceiptToCurrentAccount> ReceiptToCurrentAccountAsync() // Поступление на расчетный счет
         {
-            var receiptToCurrentAccountUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеНаРасчетныйСчет?$format=json";
+            var receiptToCurrentAccountUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеНаРасчетныйСчет?$format=json"
+                + "&$filter=year(Date) ge 2023";
             using HttpResponseMessage receiptToCurrentAccountResponse = await httpClient.GetAsync(receiptToCurrentAccountUrl);
             return await receiptToCurrentAccountResponse.Content.ReadFromJsonAsync<ReceiptToCurrentAccount>();
         }
@@ -115,21 +119,24 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<DebtAdjustment> DebtAdjustmentAsync() // Корректировка долга
         {
-            var debtAdjustmentUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_КорректировкаДолга?$format=json";
+            var debtAdjustmentUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_КорректировкаДолга?$format=json"
+                + "&$filter=year(Date) ge 2023";
             using HttpResponseMessage debtAdjustmentResponse = await httpClient.GetAsync(debtAdjustmentUrl);
             return await debtAdjustmentResponse.Content.ReadFromJsonAsync<DebtAdjustment>();
         }
 
         public async Task<Receipts> ReceiptProcessingAsync() // Поступление из переработки
         {
-            var receiptsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеИзПереработки?$format=json";
+            var receiptsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеИзПереработки?$format=json"
+                +"&$filter=year(Date) ge 2023";
             using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
             return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
         }
 
         public async Task<Selling> SellingAsync() // Реализация
         {
-            var sellingUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json";
+            var sellingUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json"
+                +"&$filter=year(Date) ge 2023";
             using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
             return await sellingResponse.Content.ReadFromJsonAsync<Selling>();
         }
@@ -143,7 +150,8 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<InvoiceReceived> InvoiceReceivedAsync() // Счета-фактуры полученные
         {
-            var invoiceReceivedUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СчетФактураПолученный?$format=json";
+            var invoiceReceivedUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_СчетФактураПолученный?$format=json"
+                +"&$filter=year(Date) ge 2023";
             using HttpResponseMessage invoiceReceivedResponse = await httpClient.GetAsync(invoiceReceivedUrl);
             return await invoiceReceivedResponse.Content.ReadFromJsonAsync<InvoiceReceived>();
         }
@@ -205,6 +213,10 @@ namespace Cost.Infrastructure.Repositories
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "Ставка НДС")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "AmountUntil2026")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "RateNDS2026")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
             }
@@ -235,6 +247,8 @@ namespace Cost.Infrastructure.Repositories
                 CostItem = row.Field<string>("Статья затрат"),
                 Name = row.Field<string>("Наименование"),
                 ContractClosed = row.Field<string>("Статус"),
+                AmountUntil2026 = row.Field<decimal>("AmountUntil2026"),
+                RateNDS2026 = row.Field<decimal>("RateNDS2026"),
                 AreaOfActivity = row.Field<string>("Направление")
             }).ToList();
         }
@@ -345,7 +359,8 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync() // Реализация строительных работ
         {
-            var sellingUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
+            var sellingUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json"
+                + "&$filter=year(Date) ge 2023";
             using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
             return await sellingResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
         }

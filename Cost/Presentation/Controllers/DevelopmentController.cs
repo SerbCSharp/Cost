@@ -1,6 +1,5 @@
 using Cost.Application;
 using Cost.Domain;
-using Cost.Infrastructure.Repositories;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.ReportsToExcel;
 using Microsoft.AspNetCore.Mvc;
@@ -161,5 +160,29 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.CashFlow(cashFlow);
             return NoContent();
         }
+
+        /// <summary>Договора, у которых надо указать направление деятельности</summary>
+        /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
+        [HttpGet("NoAreaOfActivity")]
+        public async Task<IActionResult> NoAreaOfActivityAsync([Required] Organizations Organization, DateOnly startDate, DateOnly endDate)
+        {
+            startDate = startDate.Year == 1 ? new DateOnly(2026, 1, 1) : startDate;
+            endDate = endDate.Year == 1 ? DateOnly.FromDateTime(DateTime.Now) : endDate;
+
+            var cashFlow = await _generatingReports.NoAreaOfActivityAsync(Organization, startDate, endDate);
+            _exportingReportsToExcel.IncomeAndExpenses(cashFlow);
+            return NoContent();
+        }
+
+        /// <summary>Текущая задолженность</summary>
+        /// <response>Записывает информацию в CurrentDebt.xlsx</response>
+        [HttpGet("CurrentDebt")]
+        public async Task<IActionResult> CurrentDebtAsync([Required] Organizations Organization)
+        {
+            var cost = await _generatingReports.CurrentDebtAsync(Organization);
+            _exportingReportsToExcel.CurrentDebt(cost);
+            return NoContent();
+        }
+
     }
 }

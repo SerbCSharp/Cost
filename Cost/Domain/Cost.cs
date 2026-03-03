@@ -26,5 +26,7 @@
         public decimal ConstructionCostNDS { get; set; }
         public decimal InputNDS { get; set; }
         public decimal Expenses { get; set; }
+        public string ResidentialComplex { get; set; }
+        public decimal CurrentDebt { get; set; }
     }
 }

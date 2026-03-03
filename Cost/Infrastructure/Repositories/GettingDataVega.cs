@@ -32,6 +32,7 @@ namespace Cost.Infrastructure.Repositories
         private readonly Base1CConfiguration _base1CConfiguration;
 
         public decimal StartBalance => 2122997.74M;
+        public DateOnly StartDate => new DateOnly(2026, 1, 1);
 
         public GettingDataVega(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
         {

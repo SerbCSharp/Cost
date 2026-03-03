@@ -22,6 +22,7 @@ namespace Cost.Application
     public interface IGettingData
     {
         decimal StartBalance { get; }
+        DateOnly StartDate { get; }
 
         Task<Counterparties> CounterpartiesAsync(); // Контрагенты
         Task<ContractsCounterparties> ContractsCounterpartiesAsync(); // Договоры контрагентов

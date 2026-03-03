@@ -715,5 +715,65 @@ namespace Cost.Presentation.ReportsToExcel
 
             package.SaveAs(new FileInfo(filePath));
         }
+
+        public void CurrentDebt(List<Domain.Cost> cost) // Текущая задолженность
+        {
+            string filePath = "C:\\Cost\\CurrentDebt.xlsx";
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets.Add("Текущая задолженность");
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+
+            // Шапка
+            sheet.Cells[1, 1].Value = "Жилой комплекс";
+            sheet.Cells[1, 2].Value = "Объект";
+            sheet.Cells[1, 3].Value = "Статья затрат";
+            sheet.Cells[1, 4].Value = "Подрядчик/Поставщик";
+            sheet.Cells[1, 5].Value = "Сумма договора";
+            sheet.Cells[1, 6].Value = "Выполнение";
+            sheet.Cells[1, 7].Value = "Оплата";
+            sheet.Cells[1, 8].Value = "Текущая задолженность";
+            sheet.Cells[1, 1, 1, 8].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            var column = 0;
+            foreach (var item in cost)
+            {
+                sheet.Cells[row, column + 1].Value = item.ResidentialComplex;
+                sheet.Cells[row, column + 2].Value = item.ConstructionObject;
+                sheet.Cells[row, column + 3].Value = item.CostItem;
+                sheet.Cells[row, column + 4].Value = item.ContractorOrSupplier;
+                sheet.Cells[row, column + 5].Value = item.Sum;
+                sheet.Cells[row, column + 6].Value = item.Receipt;
+                sheet.Cells[row, column + 7].Value = item.Payment;
+                sheet.Cells[row, column + 8].Value = item.CurrentDebt;
+                row++;
+            }
+
+            sheet.Cells[row, column + 8].Formula = $"=SUBTOTAL(9,H2:H{row - 1})";
+            sheet.Cells[row, 2, row, 8].Style.Font.Bold = true;
+
+
+            sheet.Cells[1, 1, row, 8].AutoFitColumns();
+            sheet.Column(2).Width = 40;
+            sheet.Column(3).Width = 80;
+
+            var range = sheet.Cells[1, 1, row - 1, 8];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+
+            sheet.Cells[2, 5, row, 8].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            sheet.View.FreezePanes(2, 1);
+
+            range.AutoFilter = true;
+
+            package.SaveAs(new FileInfo(filePath));
+        }
     }
 }
