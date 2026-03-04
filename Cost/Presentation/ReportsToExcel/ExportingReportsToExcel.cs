@@ -1,5 +1,6 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
+using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using OfficeOpenXml;
@@ -768,6 +769,53 @@ namespace Cost.Presentation.ReportsToExcel
             range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
 
             sheet.Cells[2, 5, row, 8].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            sheet.View.FreezePanes(2, 1);
+
+            range.AutoFilter = true;
+
+            package.SaveAs(new FileInfo(filePath));
+        }
+
+        public void ActOfCompletion(IEnumerable<ActOfCompletionValue> cost) // Акты об окончании СМР
+        {
+            string filePath = "C:\\Cost\\ActOfCompletion.xlsx";
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets.Add("Акты об окончании СМР");
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+
+            // Шапка
+            sheet.Cells[1, 1].Value = "ContractId";
+            sheet.Cells[1, 2].Value = "StartDate";
+            sheet.Cells[1, 3].Value = "EndDate";
+            sheet.Cells[1, 4].Value = "Comment";
+            sheet.Cells[1, 1, 1, 4].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            var column = 0;
+            foreach (var item in cost)
+            {
+                sheet.Cells[row, column + 1].Value = item.ContractId;
+                sheet.Cells[row, column + 2].Value = item.StartDate;
+                sheet.Cells[row, column + 3].Value = item.EndDate;
+                sheet.Cells[row, column + 4].Value = item.Comment;
+                row++;
+            }
+
+            sheet.Cells[row, 2, row, 4].Style.Font.Bold = true;
+            sheet.Cells[1, 1, row, 4].AutoFitColumns();
+
+            var range = sheet.Cells[1, 1, row - 1, 4];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+
+            sheet.Cells[2, 2, row, 3].Style.Numberformat.Format = "dd.mm.yyyy";
 
             sheet.View.FreezePanes(2, 1);
 

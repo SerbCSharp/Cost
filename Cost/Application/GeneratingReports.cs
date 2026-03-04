@@ -1,5 +1,6 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
+using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using Cost.Infrastructure.Repositories.Models.Payments;
@@ -796,6 +797,8 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
+            var serb = await gettingData.TmpAsync();
+
             var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
             var billPayment = await gettingData.BillPaymentAsync();
             var additionalInformation = await gettingData.AdditionalInformationAsync();
@@ -893,8 +896,8 @@ namespace Cost.Application
                 TypeOperation = z.payment.payment.payCostName.payObjectName.payCons.payBill.payMany.TypeOperation
             }).OrderByDescending(x => x.Date).ToList();
 
-            var paymentsGrouped = result.Where(w => w.Date >= new DateOnly(2024, 1, 1)).GroupBy(y => y.Contractor).Select(x => new LiterAndCostItemInPayments { Contractor = x.Key, PaymentAmount = x.Sum(z => z.PaymentAmount) })
-                .OrderByDescending(o => o.PaymentAmount).ToList();
+            var paymentsGrouped = result.GroupBy(y => y.ContractId).Select(x => new LiterAndCostItemInPayments { ContractId = x.Key, PaymentAmount = x.Sum(z => z.PaymentAmount) })
+                .ToList();
 
             return result;
         }
@@ -1041,7 +1044,7 @@ namespace Cost.Application
             {
                 if (item.ConstructionObject.Contains("Смородина", StringComparison.OrdinalIgnoreCase))
                 {
-                    item.ResidentialComplex = "Смородина";
+                    item.ResidentialComplex = "1.Смородина";
                     if (item.ContractorOrSupplier == "Подрядчик")
                     {
                         if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")
@@ -1053,7 +1056,7 @@ namespace Cost.Application
 
                 if (item.ConstructionObject.Contains("Кипарис", StringComparison.OrdinalIgnoreCase))
                 {
-                    item.ResidentialComplex = "Кипарис";
+                    item.ResidentialComplex = "2.Кипарис";
                     if (item.ContractorOrSupplier == "Подрядчик")
                     {
                         if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")
@@ -1081,6 +1084,15 @@ namespace Cost.Application
                        .ThenBy(z => z.ContractorOrSupplier)
                        .ThenBy(t => t.ConstructionObject)
                        .ThenBy(o => o.CostItem);
+        }
+
+        public async Task<IEnumerable<ActOfCompletionValue>> ActOfCompletionAsync(Organizations organization) // Акты об окончании СМР
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var actOfCompletion = (await gettingData.ActOfCompletionAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
+
+            return actOfCompletion;
         }
     }
 }

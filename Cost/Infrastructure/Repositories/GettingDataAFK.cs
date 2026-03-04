@@ -1,6 +1,7 @@
 ﻿using Cost.Application;
 using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
+using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
 using Cost.Infrastructure.Repositories.Models.BillPayment;
 using Cost.Infrastructure.Repositories.Models.ConstructionProjects;
@@ -336,7 +337,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеНаРасчетныйСчет?$format=json";
+            var operationUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/AccumulationRegister_ОплатаСчетов?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);
@@ -395,6 +396,11 @@ namespace Cost.Infrastructure.Repositories
                 CostItems = row.Field<string>("CostItems"),
                 AreaOfActivity = row.Field<string>("AreaOfActivity")
             }).ToList();
+        }
+
+        public Task<ActOfCompletion> ActOfCompletionAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -14,5 +14,8 @@ namespace Cost.Infrastructure.Repositories.Models.Payments
 
         [JsonPropertyName("СуммаНДС")]
         public decimal PaymentNDSAmount { get; set; }
+
+        [JsonPropertyName("СчетНаОплату_Key")]
+        public string InvoiceForPaymentId { get; set; }
     }
 }

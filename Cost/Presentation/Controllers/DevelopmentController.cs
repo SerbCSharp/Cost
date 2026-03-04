@@ -184,5 +184,14 @@ namespace Cost.Presentation.Controllers
             return NoContent();
         }
 
+        /// <summary>Акты об окончании СМР</summary>
+        /// <response>Записывает информацию в ActOfCompletion.xlsx</response>
+        [HttpGet("ActOfCompletion")]
+        public async Task<IActionResult> ActOfCompletionAsync([Required] Organizations Organization)
+        {
+            var actOfCompletion = await _generatingReports.ActOfCompletionAsync(Organization);
+            _exportingReportsToExcel.ActOfCompletion(actOfCompletion);
+            return NoContent();
+        }
     }
 }

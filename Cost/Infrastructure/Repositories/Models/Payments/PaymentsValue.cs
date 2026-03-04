@@ -31,5 +31,6 @@ namespace Cost.Infrastructure.Repositories.Models.Payments
 
         [JsonPropertyName("ВидОперации")]
         public string TypeOperation { get; set; }
+        public string InvoiceForPaymentId { get; set; }
     }
 }

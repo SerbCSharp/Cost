@@ -1,5 +1,6 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
+using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
 using Cost.Infrastructure.Repositories.Models.BillPayment;
 using Cost.Infrastructure.Repositories.Models.ConstructionProjects;
@@ -46,7 +47,7 @@ namespace Cost.Application
         List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments(); // Литер и статья затрат в оплатах
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
         List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity(); // AreaOfActivity по литеру и статье затрат в оплатах
+        Task<ActOfCompletion> ActOfCompletionAsync(); // Акты об окончании СМР
         Task<string> TmpAsync();
-
     }
 }
