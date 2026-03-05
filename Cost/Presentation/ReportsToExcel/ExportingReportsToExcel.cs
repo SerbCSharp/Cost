@@ -4,8 +4,10 @@ using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using OfficeOpenXml;
+using OfficeOpenXml.Drawing;
 using OfficeOpenXml.Style;
 using OfficeOpenXml.Table.PivotTable;
+using System.Drawing;
 
 namespace Cost.Presentation.ReportsToExcel
 {
@@ -22,66 +24,64 @@ namespace Cost.Presentation.ReportsToExcel
             //using var package = new ExcelPackage();
             using var package = new ExcelPackage(new FileInfo("C:\\Cost\\CurrentDebt.xlsx"));
 
-            var sheet = package.Workbook.Worksheets["Data"];
             package.Workbook.Worksheets.Delete("Текущая задолженность");
             var pivot = package.Workbook.Worksheets.Add("Текущая задолженность");
-            //var sheet = package.Workbook.Worksheets.Add("Data");
-            //sheet.Cells.Style.Font.Name = "Calibri";
-            //sheet.Cells.Style.Font.Size = 11;
+            var sheet = package.Workbook.Worksheets.Add("Data");
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
 
-            //sheet.View.FreezePanes(2, 1);
+            sheet.View.FreezePanes(2, 1);
 
-            //// Шапка
-            //sheet.Cells[1, 1].Value = "ResidentialComplex";
-            //sheet.Cells[1, 2].Value = "ConstructionObject";
-            //sheet.Cells[1, 3].Value = "ContractorOrSupplier";
-            //sheet.Cells[1, 4].Value = "CostItem";
-            //sheet.Cells[1, 5].Value = "Contractor";
-            //sheet.Cells[1, 6].Value = "Number";
-            //sheet.Cells[1, 7].Value = "ContractDate";
-            //sheet.Cells[1, 8].Value = "ContractAmount";
-            //sheet.Cells[1, 9].Value = "Receipt";
-            //sheet.Cells[1, 10].Value = "Payment";
-            //sheet.Cells[1, 11].Value = "CurrentDebt";
-            //sheet.Cells[1, 1, 1, 11].Style.Font.Bold = true;
-            //sheet.Cells[1, 1, 1, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            // Шапка
+            sheet.Cells[1, 1].Value = "ResidentialComplex";
+            sheet.Cells[1, 2].Value = "ConstructionObject";
+            sheet.Cells[1, 3].Value = "ContractorOrSupplier";
+            sheet.Cells[1, 4].Value = "CostItem";
+            sheet.Cells[1, 5].Value = "Contractor";
+            sheet.Cells[1, 6].Value = "Number";
+            sheet.Cells[1, 7].Value = "ContractDate";
+            sheet.Cells[1, 8].Value = "ContractAmount";
+            sheet.Cells[1, 9].Value = "Receipt";
+            sheet.Cells[1, 10].Value = "Payment";
+            sheet.Cells[1, 11].Value = "CurrentDebt";
+            sheet.Cells[1, 1, 1, 11].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            //sheet.Columns[1, 6].Style.Numberformat.Format = "@";
-            //sheet.Column(7).Style.Numberformat.Format = "dd.mm.yyyy";
-            //sheet.Columns[8, 11].Style.Numberformat.Format = "### ### ### ##0.00";
-            //sheet.Column(2).Width = 40;
-            //sheet.Column(4).Width = 80;
+            sheet.Columns[1, 6].Style.Numberformat.Format = "@";
+            sheet.Column(7).Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Columns[8, 11].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Column(2).Width = 40;
+            sheet.Column(4).Width = 80;
 
-            //var row = 2;
-            //var column = 0;
-            //foreach (var item in cost)
-            //{
-            //    sheet.Cells[row, column + 1].Value = item.ResidentialComplex;
-            //    sheet.Cells[row, column + 2].Value = item.ConstructionObject;
-            //    sheet.Cells[row, column + 3].Value = item.ContractorOrSupplier;
-            //    sheet.Cells[row, column + 4].Value = item.CostItem;
-            //    sheet.Cells[row, column + 5].Value = item.Contractor;
-            //    sheet.Cells[row, column + 6].Value = item.Number;
-            //    sheet.Cells[row, column + 7].Value = item.Date;
-            //    sheet.Cells[row, column + 8].Value = item.Sum;
-            //    sheet.Cells[row, column + 9].Value = item.Receipt;
-            //    sheet.Cells[row, column + 10].Value = item.Payment;
-            //    sheet.Cells[row, column + 11].Value = item.CurrentDebt;
-            //    row++;
-            //}
+            var row = 2;
+            var column = 0;
+            foreach (var item in cost)
+            {
+                sheet.Cells[row, column + 1].Value = item.ResidentialComplex;
+                sheet.Cells[row, column + 2].Value = item.ConstructionObject;
+                sheet.Cells[row, column + 3].Value = item.ContractorOrSupplier;
+                sheet.Cells[row, column + 4].Value = item.CostItem;
+                sheet.Cells[row, column + 5].Value = item.Contractor.PadRight(50, ' ') + "   " + item.Number;
+                sheet.Cells[row, column + 6].Value = item.Number;
+                sheet.Cells[row, column + 7].Value = item.Date;
+                sheet.Cells[row, column + 8].Value = item.Sum;
+                sheet.Cells[row, column + 9].Value = item.Receipt;
+                sheet.Cells[row, column + 10].Value = item.Payment;
+                sheet.Cells[row, column + 11].Value = item.CurrentDebt;
+                row++;
+            }
 
-            //sheet.Cells[row, 2, row, 11].Style.Font.Bold = true;
-            //sheet.Cells[1, 1, row, 11].AutoFitColumns();
+            sheet.Cells[row, 2, row, 11].Style.Font.Bold = true;
+            sheet.Cells[1, 1, row, 11].AutoFitColumns();
 
-            //var range = sheet.Cells[1, 1, row - 1, 11];
-            var range = sheet.Cells[1, 1, 1410, 11];
+            var range = sheet.Cells[1, 1, row - 1, 11];
 
-            //range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            //range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            //range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            //range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
 
-            //range.AutoFilter = true;
+            range.AutoFilter = true;
 
 
 
@@ -90,37 +90,48 @@ namespace Cost.Presentation.ReportsToExcel
             // Создание сводной таблицы
             var pivotTable = pivot.PivotTables.Add(pivot.Cells["A1"], range, "CurrentDebt");
 
+            pivotTable.ShowHeaders = false;
+            pivotTable.ShowRowHeaders = false;
+            pivotTable.Compact = false;
+
+            var styleWholeTable = pivotTable.Styles.AddWholeTable();
+            styleWholeTable.Style.Font.Name = "Calibri";
+            styleWholeTable.Style.Font.Size = 11;
+            styleWholeTable.Style.Font.Color.SetColor(Color.Black);
+            styleWholeTable.Style.NumberFormat.Format = "### ### ### ##0.00";
+            styleWholeTable.Style.Fill.BackgroundColor.SetColor(Color.White);
+
+            styleWholeTable.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+            styleWholeTable.Style.Border.Horizontal.Style = ExcelBorderStyle.Thin;
+            styleWholeTable.Style.Border.Vertical.Style = ExcelBorderStyle.Thin;
+
+            pivotTable.WorkSheet.Cells[2, 2, 2, 5].Style.Font.Bold = true;
+            pivotTable.WorkSheet.Cells[2, 2, 2, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            pivotTable.WorkSheet.Column(4).Width = 40;
+
+
             // Добавление полей
             pivotTable.RowFields.Add(pivotTable.Fields["ResidentialComplex"]);
             pivotTable.RowFields.Add(pivotTable.Fields["ConstructionObject"]);
             pivotTable.RowFields.Add(pivotTable.Fields["ContractorOrSupplier"]);
             pivotTable.RowFields.Add(pivotTable.Fields["CostItem"]);
             pivotTable.RowFields.Add(pivotTable.Fields["Contractor"]);
-            pivotTable.RowFields.Add(pivotTable.Fields["Number"]);
             pivotTable.DataFields.Add(pivotTable.Fields["ContractAmount"]);
             pivotTable.DataFields.Add(pivotTable.Fields["Receipt"]);
             pivotTable.DataFields.Add(pivotTable.Fields["Payment"]);
             pivotTable.DataFields.Add(pivotTable.Fields["CurrentDebt"]);
-            //pivotTable.DataFields[0].Function = DataFieldFunctions.Sum;
-            //pivotTable.DataFields[1].Function = DataFieldFunctions.Sum;
+
+            pivotTable.DataFields[0].Name = "Сумма договора";
+            pivotTable.DataFields[1].Name = "Выполнение";
+            pivotTable.DataFields[2].Name = "Оплата";
+            pivotTable.DataFields[3].Name = "Текущая задолженность";
+
             pivotTable.DataOnRows = false;
 
-            //var slicer = pivotTable.Fields["ContractorOrSupplier"].AddSlicer();
-            //slicer.SetPosition(0, 0, 5, 0);
-            //slicer.SetSize(400, 208);
-            //slicer.Style = eSlicerStyle.Light4;
-
-            pivotTable.RowFields[4].Compact = false;
-            //pivotTable.RowFields[5].Compact = false;
-            pivotTable.RowFields[4].SubTotalFunctions = eSubTotalFunctions.None;
-            //pivotTable.RowFields[5].SubTotalFunctions = eSubTotalFunctions.None;
-
-            //pivotTable.RowFields[0].Items.Refresh();
             pivotTable.RowFields[0].Items.ShowDetails(false);
             pivotTable.RowFields[1].Items.ShowDetails(false);
             pivotTable.RowFields[2].Items.ShowDetails(false);
             pivotTable.RowFields[3].Items.ShowDetails(false);
-            //pivotTable.RowFields[4].Items.ShowDetails(false);
 
             package.SaveAs(new FileInfo(filePath));
         }
