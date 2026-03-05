@@ -323,7 +323,7 @@ namespace Cost.Application
                     ContractorOrSupplier = z.FirstOrDefault().ContractorOrSupplier,
                     CostItem = z.Key.CostItemPayment,
                     Date = z.FirstOrDefault().Date,
-                    Sum = null,
+                    Sum = 0,
                     WarrantyLien = z.FirstOrDefault().WarrantyLien,
                     Name = z.FirstOrDefault().Name,
                     ConstructionCost = z.Sum(s => s.Payment),
@@ -797,8 +797,6 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            var serb = await gettingData.TmpAsync();
-
             var payments = (await gettingData.PaymentsAsync()).Value.Where(x => x.Posted == true && x.DeletionMark == false);
             var billPayment = await gettingData.BillPaymentAsync();
             var additionalInformation = await gettingData.AdditionalInformationAsync();
@@ -1044,45 +1042,32 @@ namespace Cost.Application
             {
                 if (item.ConstructionObject.Contains("Смородина", StringComparison.OrdinalIgnoreCase))
                 {
-                    item.ResidentialComplex = "1.Смородина";
+                    item.ResidentialComplex = "Смородина";
                     if (item.ContractorOrSupplier == "Подрядчик")
                     {
                         if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")
-                            item.CurrentDebt = (item.Receipt - item.Receipt * item.GeneralContracting) - item.Payment;
+                            item.CurrentDebt = item.Receipt - item.Receipt * item.GeneralContracting - item.Payment;
                         else
-                            item.CurrentDebt = (item.Receipt - item.Receipt * (item.GeneralContracting + item.WarrantyLien)) - item.Payment;
+                            item.CurrentDebt = item.Receipt - item.Receipt * (item.GeneralContracting + item.WarrantyLien) - item.Payment;
                     }
                 }
 
                 if (item.ConstructionObject.Contains("Кипарис", StringComparison.OrdinalIgnoreCase))
                 {
-                    item.ResidentialComplex = "2.Кипарис";
+                    item.ResidentialComplex = "Кипарис";
                     if (item.ContractorOrSupplier == "Подрядчик")
                     {
                         if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")
-                            item.CurrentDebt = (item.Receipt - item.Receipt * item.GeneralContracting) - item.Payment;
+                            item.CurrentDebt = item.Receipt - item.Receipt * item.GeneralContracting - item.Payment;
                         else
-                            item.CurrentDebt = (item.Receipt - item.Receipt * (item.GeneralContracting + item.WarrantyLien)) - item.Payment;
+                            item.CurrentDebt = item.Receipt - item.Receipt * (item.GeneralContracting + item.WarrantyLien) - item.Payment;
                     }
                 }
             }
-
             return cost.Where(x => !string.IsNullOrEmpty(x.ResidentialComplex))
-                       .GroupBy(g => new { g.ResidentialComplex, g.ContractorOrSupplier, g.ConstructionObject, g.CostItem})
-                       .Select(s => new Domain.Cost
-                       {
-                           ResidentialComplex = s.Key.ResidentialComplex,
-                           ContractorOrSupplier = s.Key.ContractorOrSupplier,
-                           ConstructionObject = s.Key.ConstructionObject,
-                           CostItem = s.Key.CostItem,
-                           Sum = s.Sum(su => su.Sum),
-                           Receipt = s.Sum(r => r.Receipt),
-                           Payment = s.Sum(p => p.Payment),
-                           CurrentDebt = s.Sum(cd => cd.CurrentDebt)
-                       })
                        .OrderBy(y => y.ResidentialComplex)
-                       .ThenBy(z => z.ContractorOrSupplier)
                        .ThenBy(t => t.ConstructionObject)
+                       .ThenBy(z => z.ContractorOrSupplier)
                        .ThenBy(o => o.CostItem);
         }
 
