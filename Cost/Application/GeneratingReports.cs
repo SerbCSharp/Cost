@@ -1043,6 +1043,7 @@ namespace Cost.Application
                 if (item.ConstructionObject.Contains("Смородина", StringComparison.OrdinalIgnoreCase))
                 {
                     item.ResidentialComplex = "Смородина";
+                    item.Number = item.Contractor + "   " + item.Number;
                     if (item.ContractorOrSupplier == "Подрядчик")
                     {
                         if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")
@@ -1055,6 +1056,7 @@ namespace Cost.Application
                 if (item.ConstructionObject.Contains("Кипарис", StringComparison.OrdinalIgnoreCase))
                 {
                     item.ResidentialComplex = "Кипарис";
+                    item.Number = item.Contractor + "   " + item.Number;
                     if (item.ContractorOrSupplier == "Подрядчик")
                     {
                         if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")

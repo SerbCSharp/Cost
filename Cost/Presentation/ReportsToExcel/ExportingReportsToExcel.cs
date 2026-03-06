@@ -6,8 +6,8 @@ using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing;
 using OfficeOpenXml.Style;
-using OfficeOpenXml.Table.PivotTable;
 using System.Drawing;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Cost.Presentation.ReportsToExcel
 {
@@ -21,10 +21,8 @@ namespace Cost.Presentation.ReportsToExcel
         public void CurrentDebt(IEnumerable<Domain.Cost> cost) // Текущая задолженность
         {
             string filePath = "C:\\Cost\\CurrentDebt.xlsx";
-            //using var package = new ExcelPackage();
-            using var package = new ExcelPackage(new FileInfo("C:\\Cost\\CurrentDebt.xlsx"));
+            using var package = new ExcelPackage();
 
-            package.Workbook.Worksheets.Delete("Текущая задолженность");
             var pivot = package.Workbook.Worksheets.Add("Текущая задолженность");
             var sheet = package.Workbook.Worksheets.Add("Data");
             sheet.Cells.Style.Font.Name = "Calibri";
@@ -37,19 +35,18 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 2].Value = "ConstructionObject";
             sheet.Cells[1, 3].Value = "ContractorOrSupplier";
             sheet.Cells[1, 4].Value = "CostItem";
-            sheet.Cells[1, 5].Value = "Contractor";
-            sheet.Cells[1, 6].Value = "Number";
-            sheet.Cells[1, 7].Value = "ContractDate";
-            sheet.Cells[1, 8].Value = "ContractAmount";
-            sheet.Cells[1, 9].Value = "Receipt";
-            sheet.Cells[1, 10].Value = "Payment";
-            sheet.Cells[1, 11].Value = "CurrentDebt";
-            sheet.Cells[1, 1, 1, 11].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[1, 5].Value = "Contract";
+            sheet.Cells[1, 6].Value = "ContractDate";
+            sheet.Cells[1, 7].Value = "ContractAmount";
+            sheet.Cells[1, 8].Value = "Receipt";
+            sheet.Cells[1, 9].Value = "Payment";
+            sheet.Cells[1, 10].Value = "CurrentDebt";
+            sheet.Cells[1, 1, 1, 10].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 10].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            sheet.Columns[1, 6].Style.Numberformat.Format = "@";
-            sheet.Column(7).Style.Numberformat.Format = "dd.mm.yyyy";
-            sheet.Columns[8, 11].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Columns[1, 5].Style.Numberformat.Format = "@";
+            sheet.Column(6).Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Columns[7, 10].Style.Numberformat.Format = "### ### ### ##0.00";
             sheet.Column(2).Width = 40;
             sheet.Column(4).Width = 80;
 
@@ -61,21 +58,19 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 2].Value = item.ConstructionObject;
                 sheet.Cells[row, column + 3].Value = item.ContractorOrSupplier;
                 sheet.Cells[row, column + 4].Value = item.CostItem;
-                sheet.Cells[row, column + 5].Value = item.Contractor.PadRight(50, ' ') + "   " + item.Number;
-                sheet.Cells[row, column + 6].Value = item.Number;
-                sheet.Cells[row, column + 7].Value = item.Date;
-                sheet.Cells[row, column + 8].Value = item.Sum;
-                sheet.Cells[row, column + 9].Value = item.Receipt;
-                sheet.Cells[row, column + 10].Value = item.Payment;
-                sheet.Cells[row, column + 11].Value = item.CurrentDebt;
+                sheet.Cells[row, column + 5].Value = item.Number;
+                sheet.Cells[row, column + 6].Value = item.Date;
+                sheet.Cells[row, column + 7].Value = item.Sum;
+                sheet.Cells[row, column + 8].Value = item.Receipt;
+                sheet.Cells[row, column + 9].Value = item.Payment;
+                sheet.Cells[row, column + 10].Value = item.CurrentDebt;
                 row++;
             }
 
-            sheet.Cells[row, 2, row, 11].Style.Font.Bold = true;
-            sheet.Cells[1, 1, row, 11].AutoFitColumns();
+            sheet.Cells[row, 2, row, 10].Style.Font.Bold = true;
+            sheet.Cells[1, 1, row, 10].AutoFitColumns();
 
-            var range = sheet.Cells[1, 1, row - 1, 11];
-
+            var range = sheet.Cells[1, 1, row - 1, 10];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -83,55 +78,70 @@ namespace Cost.Presentation.ReportsToExcel
 
             range.AutoFilter = true;
 
+            var customPivotTableStyle = pivot.Workbook.Styles.CreatePivotTableStyle("CurrentDebtStyle");
 
 
+            //customPivotTableStyle.WholeTable.Style.Font.Color.SetColor(ExcelIndexedColor.Indexed22);
+            //customPivotTableStyle.PageFieldLabels.Style.Font.Color.SetColor(Color.Red);
+            //customPivotTableStyle.PageFieldValues.Style.Font.Color.SetColor(eThemeSchemeColor.Accent4);
+
+            customPivotTableStyle.HeaderRow.Style.Font.Bold = true;
+            customPivotTableStyle.TotalRow.Style.Font.Bold = true;
+            //customPivotTableStyle.HeaderRow.Style.Font.Color.SetColor(Color.DarkGray);
+            //customPivotTableStyle.HeaderRow.Style.Fill.Style = eDxfFillStyle.GradientFill;
+            //customPivotTableStyle.HeaderRow.Style.Fill.Gradient.Degree = 180;
+
+            //var c1 = customPivotTableStyle.HeaderRow.Style.Fill.Gradient.Colors.Add(0);
+            //c1.Color.SetColor(Color.LightBlue);
+
+            //var c3 = customPivotTableStyle.HeaderRow.Style.Fill.Gradient.Colors.Add(100);
+            //c3.Color.SetColor(Color.DarkCyan);
 
 
             // Создание сводной таблицы
             var pivotTable = pivot.PivotTables.Add(pivot.Cells["A1"], range, "CurrentDebt");
-
+            pivotTable.StyleName = "CurrentDebtStyle";
             pivotTable.ShowHeaders = false;
             pivotTable.ShowRowHeaders = false;
-            pivotTable.Compact = false;
+            pivotTable.DataOnRows = false;
+
+            ////pivotTable.PivotTableStyle = OfficeOpenXml.Table.PivotTableStyles.None;
+            pivotTable.RowGrandTotals = false;
+            pivotTable.GrandTotalCaption = "Итого:";
 
             var styleWholeTable = pivotTable.Styles.AddWholeTable();
             styleWholeTable.Style.Font.Name = "Calibri";
             styleWholeTable.Style.Font.Size = 11;
-            styleWholeTable.Style.Font.Color.SetColor(Color.Black);
             styleWholeTable.Style.NumberFormat.Format = "### ### ### ##0.00";
-            styleWholeTable.Style.Fill.BackgroundColor.SetColor(Color.White);
-
             styleWholeTable.Style.Border.BorderAround(ExcelBorderStyle.Thin);
             styleWholeTable.Style.Border.Horizontal.Style = ExcelBorderStyle.Thin;
             styleWholeTable.Style.Border.Vertical.Style = ExcelBorderStyle.Thin;
 
-            pivotTable.WorkSheet.Cells[2, 2, 2, 5].Style.Font.Bold = true;
-            pivotTable.WorkSheet.Cells[2, 2, 2, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            pivotTable.WorkSheet.Column(4).Width = 40;
-
-
-            // Добавление полей
             pivotTable.RowFields.Add(pivotTable.Fields["ResidentialComplex"]);
             pivotTable.RowFields.Add(pivotTable.Fields["ConstructionObject"]);
             pivotTable.RowFields.Add(pivotTable.Fields["ContractorOrSupplier"]);
             pivotTable.RowFields.Add(pivotTable.Fields["CostItem"]);
-            pivotTable.RowFields.Add(pivotTable.Fields["Contractor"]);
+            pivotTable.RowFields.Add(pivotTable.Fields["Contract"]);
             pivotTable.DataFields.Add(pivotTable.Fields["ContractAmount"]);
             pivotTable.DataFields.Add(pivotTable.Fields["Receipt"]);
             pivotTable.DataFields.Add(pivotTable.Fields["Payment"]);
             pivotTable.DataFields.Add(pivotTable.Fields["CurrentDebt"]);
 
-            pivotTable.DataFields[0].Name = "Сумма договора";
-            pivotTable.DataFields[1].Name = "Выполнение";
-            pivotTable.DataFields[2].Name = "Оплата";
-            pivotTable.DataFields[3].Name = "Текущая задолженность";
-
-            pivotTable.DataOnRows = false;
+            pivotTable.DataFields[0].Name = "       Сумма договора      ";
+            pivotTable.DataFields[1].Name = "         Выполнение        ";
+            pivotTable.DataFields[2].Name = "           Оплата          ";
+            pivotTable.DataFields[3].Name = "   Текущая задолженность   ";
 
             pivotTable.RowFields[0].Items.ShowDetails(false);
             pivotTable.RowFields[1].Items.ShowDetails(false);
             pivotTable.RowFields[2].Items.ShowDetails(false);
             pivotTable.RowFields[3].Items.ShowDetails(false);
+
+            //var style3 = pivotTable.Styles.AddAllLabels();
+            //style3.Style.Font.Color.SetColor(Color.Green);
+            //var style2 = pivotTable.Styles.AddData();
+            //style2.GrandRow = true; //The pivot area will apply to the Grand Row only.
+            //style2.Style.Font.Color.SetColor(Color.Red);
 
             package.SaveAs(new FileInfo(filePath));
         }

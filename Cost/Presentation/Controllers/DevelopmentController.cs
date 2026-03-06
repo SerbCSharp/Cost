@@ -179,9 +179,8 @@ namespace Cost.Presentation.Controllers
         [HttpGet("CurrentDebt")]
         public async Task<IActionResult> CurrentDebtAsync([Required] Organizations Organization)
         {
-            //var cost = await _generatingReports.CurrentDebtAsync(Organization);
-            //_exportingReportsToExcel.CurrentDebt(cost);
-            _exportingReportsToExcel.CurrentDebt(new List<Domain.Cost>());
+            var cost = await _generatingReports.CurrentDebtAsync(Organization);
+            _exportingReportsToExcel.CurrentDebt(cost);
             return NoContent();
         }
 
