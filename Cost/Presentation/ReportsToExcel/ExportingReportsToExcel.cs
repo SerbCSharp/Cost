@@ -4,10 +4,7 @@ using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using OfficeOpenXml;
-using OfficeOpenXml.Drawing;
 using OfficeOpenXml.Style;
-using System.Drawing;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Cost.Presentation.ReportsToExcel
 {
@@ -79,24 +76,7 @@ namespace Cost.Presentation.ReportsToExcel
             range.AutoFilter = true;
 
             var customPivotTableStyle = pivot.Workbook.Styles.CreatePivotTableStyle("CurrentDebtStyle");
-
-
-            //customPivotTableStyle.WholeTable.Style.Font.Color.SetColor(ExcelIndexedColor.Indexed22);
-            //customPivotTableStyle.PageFieldLabels.Style.Font.Color.SetColor(Color.Red);
-            //customPivotTableStyle.PageFieldValues.Style.Font.Color.SetColor(eThemeSchemeColor.Accent4);
-
             customPivotTableStyle.HeaderRow.Style.Font.Bold = true;
-            customPivotTableStyle.TotalRow.Style.Font.Bold = true;
-            //customPivotTableStyle.HeaderRow.Style.Font.Color.SetColor(Color.DarkGray);
-            //customPivotTableStyle.HeaderRow.Style.Fill.Style = eDxfFillStyle.GradientFill;
-            //customPivotTableStyle.HeaderRow.Style.Fill.Gradient.Degree = 180;
-
-            //var c1 = customPivotTableStyle.HeaderRow.Style.Fill.Gradient.Colors.Add(0);
-            //c1.Color.SetColor(Color.LightBlue);
-
-            //var c3 = customPivotTableStyle.HeaderRow.Style.Fill.Gradient.Colors.Add(100);
-            //c3.Color.SetColor(Color.DarkCyan);
-
 
             // Создание сводной таблицы
             var pivotTable = pivot.PivotTables.Add(pivot.Cells["A1"], range, "CurrentDebt");
@@ -104,10 +84,7 @@ namespace Cost.Presentation.ReportsToExcel
             pivotTable.ShowHeaders = false;
             pivotTable.ShowRowHeaders = false;
             pivotTable.DataOnRows = false;
-
-            ////pivotTable.PivotTableStyle = OfficeOpenXml.Table.PivotTableStyles.None;
             pivotTable.RowGrandTotals = false;
-            pivotTable.GrandTotalCaption = "Итого:";
 
             var styleWholeTable = pivotTable.Styles.AddWholeTable();
             styleWholeTable.Style.Font.Name = "Calibri";
@@ -136,12 +113,6 @@ namespace Cost.Presentation.ReportsToExcel
             pivotTable.RowFields[1].Items.ShowDetails(false);
             pivotTable.RowFields[2].Items.ShowDetails(false);
             pivotTable.RowFields[3].Items.ShowDetails(false);
-
-            //var style3 = pivotTable.Styles.AddAllLabels();
-            //style3.Style.Font.Color.SetColor(Color.Green);
-            //var style2 = pivotTable.Styles.AddData();
-            //style2.GrandRow = true; //The pivot area will apply to the Grand Row only.
-            //style2.Style.Font.Color.SetColor(Color.Red);
 
             package.SaveAs(new FileInfo(filePath));
         }
