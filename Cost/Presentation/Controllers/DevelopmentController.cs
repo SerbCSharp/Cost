@@ -19,6 +19,14 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel = exportingReportsToExcel;
         }
 
+
+
+
+
+
+
+
+
         /// <summary>Акт сверки</summary>
         /// <response>Записывает информацию в Transcript.xlsx</response>
         [HttpGet("ReconciliationStatement")]
@@ -60,55 +68,16 @@ namespace Cost.Presentation.Controllers
             return NoContent();
         }
 
-        /// <summary>Договора из 1С</summary>
-        /// <response>Записывает информацию в Contracts.xlsx</response>
-        [HttpGet("ContractsFrom1C")]
-        public async Task<IActionResult> ContractsFrom1CAsync([Required] Organizations Organization)
-        {
-            var contractsFrom1C = await _generatingReports.ContractsFrom1CAsync(Organization);
-            _exportingReportsToExcel.ContractsFrom1C(contractsFrom1C);
-            return NoContent();
-        }
-
-        /// <summary>Операции из 1С</summary>
-        /// <response>Записывает информацию в Operations.xlsx</response>
-        [HttpGet("Operations")]
-        public async Task<IActionResult> OperationsAsync([Required] Organizations Organization)
-        {
-            var operations = await _generatingReports.Operations(Organization);
-            _exportingReportsToExcel.Operations(operations);
-            return NoContent();
-        }
-
         /// <summary>Оплаты</summary>
         /// <response>Записывает информацию в Payments.xlsx</response>
         [HttpGet("Payments")]
         public async Task<IActionResult> PaymentsAsync([Required] Organizations Organization)
         {
+            //var payments = await _generatingReports.ExpensePaymentsAsync(Organization);
             var payments = await _generatingReports.PaymentsAsync(Organization);
             _exportingReportsToExcel.Payments(payments);
             return NoContent();
 
-        }
-
-        /// <summary>Отсутствующие у нас договора по которым есть оплаты</summary>
-        /// <response>Записывает информацию в Payments.xlsx</response>
-        [HttpGet("WeDoNotHaveThesePayments")]
-        public async Task<IActionResult> WeDoNotHaveThesePaymentsAsync([Required] Organizations Organization)
-        {
-            var noPayments = await _generatingReports.WeDoNotHaveThesePaymentsAsync(Organization);
-            _exportingReportsToExcel.Payments(noPayments.ToList());
-            return NoContent();
-        }
-
-        /// <summary>Номенклатура</summary>
-        /// <response>Записывает информацию в Nomenclature.xlsx</response>
-        [HttpGet("Nomenclature")]
-        public async Task<IActionResult> NomenclatureAsync([Required] Organizations Organization)
-        {
-            var noPayments = await _generatingReports.NomenclatureAsync(Organization);
-            _exportingReportsToExcel.Nomenclature(noPayments);
-            return NoContent();
         }
 
         /// <summary>Движение по договорам</summary>

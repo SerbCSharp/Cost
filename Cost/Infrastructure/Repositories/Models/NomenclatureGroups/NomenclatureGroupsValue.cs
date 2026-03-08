@@ -1,14 +1,8 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Cost.Infrastructure.Repositories.Models.NomenclatureGroups
+﻿namespace Cost.Infrastructure.Repositories.Models.NomenclatureGroups
 {
     public class NomenclatureGroupsValue
     {
         public string Ref_Key { get; set; }
         public string Description { get; set; }
-
-        [JsonPropertyName("ОбъектСтроительстваС_Key")]
-        public string ConstructionObjectId { get; set; }
-        public bool DeletionMark { get; set; }
     }
 }

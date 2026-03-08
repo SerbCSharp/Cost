@@ -4,20 +4,20 @@ using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
 using Cost.Infrastructure.Repositories.Models.BillPayment;
-using Cost.Infrastructure.Repositories.Models.ConstructionProjects;
+using Cost.Infrastructure.Repositories.Models.BuyerPaymentInvoice;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.CostItems;
 using Cost.Infrastructure.Repositories.Models.Counterparties;
+using Cost.Infrastructure.Repositories.Models.DebitToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
+using Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
-using Cost.Infrastructure.Repositories.Models.InvoiceReceived;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
-using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using Cost.Infrastructure.Repositories.Models.Payments;
 using Cost.Infrastructure.Repositories.Models.Receipts;
 using Cost.Infrastructure.Repositories.Models.ReceiptToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.Selling;
-using Cost.Infrastructure.Repositories.Models.TypesCalculations;
+using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
 using Microsoft.Extensions.Options;
 using OfficeOpenXml;
 using System.Data;
@@ -31,6 +31,7 @@ namespace Cost.Infrastructure.Repositories
         private readonly HttpClient httpClient;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly Base1CConfiguration _base1CConfiguration;
+        private const string ApiUrl = "http://localhost/afk_de/odata/standard.odata/";
 
         public decimal StartBalance => 2750248.4M;
         public DateOnly StartDate => new DateOnly(2026, 1, 1);
@@ -46,6 +47,160 @@ namespace Cost.Infrastructure.Repositories
             _httpClientFactory = httpClientFactory;
             httpClient = _httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64Credentials);
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+        }
+
+        public async Task<DebitToCurrentAccount> DebitToCurrentAccountAsync() // Списание с расчетного счета
+        {
+            var paymentUrl = ApiUrl + "Document_СписаниеСРасчетногоСчета?$format=json"
+                + "&$select=Ref_Key,Date,СуммаДокумента,ДоговорКонтрагента_Key,РасшифровкаПлатежа,НазначениеПлатежа,ВидОперации"
+                + "&$filter=DeletionMark eq false end Posted eq true";
+            using HttpResponseMessage paymentResponse = await httpClient.GetAsync(paymentUrl);
+            return await paymentResponse.Content.ReadFromJsonAsync<DebitToCurrentAccount>();
+        }
+
+        public async Task<AdditionalInformation> AdditionalInformationAsync() // Дополнительные сведения
+        {
+            var additionalInformationUrl = ApiUrl + "InformationRegister_ДополнительныеСведения?$format=json"
+                + "&$select=Объект,Значение,Значение_Type"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage additionalInformationResponse = await httpClient.GetAsync(additionalInformationUrl);
+            return await additionalInformationResponse.Content.ReadFromJsonAsync<AdditionalInformation>();
+        }
+
+        public async Task<NomenclatureGroups> NomenclatureGroupsAsync() // Номенклатурные группы
+        {
+            var nomenclatureGroupsUrl = ApiUrl + "Catalog_НоменклатурныеГруппы?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage nomenclatureGroupsResponse = await httpClient.GetAsync(nomenclatureGroupsUrl);
+            return await nomenclatureGroupsResponse.Content.ReadFromJsonAsync<NomenclatureGroups>();
+        }
+
+        public async Task<CostItems> CostItemsAsync() // Статьи затрат
+        {
+            var costItemsUrl = ApiUrl + "Catalog_СтатьиЗатрат?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage costItemsResponse = await httpClient.GetAsync(costItemsUrl);
+            return await costItemsResponse.Content.ReadFromJsonAsync<CostItems>();
+        }
+
+        public IEnumerable<ExpensePaymentsFromExcel> ExpensePaymentsFromExcel() // Литер и статья затрат в старых оплатах
+        {
+            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
+            FileInfo fileInfo = new(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "Payments"];
+            DataTable dataTable = new();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                if (sheet.Cells[1, i].Value.ToString() == "Date")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
+                else if (sheet.Cells[1, i].Value.ToString() == "PaymentAmount")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new ExpensePaymentsFromExcel
+            {
+                Liter = row.Field<string>("Liter"),
+                CostItems = row.Field<string>("CostItems"),
+                PaymentId = row.Field<string>("PaymentId"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
+                PaymentAmount = row.Field<decimal>("PaymentAmount"),
+                PurposePayment = row.Field<string>("PurposePayment"),
+            });
+        }
+
+        public async Task<SupplierPaymentInvoice> SupplierPaymentInvoiceAsync() // Счет на оплату поставщика
+        {
+            var supplierPaymentInvoiceUrl = ApiUrl + "Document_СчетНаОплатуПоставщика?$format=json"
+                + "&$select=Ref_Key,Комментарий"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage supplierPaymentInvoiceResponse = await httpClient.GetAsync(supplierPaymentInvoiceUrl);
+            return await supplierPaymentInvoiceResponse.Content.ReadFromJsonAsync<SupplierPaymentInvoice>();
+        }
+
+        public async Task<DepositToCurrentAccount> DepositToCurrentAccountAsync() // Поступление на расчетный счет
+        {
+            var depositToCurrentAccountUrl = ApiUrl + "Document_ПоступлениеНаРасчетныйСчет?$format=json"
+                + "&$select=Ref_Key,Date,СуммаДокумента,ДоговорКонтрагента_Key,РасшифровкаПлатежа,НазначениеПлатежа,ВидОперации"
+                + "&$filter=DeletionMark eq false end Posted eq true";
+            using HttpResponseMessage depositToCurrentAccountResponse = await httpClient.GetAsync(depositToCurrentAccountUrl);
+            return await depositToCurrentAccountResponse.Content.ReadFromJsonAsync<DepositToCurrentAccount>();
+        }
+
+        public async Task<BuyerPaymentInvoice> BuyerPaymentInvoiceAsync() // Счет на оплату покупателю
+        {
+            var buyerPaymentInvoiceUrl = ApiUrl + "Document_СчетНаОплатуПокупателю?$format=json"
+                + "&$select=Ref_Key,Комментарий"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage buyerPaymentInvoiceResponse = await httpClient.GetAsync(buyerPaymentInvoiceUrl);
+            return await buyerPaymentInvoiceResponse.Content.ReadFromJsonAsync<BuyerPaymentInvoice>();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+        public IEnumerable<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments() // Литер и статья затрат в старых оплатах
+        {
+            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
+            FileInfo fileInfo = new(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "Payments"];
+            DataTable dataTable = new();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                if (sheet.Cells[1, i].Value.ToString() == "Date")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
+                else if (sheet.Cells[1, i].Value.ToString() == "PaymentAmount")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new LiterAndCostItemInPayments
+            {
+                Liter = row.Field<string>("Liter"),
+                CostItems = row.Field<string>("CostItems"),
+                PaymentId = row.Field<string>("PaymentId"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
+                //Number = row.Field<string>("Number"),
+                PaymentAmount = row.Field<decimal>("PaymentAmount"),
+                PurposePayment = row.Field<string>("PurposePayment"),
+            });
         }
 
         public async Task<Counterparties> CounterpartiesAsync() // Контрагенты
@@ -87,34 +242,6 @@ namespace Cost.Infrastructure.Repositories
             return await receiptToCurrentAccountResponse.Content.ReadFromJsonAsync<ReceiptToCurrentAccount>();
         }
 
-        public async Task<NomenclatureGroups> NomenclatureGroupsAsync() // Номенклатурные группы
-        {
-            var nomenclatureGroupsUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_НоменклатурныеГруппы?$format=json";
-            using HttpResponseMessage nomenclatureGroupsResponse = await httpClient.GetAsync(nomenclatureGroupsUrl);
-            return await nomenclatureGroupsResponse.Content.ReadFromJsonAsync<NomenclatureGroups>();
-        }
-
-        public async Task<ConstructionProjects> ConstructionProjectsAsync() // Объекты Строительства
-        {
-            var constructionProjectsUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_ОбъектыСтроительства?$format=json";
-            using HttpResponseMessage constructionProjectsResponse = await httpClient.GetAsync(constructionProjectsUrl);
-            return await constructionProjectsResponse.Content.ReadFromJsonAsync<ConstructionProjects>();
-        }
-
-        public async Task<CostItems> CostItemsAsync() // Статьи затрат
-        {
-            var costItemsUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_СтатьиЗатрат?$format=json";
-            using HttpResponseMessage costItemsResponse = await httpClient.GetAsync(costItemsUrl);
-            return await costItemsResponse.Content.ReadFromJsonAsync<CostItems>();
-        }
-
-        public async Task<TypesCalculations> TypesCalculationsAsync() // Виды взаиморасчетов
-        {
-            var typesCalculationsUrl = "http://localhost/afk_de/odata/standard.odata/Catalog_ВидыВзаиморасчетов?$format=json";
-            using HttpResponseMessage typesCalculationsResponse = await httpClient.GetAsync(typesCalculationsUrl);
-            return await typesCalculationsResponse.Content.ReadFromJsonAsync<TypesCalculations>();
-        }
-
         public async Task<DebtAdjustment> DebtAdjustmentAsync() // Корректировка долга
         {
             var debtAdjustmentUrl = "http://localhost/afk_de/odata/standard.odata/Document_КорректировкаДолга?$format=json";
@@ -141,20 +268,6 @@ namespace Cost.Infrastructure.Repositories
             var sellingUrl = "http://localhost/afk_de/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
             using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
             return await sellingResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
-        }
-
-        public async Task<AdditionalInformation> AdditionalInformationAsync() // Дополнительные сведения
-        {
-            var additionalInformationUrl = "http://localhost/afk_de/odata/standard.odata/InformationRegister_ДополнительныеСведения?$format=json";
-            using HttpResponseMessage additionalInformationResponse = await httpClient.GetAsync(additionalInformationUrl);
-            return await additionalInformationResponse.Content.ReadFromJsonAsync<AdditionalInformation>();
-        }
-
-        public async Task<InvoiceReceived> InvoiceReceivedAsync() // Счета-фактуры полученные
-        {
-            var invoiceReceivedUrl = "http://localhost/afk_de/odata/standard.odata/Document_СчетФактураПолученный?$format=json";
-            using HttpResponseMessage invoiceReceivedResponse = await httpClient.GetAsync(invoiceReceivedUrl);
-            return await invoiceReceivedResponse.Content.ReadFromJsonAsync<InvoiceReceived>();
         }
 
         public List<Facility> GetFacility() // Площади объектов строительства
@@ -295,62 +408,13 @@ namespace Cost.Infrastructure.Repositories
             }).ToList();
         }
 
-        public List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments() // Литер и статья затрат в оплатах
-        {
-            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
-            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            FileInfo fileInfo = new FileInfo(filePath);
-            using var package = new ExcelPackage(fileInfo);
-            var sheet = package.Workbook.Worksheets[Name: "Payments"];
-            DataTable dataTable = new DataTable();
-
-            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
-            {
-                if (sheet.Cells[1, i].Value.ToString() == "Date")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
-                else if (sheet.Cells[1, i].Value.ToString() == "PaymentAmount")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
-                else
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
-            }
-
-            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
-            {
-                DataRow dataRow = dataTable.NewRow();
-                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
-                {
-                    dataRow[j - 1] = sheet.Cells[i, j].Value;
-                }
-                dataTable.Rows.Add(dataRow);
-            }
-
-            return dataTable.AsEnumerable().Select(row => new LiterAndCostItemInPayments
-            {
-                Liter = row.Field<string>("Liter"),
-                CostItems = row.Field<string>("CostItems"),
-                PaymentId = row.Field<string>("PaymentId"),
-                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
-                Number = row.Field<string>("Number"),
-                PaymentAmount = row.Field<decimal>("PaymentAmount"),
-                PurposePayment = row.Field<string>("PurposePayment"),
-            }).ToList();
-        }
-
         public async Task<string> TmpAsync()
         {
             var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_СчетНаОплатуПоставщика?$format=json";
-            //var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_СчетНаОплатуПокупателю?$format=json";
             using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);
             return content1;
-        }
-
-        public async Task<OperationsTmp> OperationAsync() // Операции
-        {
-            var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_ОперацияБух?$format=json";
-            using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
-            return await operationResponse.Content.ReadFromJsonAsync<OperationsTmp>();
         }
 
         public async Task<BillPayment> BillPaymentAsync() // Оплата счетов

@@ -19,36 +19,10 @@ namespace Cost.Infrastructure.Repositories.Models.ContractsCounterparties
         [JsonPropertyName("Сумма")]
         public decimal? Sum { get; set; }
 
-        [JsonPropertyName("СуммаНДС")]
-        public decimal? SumNDS { get; set; }
-
-        [JsonPropertyName("СтавкаНДС")]
-        public string RateNDS { get; set; }
-
-        [JsonPropertyName("ДоговорЗакрыт")]
-        public bool? ContractClosed { get; set; }
-
-        [JsonPropertyName("ДополнительныеРеквизиты")]
-        public AdditionalDetails[] AdditionalDetails { get; set; }
-
         [JsonPropertyName("Owner_Key")]
         public string ContractorId { get; set; } // Подрядчик
 
-        [JsonPropertyName("Организация_Key")]
-        public string OrganizationId { get; set; }
-
-        [JsonPropertyName("ВидВзаиморасчетов_Key")]
-        public string TypeCalculationId { get; set; }
-        public string CostItemsId { get; set; }
-        public string NomenclatureGroupsId { get; set; }
-        public string CostItems { get; set; }
-        public string ConstructionProjects { get; set; }
-        public string TypeCalculation { get; set; }
-
-        [JsonPropertyName("ВидДоговора")]
-        public string TypeAgreement { get; set; }
         public bool? DeletionMark { get; set; }
-        public string Contractor { get; set; }
         public string Code { get; set; }
     }
 }

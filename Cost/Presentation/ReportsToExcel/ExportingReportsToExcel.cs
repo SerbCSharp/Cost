@@ -1,10 +1,9 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
-using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
-using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using System.Reflection;
 
 namespace Cost.Presentation.ReportsToExcel
 {
@@ -13,6 +12,63 @@ namespace Cost.Presentation.ReportsToExcel
         public ExportingReportsToExcel()
         {
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+        }
+
+        public void  Browse<T>(IEnumerable<T> data) // Универсальный просмотрщик
+        {
+            string filePath = "C:\\Cost\\Browse.xlsx";
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets.Add("Browse");
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+            sheet.View.FreezePanes(2, 1);
+
+            var type = data.GetType().GetInterface("IEnumerable`1").GetGenericArguments()[0];
+            var fields = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            var countFields = fields.Length;
+
+            // Шапка
+            for (int i = 0; i < countFields; i++ )
+            {
+                sheet.Cells[1, i + 1].Value = fields[i].Name;
+                switch (fields[i].PropertyType.Name)
+                {
+                    case "String":
+                        sheet.Column(i + 1).Style.Numberformat.Format = "@";
+                        break;
+                    case "DateOnly":
+                        sheet.Column(i + 1).Style.Numberformat.Format = "dd.mm.yyyy";
+                        break;
+                    case "Decimal":
+                        sheet.Column(i + 1).Style.Numberformat.Format = "### ### ### ##0.00";
+                        break;
+                    default:
+                        break;
+                }
+            }
+            sheet.Cells[1, 1, 1, countFields].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, countFields].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            foreach (var item in data)
+            {
+                for (int i = 0; i < countFields; i++)
+                {
+                    sheet.Cells[row, i + 1].Value = fields[i].GetValue(item);
+                }
+                row++;
+            }
+
+            sheet.Cells[1, 1, row, 10].AutoFitColumns();
+            var range = sheet.Cells[1, 1, row - 1, countFields];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range.AutoFilter = true;
+
+            package.SaveAs(new FileInfo(filePath));
         }
 
         public void CurrentDebt(IEnumerable<Domain.Cost> cost) // Текущая задолженность
@@ -77,6 +133,7 @@ namespace Cost.Presentation.ReportsToExcel
 
             var customPivotTableStyle = pivot.Workbook.Styles.CreatePivotTableStyle("CurrentDebtStyle");
             customPivotTableStyle.HeaderRow.Style.Font.Bold = true;
+            customPivotTableStyle.TotalRow.Style.Font.Bold = true;
 
             // Создание сводной таблицы
             var pivotTable = pivot.PivotTables.Add(pivot.Cells["A1"], range, "CurrentDebt");
@@ -84,7 +141,7 @@ namespace Cost.Presentation.ReportsToExcel
             pivotTable.ShowHeaders = false;
             pivotTable.ShowRowHeaders = false;
             pivotTable.DataOnRows = false;
-            pivotTable.RowGrandTotals = false;
+            // pivotTable.RowGrandTotals = false;
 
             var styleWholeTable = pivotTable.Styles.AddWholeTable();
             styleWholeTable.Style.Font.Name = "Calibri";
@@ -120,7 +177,6 @@ namespace Cost.Presentation.ReportsToExcel
         public void Cost(List<Domain.Cost> cost) // Стоимость строительства
         {
             string filePath = "C:\\Cost\\Cost.xlsx";
-            //ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
             var sheet = package.Workbook.Worksheets.Add("Прямые затраты");
@@ -430,7 +486,6 @@ namespace Cost.Presentation.ReportsToExcel
         public void IncomeAndExpenses(List<IncomeAndExpenses> incomeAndExpenses)
         {
             string filePath = "C:\\Cost\\IncomeAndExpenses.xlsx";
-            //ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
             var sheet = package.Workbook.Worksheets["IncomeAndExpenses"];
@@ -482,8 +537,6 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 15].Value = item.InvoiceReceivedNDS;
                 sheet.Cells[row, column + 16].Value = item.TypeOperation;
                 sheet.Cells[row, column + 17].Value = item.AreaOfActivity;
-                //sheet.Cells[row, column + 18].Value = item.LiterPayment;
-                //sheet.Cells[row, column + 19].Value = item.CostItemPayment;
                 row++;
             }
             sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B2:B{row - 1})";
@@ -514,128 +567,6 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
-        public void ContractsFrom1C(List<ContractsCounterpartiesValue> Contracts) // 
-        {
-            string filePath = "C:\\Cost\\Contracts.xlsx";
-            //ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            using var package = new ExcelPackage();
-
-            var sheet = package.Workbook.Worksheets.Add("Договоры из 1С");
-            sheet.Cells.Style.Font.Name = "Calibri";
-            sheet.Cells.Style.Font.Size = 11;
-
-            // Шапка
-            sheet.Cells[1, 1].Value = "Код договора из 1С";
-            sheet.Cells[1, 2].Value = "Подрядчик";
-            sheet.Cells[1, 3].Value = "Номер договора";
-            sheet.Cells[1, 4].Value = "Номер ДС";
-            sheet.Cells[1, 5].Value = "Наименование";
-            sheet.Cells[1, 6].Value = "Дата договора";
-            sheet.Cells[1, 7].Value = "Сумма договора";
-            sheet.Cells[1, 8].Value = "Ставка НДС";
-            sheet.Cells[1, 9].Value = "ГП";
-            sheet.Cells[1, 10].Value = "ГУ";
-            sheet.Cells[1, 11].Value = "Подрядчик/Поставщик";
-            sheet.Cells[1, 12].Value = "Литер";
-            sheet.Cells[1, 13].Value = "Статья затрат";
-            sheet.Cells[1, 14].Value = "Комментарий";
-            sheet.Cells[1, 15].Value = "Статус";
-            sheet.Cells[1, 16].Value = "Тип договора";
-            sheet.Cells[1, 1, 1, 16].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 16].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
-            var row = 2;
-            var column = 0;
-            foreach (var item in Contracts)
-            {
-                sheet.Cells[row, column + 1].Value = item.CounterpartyAgreementId;
-                sheet.Cells[row, column + 2].Value = item.Contractor;
-                sheet.Cells[row, column + 3].Value = item.Number;
-                sheet.Cells[row, column + 4].Value = "";
-                sheet.Cells[row, column + 5].Value = item.Name;
-                sheet.Cells[row, column + 6].Value = item.Date;
-                sheet.Cells[row, column + 7].Value = item.Sum;
-                sheet.Cells[row, column + 8].Value = item.RateNDS;
-                sheet.Cells[row, column + 9].Value = item.TypeCalculation;
-                sheet.Cells[row, column + 10].Value = "";
-                sheet.Cells[row, column + 11].Value = "";
-                sheet.Cells[row, column + 12].Value = item.ConstructionProjects;
-                sheet.Cells[row, column + 13].Value = item.CostItems;
-                sheet.Cells[row, column + 14].Value = "";
-                sheet.Cells[row, column + 15].Value = item.ContractClosed;
-                sheet.Cells[row, column + 16].Value = item.TypeAgreement;
-                row++;
-            }
-
-            sheet.Cells[1, 1, row, 16].AutoFitColumns();
-
-            var range = sheet.Cells[1, 1, row - 1, 16];
-            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-
-            sheet.Cells[2, 6, row, 6].Style.Numberformat.Format = "dd.mm.yyyy";
-            sheet.Cells[2, 7, row, 7].Style.Numberformat.Format = "### ### ### ##0.00";
-
-            sheet.View.FreezePanes(2, 2);
-
-            range.AutoFilter = true;
-
-            package.SaveAs(new FileInfo(filePath));
-        }
-
-        public void Operations(List<OperationsTmpValue> operations)
-        {
-            string filePath = "C:\\Cost\\Operations.xlsx";
-            //ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            using var package = new ExcelPackage();
-
-            var sheet = package.Workbook.Worksheets["Бухгалтерские операции"];
-            if (sheet == null)
-                sheet = package.Workbook.Worksheets.Add("Бухгалтерские операции");
-
-            sheet.Cells.Style.Font.Name = "Times New Roman";
-            sheet.Cells.Style.Font.Size = 13;
-
-            // Шапка
-            sheet.Cells[1, 1].Value = "Код из 1С";
-            sheet.Cells[1, 2].Value = "Номер";
-            sheet.Cells[1, 3].Value = "Дата";
-            sheet.Cells[1, 4].Value = "Сумма";
-            sheet.Cells[1, 5].Value = "Содержание";
-            sheet.Cells[1, 6].Value = "Комментарий";
-            sheet.Cells[1, 1, 1, 6].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
-            var row = 2;
-            var column = 0;
-            foreach (var item in operations)
-            {
-                sheet.Cells[row, column + 1].Value = item.Ref_Key;
-                sheet.Cells[row, column + 2].Value = item.Number;
-                sheet.Cells[row, column + 3].Value = item.Date;
-                sheet.Cells[row, column + 4].Value = item.Sum;
-                sheet.Cells[row, column + 5].Value = item.Content;
-                sheet.Cells[row, column + 6].Value = item.Comment;
-                row++;
-            }
-            sheet.Cells[1, 1, row, 6].AutoFitColumns();
-
-            var range = sheet.Cells[1, 1, row - 1, 6];
-            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-
-            sheet.Cells[2, 3, row, 3].Style.Numberformat.Format = "dd.mm.yyyy";
-            sheet.Cells[2, 4, row, 4].Style.Numberformat.Format = "### ### ### ##0.00";
-
-            range.AutoFilter = true;
-
-            package.SaveAs(new FileInfo(filePath));
-        }
-
         public void Payments(List<LiterAndCostItemInPayments> payments) // Оплаты
         {
             string filePath = "C:\\Cost\\Payments.xlsx";
@@ -648,7 +579,6 @@ namespace Cost.Presentation.ReportsToExcel
 
             // Шапка
             sheet.Cells[1, 1].Value = "PaymentId";
-            sheet.Cells[1, 2].Value = "Number";
             sheet.Cells[1, 3].Value = "Date";
             sheet.Cells[1, 4].Value = "Сумма";
             sheet.Cells[1, 5].Value = "Литер";
@@ -656,8 +586,6 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 7].Value = "PurposePayment";
             sheet.Cells[1, 8].Value = "Контрагент";
             sheet.Cells[1, 9].Value = "Договор";
-            sheet.Cells[1, 10].Value = "Литер из договора";
-            sheet.Cells[1, 11].Value = "Статья затрат из договора";
             sheet.Cells[1, 12].Value = "Подрядчик/Поставщик";
             sheet.Cells[1, 13].Value = "ContractId";
             sheet.Cells[1, 14].Value = "Вид операции";
@@ -669,7 +597,6 @@ namespace Cost.Presentation.ReportsToExcel
             foreach (var item in payments)
             {
                 sheet.Cells[row, column + 1].Value = item.PaymentId;
-                sheet.Cells[row, column + 2].Value = item.Number;
                 sheet.Cells[row, column + 3].Value = item.Date;
                 sheet.Cells[row, column + 4].Value = item.PaymentAmount;
                 sheet.Cells[row, column + 5].Value = item.Liter;
@@ -677,8 +604,6 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 7].Value = item.PurposePayment;
                 sheet.Cells[row, column + 8].Value = item.Contractor;
                 sheet.Cells[row, column + 9].Value = item.ContractNumber;
-                sheet.Cells[row, column + 10].Value = item.LiterInAgreement;
-                sheet.Cells[row, column + 11].Value = item.CostItemsInAgreement;
                 sheet.Cells[row, column + 12].Value = item.ContractorOrSupplier;
                 sheet.Cells[row, column + 13].Value = item.ContractId;
                 sheet.Cells[row, column + 14].Value = item.TypeOperation;
@@ -709,49 +634,9 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
-        public void Nomenclature(List<Nomenclature> nomenclature) // Проверка заполнения номенклатурных групп
-        {
-            string filePath = "C:\\Cost\\Nomenclature.xlsx";
-            //ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            using var package = new ExcelPackage();
-
-            var sheet = package.Workbook.Worksheets.Add("Номенклатурные группы");
-            sheet.Cells.Style.Font.Name = "Calibri";
-            sheet.Cells.Style.Font.Size = 11;
-
-            // Шапка
-            sheet.Cells[1, 1].Value = "Название группы";
-            sheet.Cells[1, 2].Value = "Название объекта";
-            sheet.Cells[1, 1, 1, 2].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
-            var row = 2;
-            var column = 0;
-            foreach (var item in nomenclature)
-            {
-                sheet.Cells[row, column + 1].Value = item.Description;
-                sheet.Cells[row, column + 2].Value = item.ConstructionName;
-                row++;
-            }
-            sheet.Cells[row, 2, row, 2].Style.Font.Bold = true;
-            sheet.Cells[1, 1, row, 2].AutoFitColumns();
-
-            var range = sheet.Cells[1, 1, row - 1, 2];
-            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-
-            range.AutoFilter = true;
-            sheet.View.FreezePanes(2, 1);
-
-            package.SaveAs(new FileInfo(filePath));
-        }
-
         public void CashFlow(List<CashFlow> cashFlow) // ДДС
         {
             string filePath = "C:\\Cost\\CashFlow.xlsx";
-            //ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
 
             var sheet = package.Workbook.Worksheets.Add("ДДС");

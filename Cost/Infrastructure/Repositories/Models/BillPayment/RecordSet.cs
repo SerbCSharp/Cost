@@ -6,9 +6,5 @@ namespace Cost.Infrastructure.Repositories.Models.BillPayment
     {
         [JsonPropertyName("СчетНаОплату")]
         public string InvoiceForPaymentId { get; set; }
-        public DateTime Period { get; set; }
-
-        [JsonPropertyName("Сумма")]
-        public decimal DocumentAmount { get; set; }
     }
 }

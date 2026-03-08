@@ -4,20 +4,20 @@ using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
 using Cost.Infrastructure.Repositories.Models.BillPayment;
-using Cost.Infrastructure.Repositories.Models.ConstructionProjects;
+using Cost.Infrastructure.Repositories.Models.BuyerPaymentInvoice;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.CostItems;
 using Cost.Infrastructure.Repositories.Models.Counterparties;
+using Cost.Infrastructure.Repositories.Models.DebitToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
+using Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
-using Cost.Infrastructure.Repositories.Models.InvoiceReceived;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
-using Cost.Infrastructure.Repositories.Models.OperationsTmp;
 using Cost.Infrastructure.Repositories.Models.Payments;
 using Cost.Infrastructure.Repositories.Models.Receipts;
 using Cost.Infrastructure.Repositories.Models.ReceiptToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.Selling;
-using Cost.Infrastructure.Repositories.Models.TypesCalculations;
+using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
 using Microsoft.Extensions.Options;
 using OfficeOpenXml;
 using System.Data;
@@ -94,25 +94,11 @@ namespace Cost.Infrastructure.Repositories
             return await nomenclatureGroupsResponse.Content.ReadFromJsonAsync<NomenclatureGroups>();
         }
 
-        public async Task<ConstructionProjects> ConstructionProjectsAsync() // Объекты Строительства
-        {
-            var constructionProjectsUrl = "http://localhost/PARMA/odata/standard.odata/Catalog_ОбъектыСтроительства?$format=json";
-            using HttpResponseMessage constructionProjectsResponse = await httpClient.GetAsync(constructionProjectsUrl);
-            return await constructionProjectsResponse.Content.ReadFromJsonAsync<ConstructionProjects>();
-        }
-
         public async Task<CostItems> CostItemsAsync() // Статьи затрат
         {
             var costItemsUrl = "http://localhost/PARMA/odata/standard.odata/Catalog_СтатьиЗатрат?$format=json";
             using HttpResponseMessage costItemsResponse = await httpClient.GetAsync(costItemsUrl);
             return await costItemsResponse.Content.ReadFromJsonAsync<CostItems>();
-        }
-
-        public async Task<TypesCalculations> TypesCalculationsAsync() // Виды взаиморасчетов
-        {
-            var typesCalculationsUrl = "http://localhost/PARMA/odata/standard.odata/Catalog_ВидыВзаиморасчетов?$format=json";
-            using HttpResponseMessage typesCalculationsResponse = await httpClient.GetAsync(typesCalculationsUrl);
-            return await typesCalculationsResponse.Content.ReadFromJsonAsync<TypesCalculations>();
         }
 
         public async Task<DebtAdjustment> DebtAdjustmentAsync() // Корректировка долга
@@ -141,13 +127,6 @@ namespace Cost.Infrastructure.Repositories
             var additionalInformationUrl = "http://localhost/PARMA/odata/standard.odata/InformationRegister_ДополнительныеСведения?$format=json";
             using HttpResponseMessage additionalInformationResponse = await httpClient.GetAsync(additionalInformationUrl);
             return await additionalInformationResponse.Content.ReadFromJsonAsync<AdditionalInformation>();
-        }
-
-        public async Task<InvoiceReceived> InvoiceReceivedAsync() // Счета-фактуры полученные
-        {
-            var invoiceReceivedUrl = "http://localhost/PARMA/odata/standard.odata/Document_СчетФактураПолученный?$format=json";
-            using HttpResponseMessage invoiceReceivedResponse = await httpClient.GetAsync(invoiceReceivedUrl);
-            return await invoiceReceivedResponse.Content.ReadFromJsonAsync<InvoiceReceived>();
         }
 
         public List<Facility> GetFacility() // Площади объектов строительства
@@ -287,7 +266,7 @@ namespace Cost.Infrastructure.Repositories
             }).ToList();
         }
 
-        public List<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments() // Литер и статья затрат в оплатах
+        public IEnumerable<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments() // Литер и статья затрат в оплатах
         {
             return new List<LiterAndCostItemInPayments>();
         }
@@ -305,13 +284,6 @@ namespace Cost.Infrastructure.Repositories
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);
             return content1;
-        }
-
-        public async Task<OperationsTmp> OperationAsync() // Операции
-        {
-            var operationUrl = "http://localhost/PARMA/odata/standard.odata/Document_ОперацияБух?$format=json";
-            using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
-            return await operationResponse.Content.ReadFromJsonAsync<OperationsTmp>();
         }
 
         public async Task<BillPayment> BillPaymentAsync() // Оплата счетов
@@ -361,6 +333,31 @@ namespace Cost.Infrastructure.Repositories
         }
 
         public Task<ActOfCompletion> ActOfCompletionAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<DebitToCurrentAccount> DebitToCurrentAccountAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<ExpensePaymentsFromExcel> ExpensePaymentsFromExcel()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<SupplierPaymentInvoice> SupplierPaymentInvoiceAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<DepositToCurrentAccount> DepositToCurrentAccountAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<BuyerPaymentInvoice> BuyerPaymentInvoiceAsync()
         {
             throw new NotImplementedException();
         }

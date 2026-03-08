@@ -5,13 +5,10 @@ namespace Cost.Infrastructure.Repositories.Models.AdditionalInformation
     public class AdditionalInformationValue
     {
         [JsonPropertyName("Объект")]
-        public string Indicator { get; set; }
+        public string ADObject { get; set; }
 
         [JsonPropertyName("Значение")]
-        public string IndicatorValue { get; set; }
-
-        [JsonPropertyName("Объект_Type")]
-        public string IndicatorType { get; set; }
+        public string ADValue { get; set; }
 
         [JsonPropertyName("Значение_Type")]
         public string ValueType { get; set; }

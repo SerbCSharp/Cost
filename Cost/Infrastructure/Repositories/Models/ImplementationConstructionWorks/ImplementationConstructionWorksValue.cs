@@ -4,8 +4,6 @@ namespace Cost.Infrastructure.Repositories.Models.ImplementationConstructionWork
 {
     public class ImplementationConstructionWorksValue
     {
-        [JsonPropertyName("Ref_Key")]
-        public string ReceiptId { get; set; }
         public DateTime Date { get; set; }
         public bool Posted { get; set; }
 
