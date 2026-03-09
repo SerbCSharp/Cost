@@ -71,6 +71,73 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
+        public void WeDoNotHaveTheseContracts(IEnumerable<Contracts> contracts)
+        {
+            string filePath = "C:\\Cost\\WeDoNotHaveTheseContracts.xlsx";
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets.Add("Новые договора");
+
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+            sheet.View.FreezePanes(2, 1);
+
+            // Шапка
+            sheet.Cells[1, 1].Value = "Код договора из 1С";
+            sheet.Cells[1, 2].Value = "Подрядчик";
+            sheet.Cells[1, 3].Value = "Номер договора";
+            sheet.Cells[1, 4].Value = "Номер ДС";
+            sheet.Cells[1, 5].Value = "Наименование";
+            sheet.Cells[1, 6].Value = "Дата договора";
+            sheet.Cells[1, 7].Value = "Сумма договора";
+            sheet.Cells[1, 1, 1, 7].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            var column = 0;
+            foreach (var item in contracts)
+            {
+                sheet.Cells[row, column + 1].Value = item.ContractId;
+                sheet.Cells[row, column + 2].Value = item.Contractor;
+                sheet.Cells[row, column + 3].Value = item.Number;
+                sheet.Cells[row, column + 4].Value = item.NumberAA;
+                sheet.Cells[row, column + 5].Value = item.Name;
+                sheet.Cells[row, column + 6].Value = item.Date;
+                sheet.Cells[row, column + 7].Value = item.Sum;
+                sheet.Cells[row, column + 8].Value = item.Code;
+                row++;
+            }
+            sheet.Cells[1, 1, row, 7].AutoFitColumns();
+            var range = sheet.Cells[1, 1, row - 1, 7];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range.AutoFilter = true;
+
+            sheet.Cells[2, 6, row, 6].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Cells[2, 7, row, 7].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            package.SaveAs(new FileInfo(filePath));
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         public void CurrentDebt(IEnumerable<Domain.Cost> cost) // Текущая задолженность
         {
             string filePath = "C:\\Cost\\CurrentDebt.xlsx";
@@ -361,60 +428,6 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[2, 12, row, 12].Style.Numberformat.Format = "### ### ### ##0.00";
 
             sheet.View.FreezePanes(2, 1);
-
-            range.AutoFilter = true;
-
-            package.SaveAs(new FileInfo(filePath));
-        }
-
-        public void WeDoNotHaveTheseContracts(IEnumerable<Contracts> contracts)
-        {
-            string filePath = "C:\\Cost\\WeDoNotHaveTheseContracts.xlsx";
-            //ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            using var package = new ExcelPackage();
-
-            var sheet = package.Workbook.Worksheets["Новые договора"];
-            if (sheet == null)
-                sheet = package.Workbook.Worksheets.Add("Новые договора");
-
-            sheet.Cells.Style.Font.Name = "Times New Roman";
-            sheet.Cells.Style.Font.Size = 13;
-
-            // Шапка
-            sheet.Cells[1, 1].Value = "Код договора из 1С";
-            sheet.Cells[1, 2].Value = "Подрядчик";
-            sheet.Cells[1, 3].Value = "Номер договора";
-            sheet.Cells[1, 4].Value = "Номер ДС";
-            sheet.Cells[1, 5].Value = "Наименование";
-            sheet.Cells[1, 6].Value = "Дата договора";
-            sheet.Cells[1, 7].Value = "Сумма договора";
-            sheet.Cells[1, 1, 1, 7].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
-            var row = 2;
-            var column = 0;
-            foreach (var item in contracts)
-            {
-                sheet.Cells[row, column + 1].Value = item.ContractId;
-                sheet.Cells[row, column + 2].Value = item.Contractor;
-                sheet.Cells[row, column + 3].Value = item.Number;
-                sheet.Cells[row, column + 4].Value = item.NumberAA;
-                sheet.Cells[row, column + 5].Value = item.Name;
-                sheet.Cells[row, column + 6].Value = item.Date;
-                sheet.Cells[row, column + 7].Value = item.Sum;
-                sheet.Cells[row, column + 8].Value = item.Code;
-                row++;
-            }
-            sheet.Cells[1, 1, row, 7].AutoFitColumns();
-
-            var range = sheet.Cells[1, 1, row - 1, 7];
-            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-
-            sheet.Cells[2, 6, row, 6].Style.Numberformat.Format = "dd.mm.yyyy";
-            sheet.Cells[2, 7, row, 7].Style.Numberformat.Format = "### ### ### ##0.00";
 
             range.AutoFilter = true;
 

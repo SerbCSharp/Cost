@@ -33,21 +33,21 @@ namespace Cost.Application
         Task<SupplierPaymentInvoice> SupplierPaymentInvoiceAsync(); // Счет на оплату поставщика
         Task<DepositToCurrentAccount> DepositToCurrentAccountAsync(); // Поступление на расчетный счет
         Task<BuyerPaymentInvoice> BuyerPaymentInvoiceAsync(); // Счет на оплату покупателю
+        Task<Counterparties> CounterpartiesAsync(); // Контрагенты
+        Task<ContractsCounterparties> ContractsCounterpartiesAsync(); // Договоры контрагентов
+        IEnumerable<Contracts> GetContracts(); // Договора
+        Task<DebtAdjustment> DebtAdjustmentAsync(); // Корректировка долга
 
 
 
 
         IEnumerable<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments(); // Литер и статья затрат в старых оплатах
-        Task<Counterparties> CounterpartiesAsync(); // Контрагенты
-        Task<ContractsCounterparties> ContractsCounterpartiesAsync(); // Договоры контрагентов
         Task<Receipts> ReceiptGoodsServicesAsync(); // Поступление товаров и услуг
         Task<Payments> PaymentsAsync(); // Списание с расчетного счета
         Task<ReceiptToCurrentAccount> ReceiptToCurrentAccountAsync(); // Поступление на расчетный счет
-        Task<DebtAdjustment> DebtAdjustmentAsync(); // Корректировка долга
         Task<Receipts> ReceiptProcessingAsync(); // Поступление из переработки
         Task<Selling> SellingAsync(); // Реализация
         List<Facility> GetFacility(); // Объекты строительства
-        List<Contracts> GetContracts(); // Договора
         List<Operations> GetOperations(); // Бухгалтерские операции
         Task<BillPayment> BillPaymentAsync(); // Оплата счетов
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ

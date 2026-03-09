@@ -12,7 +12,6 @@ namespace Cost.Infrastructure.Repositories.Models.DebtAdjustment
 
         [JsonPropertyName("ДебиторскаяЗадолженность")]
         public AccountsReceivable[] AccountsReceivable { get; set; }
-        public bool Posted { get; set; }
         public bool DeletionMark { get; set; }
     }
 }

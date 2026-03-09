@@ -5,10 +5,10 @@ namespace Cost.Infrastructure.Repositories.Models.DebtAdjustment
     public class AccountsPayable
     {
         [JsonPropertyName("ДоговорКонтрагента_Key")]
-        public string CounterpartyAgreementId { get; set; }
+        public string ContractId { get; set; }
 
         [JsonPropertyName("КорДоговорКонтрагента_Key")]
-        public string CorCounterpartyAgreementId { get; set; }
+        public string CorContractId { get; set; }
 
         [JsonPropertyName("Сумма")]
         public decimal Sum { get; set; }

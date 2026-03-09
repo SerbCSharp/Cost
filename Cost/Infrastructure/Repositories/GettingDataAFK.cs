@@ -171,7 +171,7 @@ namespace Cost.Infrastructure.Repositories
             }).ToList();
         }
 
-        public List<Contracts> GetContracts() // Договора
+        public IEnumerable<Contracts> GetContracts() // Договора
         {
             string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
@@ -222,7 +222,7 @@ namespace Cost.Infrastructure.Repositories
                 GeneralContracting = row.Field<decimal>("ГП"),
                 WarrantyLien = row.Field<decimal>("ГУ"),
                 ContractorOrSupplier = row.Field<string>("Подрядчик/Поставщик"),
-                ConstructionObject = row.Field<string>("Литер"),
+                Liter = row.Field<string>("Литер"),
                 CostItem = row.Field<string>("Статья затрат"),
                 Name = row.Field<string>("Наименование"),
                 ContractClosed = row.Field<string>("Статус"),

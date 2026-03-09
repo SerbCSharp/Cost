@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Cost.Domain
+﻿namespace Cost.Domain
 {
     public class Contracts : IEquatable<Contracts>
     {
@@ -8,18 +6,14 @@ namespace Cost.Domain
         public string Number { get; set; }
         public string NumberAA { get; set; }
         public DateOnly Date { get; set; }
-        public decimal? Sum { get; set; }
+        public decimal Sum { get; set; }
         public string Contractor { get; set; }
         public string Name { get; set; }
-        public string ConstructionObject { get; set; }
+        public string Liter { get; set; }
         public string CostItem { get; set; }
         public string ContractorOrSupplier { get; set; }
-        public string AmountIncludesNDS { get; set; }
         public decimal RateNDS { get; set; }
         public string ContractClosed { get; set; }
-
-        [JsonPropertyName("ВидДоговора")]
-        public string TypeAgreement { get; set; }
         public decimal GeneralContracting { get; set; }
         public decimal WarrantyLien { get; set; }
         public decimal AmountUntil2026 { get; set; }

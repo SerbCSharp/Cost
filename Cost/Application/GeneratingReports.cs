@@ -1,9 +1,11 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
+using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.Payments;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.ReportsToExcel;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Cost.Application
 {
@@ -217,45 +219,76 @@ namespace Cost.Application
             return result;
         }
 
-
-
-
-
-
-
-
-
-
-
-
         public async Task<IEnumerable<Contracts>> WeDoNotHaveTheseContractsAsync(Organizations organization) // Отсутствующие у нас договора
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
             var contractsCounterparties = (await gettingData.ContractsCounterpartiesAsync());
             var contractsCounterpartiesValue = contractsCounterparties.Value
-            .Where(x => x.DeletionMark == false && int.Parse(x.Code.Substring(x.Code.Length - 6)) > contractsCounterparties.CodeContract);
+                .Where(x => int.Parse(x.Code.Substring(x.Code.Length - 6)) > contractsCounterparties.CodeContract);
 
-            // Поставщики + договора
+            _exportingReportsToExcel.Browse(contractsCounterpartiesValue); // проверить
+
+            // Контрагенты + договора
             var counterparties = await gettingData.CounterpartiesAsync();
-            var contractorPlusContract = counterparties.Value.Join(contractsCounterpartiesValue, p1 => p1.Ref_Key, c1 => c1.ContractorId,
-                (p2, c2) => new { p2, c2 });
+            var contractsFrom1C = counterparties.Value.Join(contractsCounterpartiesValue, counterparties => counterparties.Ref_Key,
+                contractsCounterparties => contractsCounterparties.ContractorId,
+                (x, y) => new Contracts
+                {
+                    ContractId = y.ContractorId,
+                    Contractor = x.Description,
+                    Number = y.Number,
+                    Name = y.Name,
+                    Date = DateOnly.FromDateTime(y.Date),
+                    Sum = y.Sum,
+                    Code = y.Code
+                });
 
-            var contractsFrom1C = contractorPlusContract.Select(x => new Contracts
-            {
-                ContractId = x.c2.CounterpartyAgreementId,
-                Contractor = x.p2.Description,
-                Number = x.c2.Number,
-                Name = x.c2.Name,
-                Date = DateOnly.FromDateTime(x.c2.Date ?? new DateTime()),
-                Sum = x.c2.Sum,
-                Code = x.c2.Code
-            });
+            _exportingReportsToExcel.Browse(contractsFrom1C); // сравнить
 
             var contractsFromExcel = gettingData.GetContracts();
 
             return contractsFrom1C.Except(contractsFromExcel);
         }
+
+        public async Task<IEnumerable<AccountingTransaction>> AccountingTransaction(Organizations organization) // Корректировка долга и бухгалтерские операции
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var debtAdjustment = (await gettingData.DebtAdjustmentAsync()).Value;
+
+            _exportingReportsToExcel.Browse(debtAdjustment); // проверить
+
+            var Payable = debtAdjustment.SelectMany(x => x.AccountsPayable, (p, c) => new { p.Ref_Key, c.ContractId, c.CorContractId, c.Sum, p.Date, p });
+
+            _exportingReportsToExcel.Browse(Payable); // проверить
+
+            var Receivable = debtAdjustment.SelectMany(x => x.AccountsReceivable, (p, c) => new { p.Ref_Key, c.ContractId, c.CorContractId, c.Sum, p.Date, p });
+
+            _exportingReportsToExcel.Browse(Receivable); // проверить
+
+            var ReceivableDoubleEntry = debtAdjustment.Where(x => x.AccountsReceivable.Length == 0).SelectMany(x => x.AccountsPayable, (p, c) =>
+                new { p.Ref_Key, CounterpartyAgreementId = c.CorContractId, c.Sum, p.Date, p });
+
+            _exportingReportsToExcel.Browse(ReceivableDoubleEntry); // проверить
+
+            var PayableDoubleEntry = debtAdjustment.Where(x => x.AccountsPayable.Length == 0).SelectMany(x => x.AccountsReceivable, (p, c) =>
+                new { p.Ref_Key, CounterpartyAgreementId = c.CorContractId, c.Sum, p.Date, p });
+
+            _exportingReportsToExcel.Browse(PayableDoubleEntry); // проверить
+
+            return [];
+        }
+
+
+
+
+
+
+
+
+
+
 
         public async Task<List<ReconciliationStatement>> ReconciliationStatementAsync(string contractName, Organizations organization, string contractor) // Акт сверки
         {
@@ -304,20 +337,20 @@ namespace Cost.Application
             var plusSelling = plusReceiptProcessing.Concat(selling);
             // ---------------------------------------------------------------------------------------------------------------
 
-            var debtAdjustment = (await gettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
+            var debtAdjustment = (await gettingData.DebtAdjustmentAsync()).Value.ToList();
             // Убираем из Корректировки долга проводки по одному договору в одном документе Корректировка долга
             foreach (var item in debtAdjustment)
             {
                 if (item.AccountsPayable.Length > 0 && item.AccountsReceivable.Length > 0
-                    && item.AccountsPayable.First().CounterpartyAgreementId == item.AccountsReceivable.First().CounterpartyAgreementId)
+                    && item.AccountsPayable.First().ContractId == item.AccountsReceivable.First().ContractId)
                 {
                     item.DeletionMark = true;
                 }
-                if (item.AccountsPayable.Length > 0 && item.AccountsPayable.First().CounterpartyAgreementId == item.AccountsPayable.First().CorCounterpartyAgreementId)
+                if (item.AccountsPayable.Length > 0 && item.AccountsPayable.First().ContractId == item.AccountsPayable.First().CorContractId)
                 {
                     item.DeletionMark = true;
                 }
-                if (item.AccountsReceivable.Length > 0 && item.AccountsReceivable.First().CounterpartyAgreementId == item.AccountsReceivable.First().CorCounterpartyAgreementId)
+                if (item.AccountsReceivable.Length > 0 && item.AccountsReceivable.First().ContractId == item.AccountsReceivable.First().CorContractId)
                 {
                     item.DeletionMark = true;
                 }
@@ -325,12 +358,12 @@ namespace Cost.Application
             debtAdjustment.RemoveAll(x => x.DeletionMark);
 
             var Payable = debtAdjustment.SelectMany(x => x.AccountsPayable, (p, c) =>
-            new { p.Ref_Key, c.CounterpartyAgreementId, c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
-                .Where(y => y.CounterpartyAgreementId == contract.ContractId).ToList();
+            new { p.Ref_Key, c.ContractId, c.CorContractId, c.Sum, p.Date, p })
+                .Where(y => y.ContractId == contract.ContractId).ToList();
 
             var Receivable = debtAdjustment.SelectMany(x => x.AccountsReceivable, (p, c) =>
-            new { p.Ref_Key, c.CounterpartyAgreementId, c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
-                .Where(y => y.CounterpartyAgreementId == contract.ContractId).ToList();
+            new { p.Ref_Key, c.ContractId, c.CorContractId, c.Sum, p.Date, p })
+                .Where(y => y.ContractId == contract.ContractId).ToList();
 
             var payableReconciliationStatement = Payable.Select(y => new ReconciliationStatement
             {
@@ -350,11 +383,11 @@ namespace Cost.Application
             var plusReceivable = plusPayable.Concat(receivableReconciliationStatement);
 
             var ReceivableDoubleEntry = debtAdjustment.Where(x => x.AccountsReceivable.Length == 0).SelectMany(x => x.AccountsPayable, (p, c) =>
-            new { p.Ref_Key, CounterpartyAgreementId = c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
+            new { p.Ref_Key, CounterpartyAgreementId = c.CorContractId, c.Sum, p.Date, p })
                 .Where(y => y.CounterpartyAgreementId == contract.ContractId).ToList();
 
             var PayableDoubleEntry = debtAdjustment.Where(x => x.AccountsPayable.Length == 0).SelectMany(x => x.AccountsReceivable, (p, c) =>
-            new { p.Ref_Key, CounterpartyAgreementId = c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
+            new { p.Ref_Key, CounterpartyAgreementId = c.CorContractId, c.Sum, p.Date, p })
                 .Where(y => y.CounterpartyAgreementId == contract.ContractId).ToList();
 
             var PlusReceivableDoubleEntry = ReceivableDoubleEntry.Select(y => new ReconciliationStatement
@@ -463,7 +496,7 @@ namespace Cost.Application
                                               Number = con.Number,
                                               RateNDS = con.RateNDS,
                                               GeneralContracting = con.GeneralContracting,
-                                              ConstructionObject = con.ConstructionObject,
+                                              ConstructionObject = con.Liter,
                                               ContractClosed = con.ContractClosed,
                                               ContractorOrSupplier = con.ContractorOrSupplier,
                                               CostItem = con.CostItem,
@@ -623,7 +656,7 @@ namespace Cost.Application
                                               Payment = subIncome?.Payment ?? 0,
                                               Contractor = con.Contractor,
                                               Number = con.Number,
-                                              ConstructionObject = con.ConstructionObject,
+                                              ConstructionObject = con.Liter,
                                               Date = con.Date,
                                               Sum = con.Sum,
                                               Name = con.Name,
@@ -731,20 +764,20 @@ namespace Cost.Application
             var plusSelling = plusReceiptProcessing.Concat(selling);
             // ---------------------------------------------------------------------------------------------------------------
 
-            var debtAdjustment = (await gettingData.DebtAdjustmentAsync()).Value.Where(x => x.Posted == true).ToList();
+            var debtAdjustment = (await gettingData.DebtAdjustmentAsync()).Value.ToList();
             // Убираем из Корректировки долга проводки по одному договору в одном документе Корректировка долга
             foreach (var item in debtAdjustment)
             {
                 if (item.AccountsPayable.Length > 0 && item.AccountsReceivable.Length > 0
-                    && item.AccountsPayable.First().CounterpartyAgreementId == item.AccountsReceivable.First().CounterpartyAgreementId)
+                    && item.AccountsPayable.First().ContractId == item.AccountsReceivable.First().ContractId)
                 {
                     item.DeletionMark = true;
                 }
-                if (item.AccountsPayable.Length > 0 && item.AccountsPayable.First().CounterpartyAgreementId == item.AccountsPayable.First().CorCounterpartyAgreementId)
+                if (item.AccountsPayable.Length > 0 && item.AccountsPayable.First().ContractId == item.AccountsPayable.First().CorContractId)
                 {
                     item.DeletionMark = true;
                 }
-                if (item.AccountsReceivable.Length > 0 && item.AccountsReceivable.First().CounterpartyAgreementId == item.AccountsReceivable.First().CorCounterpartyAgreementId)
+                if (item.AccountsReceivable.Length > 0 && item.AccountsReceivable.First().ContractId == item.AccountsReceivable.First().CorContractId)
                 {
                     item.DeletionMark = true;
                 }
@@ -752,18 +785,18 @@ namespace Cost.Application
             debtAdjustment.RemoveAll(x => x.DeletionMark);
 
             var Payable = debtAdjustment.SelectMany(x => x.AccountsPayable, (p, c) =>
-            new { p.Ref_Key, c.CounterpartyAgreementId, c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
+            new { p.Ref_Key, c.ContractId, c.CorContractId, c.Sum, p.Date, p })
                 .Where(y => DateOnly.FromDateTime(y.Date) >= date).ToList();
 
             var Receivable = debtAdjustment.SelectMany(x => x.AccountsReceivable, (p, c) =>
-            new { p.Ref_Key, c.CounterpartyAgreementId, c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
+            new { p.Ref_Key, c.ContractId, c.CorContractId, c.Sum, p.Date, p })
                 .Where(y => DateOnly.FromDateTime(y.Date) >= date).ToList();
 
             var payableIncomeAndExpenses = Payable.Select(y => new IncomeAndExpenses
             {
                 Date = DateOnly.FromDateTime(y.Date),
                 Payment = y.Sum,
-                ContractId = y.CounterpartyAgreementId,
+                ContractId = y.ContractId,
                 DocumentName = "Корректировка долга"
             });
 
@@ -771,7 +804,7 @@ namespace Cost.Application
             {
                 Date = DateOnly.FromDateTime(y.Date),
                 Receipt = y.Sum,
-                ContractId = y.CounterpartyAgreementId,
+                ContractId = y.ContractId,
                 DocumentName = "Корректировка долга"
             });
 
@@ -779,11 +812,11 @@ namespace Cost.Application
             var plusReceivable = plusPayable.Concat(receivableIncomeAndExpenses);
 
             var ReceivableDoubleEntry = debtAdjustment.Where(x => x.AccountsReceivable.Length == 0).SelectMany(x => x.AccountsPayable, (p, c) =>
-            new { p.Ref_Key, CounterpartyAgreementId = c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
+            new { p.Ref_Key, CounterpartyAgreementId = c.CorContractId, c.Sum, p.Date, p })
                 .Where(y => DateOnly.FromDateTime(y.Date) >= date).ToList();
 
             var PayableDoubleEntry = debtAdjustment.Where(x => x.AccountsPayable.Length == 0).SelectMany(x => x.AccountsReceivable, (p, c) =>
-            new { p.Ref_Key, CounterpartyAgreementId = c.CorCounterpartyAgreementId, c.Sum, p.Date, p })
+            new { p.Ref_Key, CounterpartyAgreementId = c.CorContractId, c.Sum, p.Date, p })
                 .Where(y => DateOnly.FromDateTime(y.Date) >= date).ToList();
 
             var PlusReceivableDoubleEntry = ReceivableDoubleEntry.Select(y => new IncomeAndExpenses
@@ -868,7 +901,7 @@ namespace Cost.Application
             else if (costOrIncome == "Доходы")
                 contract = gettingData.GetContracts().Where(x => x.ContractorOrSupplier == "Покупатель").ToList();
             else
-                contract = gettingData.GetContracts();
+                contract = gettingData.GetContracts().ToList();
 
             var plusContract = from p in plusImplementationConstructionWorks
                                join c in contract
@@ -890,7 +923,7 @@ namespace Cost.Application
                 Number = x.subC.Number,
                 RateNDS = x.subC.RateNDS,
                 GeneralContracting = x.subC.GeneralContracting,
-                ConstructionObject = x.subC.ConstructionObject,
+                ConstructionObject = x.subC.Liter,
                 ContractClosed = x.subC.ContractClosed,
                 ContractorOrSupplier = x.subC.ContractorOrSupplier,
                 CostItem = x.subC.CostItem,

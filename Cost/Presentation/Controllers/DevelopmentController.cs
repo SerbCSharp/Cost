@@ -19,7 +19,25 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel = exportingReportsToExcel;
         }
 
+        /// <summary>Универсальный просмотрщик коллекций</summary>
+        /// <response>Записывает информацию в Browse.xlsx</response>
+        [HttpGet("Browse")]
+        public async Task<IActionResult> BrowseAsync([Required] Organizations Organization)
+        {
+            var browse = await _generatingReports.ExpensePaymentsAsync(Organization);
+            _exportingReportsToExcel.Browse(browse);
+            return NoContent();
+        }
 
+        /// <summary>Отсутствующие у нас договора</summary>
+        /// <response>Записывает информацию в WeDoNotHaveTheseContracts.xlsx</response>
+        [HttpGet("WeDoNotHaveTheseContracts")]
+        public async Task<IActionResult> WeDoNotHaveTheseContractsAsync([Required] Organizations Organization)
+        {
+            var noContracts = await _generatingReports.WeDoNotHaveTheseContractsAsync(Organization);
+            _exportingReportsToExcel.WeDoNotHaveTheseContracts(noContracts);
+            return NoContent();
+        }
 
 
 
@@ -45,16 +63,6 @@ namespace Cost.Presentation.Controllers
         {
             var cost = await _generatingReports.CostAsync(Organization);
             _exportingReportsToExcel.Cost(cost);
-            return NoContent();
-        }
-
-        /// <summary>Отсутствующие у нас договора</summary>
-        /// <response>Записывает информацию в WeDoNotHaveTheseContracts.xlsx</response>
-        [HttpGet("WeDoNotHaveTheseContracts")]
-        public async Task<IActionResult> WeDoNotHaveTheseContractsAsync([Required] Organizations Organization)
-        {
-            var noContracts = await _generatingReports.WeDoNotHaveTheseContractsAsync(Organization);
-            _exportingReportsToExcel.WeDoNotHaveTheseContracts(noContracts);
             return NoContent();
         }
 
