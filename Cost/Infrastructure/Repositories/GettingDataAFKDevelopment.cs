@@ -236,6 +236,44 @@ namespace Cost.Infrastructure.Repositories
             return await debtAdjustmentResponse.Content.ReadFromJsonAsync<DebtAdjustment>();
         }
 
+        public IEnumerable<Operations> GetOperations() // Бухгалтерские операции
+        {
+            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
+            FileInfo fileInfo = new(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "Operations"];
+            DataTable dataTable = new();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                if (sheet.Cells[1, i].Value.ToString() == "Дата")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
+                else if (sheet.Cells[1, i].Value.ToString() == "Сумма")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new Operations
+            {
+                OperationId = row.Field<string>("Код из 1С"),
+                Number = row.Field<string>("Номер"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Дата")),
+                Sum = row.Field<decimal>("Сумма"),
+                ContractDebit = row.Field<string>("Договор Дебет"),
+                ContractCredit = row.Field<string>("Договор Кредит"),
+            });
+        }
 
 
 
@@ -306,46 +344,6 @@ namespace Cost.Infrastructure.Repositories
                 Name = row.Field<string>("Name"),
                 ObjectNameIn1C = row.Field<string>("ObjectNameIn1C"),
                 TotalArea = row.Field<decimal>("TotalArea")
-            }).ToList();
-        }
-
-        public List<Operations> GetOperations() // Бухгалтерские операции
-        {
-            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
-            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            FileInfo fileInfo = new FileInfo(filePath);
-            using var package = new ExcelPackage(fileInfo);
-            var sheet = package.Workbook.Worksheets[Name: "Operations"];
-            DataTable dataTable = new DataTable();
-
-            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
-            {
-                if (sheet.Cells[1, i].Value.ToString() == "Дата")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
-                else if (sheet.Cells[1, i].Value.ToString() == "Сумма")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
-                else
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
-            }
-
-            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
-            {
-                DataRow dataRow = dataTable.NewRow();
-                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
-                {
-                    dataRow[j - 1] = sheet.Cells[i, j].Value;
-                }
-                dataTable.Rows.Add(dataRow);
-            }
-
-            return dataTable.AsEnumerable().Select(row => new Operations
-            {
-                OperationId = row.Field<string>("Код из 1С"),
-                Number = row.Field<string>("Номер"),
-                Date = DateOnly.FromDateTime(row.Field<DateTime>("Дата")),
-                Sum = row.Field<decimal>("Сумма"),
-                ContractDebit = row.Field<string>("Договор Дебет"),
-                ContractCredit = row.Field<string>("Договор Кредит"),
             }).ToList();
         }
 

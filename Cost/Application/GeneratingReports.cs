@@ -1,6 +1,5 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
-using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.ReportsToExcel;
 
@@ -200,26 +199,32 @@ namespace Cost.Application
             return paymentsPluscontracts;
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
         public async Task<IEnumerable<AccountingTransaction>> AccountingTransaction(Organizations organization) // Корректировка долга
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
             var debtAdjustment = (await gettingData.DebtAdjustmentAsync()).Value;
-            var multiplePayable = debtAdjustment.Where(x => x.AccountsPayable.Length > 0)
-                .SelectMany(x => x.AccountsPayable, (x, y) => new { debtAdjustment = x, accountsPayable = y })
+
+            // Убираем из Корректировки долга проводки по одному договору в одном документе Корректировка долга
+            foreach (var item in debtAdjustment)
+            {
+                if (item.AccountsPayable.Length > 0 && item.AccountsReceivable.Length > 0
+                    && item.AccountsPayable.First().ContractId == item.AccountsReceivable.First().ContractId)
+                {
+                    item.DeletionMark = true;
+                }
+                if (item.AccountsPayable.Length > 0 && item.AccountsPayable.First().ContractId == item.AccountsPayable.First().CorContractId)
+                {
+                    item.DeletionMark = true;
+                }
+                if (item.AccountsReceivable.Length > 0 && item.AccountsReceivable.First().ContractId == item.AccountsReceivable.First().CorContractId)
+                {
+                    item.DeletionMark = true;
+                }
+            }
+            debtAdjustment.ToList().RemoveAll(x => x.DeletionMark);
+
+            var multiplePayable = debtAdjustment.SelectMany(x => x.AccountsPayable, (x, y) => new { debtAdjustment = x, accountsPayable = y })
                 .Select(z => new AccountingTransaction
                 {
                     Date = DateOnly.FromDateTime(z.debtAdjustment.Date),
@@ -227,28 +232,174 @@ namespace Cost.Application
                     Debit = z.accountsPayable.Sum
                 });
             var singlePayable = debtAdjustment.Where(x => x.AccountsPayable.Length == 0)
-                .SelectMany(x => x.AccountsReceivable, (x, y) =>
-                new { x.Ref_Key, CounterpartyAgreementId = y.CorContractId, y.Sum, x.Date, x });
+                .SelectMany(x => x.AccountsReceivable, (x, y) => new { debtAdjustment = x, accountsReceivable = y })
+                .Select(z => new AccountingTransaction
+                {
+                    Date = DateOnly.FromDateTime(z.debtAdjustment.Date),
+                    ContractId = z.accountsReceivable.CorContractId,
+                    Debit = z.accountsReceivable.Sum
+                });
+            var allPayable = multiplePayable.Concat(singlePayable);
 
+            var multipleReceivable = debtAdjustment.SelectMany(x => x.AccountsReceivable, (x, y) => new { debtAdjustment = x, accountsReceivable = y })
+                .Select(z => new AccountingTransaction
+                {
+                    Date = DateOnly.FromDateTime(z.debtAdjustment.Date),
+                    ContractId = z.accountsReceivable.ContractId,
+                    Credit = z.accountsReceivable.Sum
+                });
+            var singleReceivable = debtAdjustment.Where(x => x.AccountsPayable.Length == 0)
+                .SelectMany(x => x.AccountsPayable, (x, y) => new { debtAdjustment = x, accountsPayable = y })
+                .Select(z => new AccountingTransaction
+                {
+                    Date = DateOnly.FromDateTime(z.debtAdjustment.Date),
+                    ContractId = z.accountsPayable.CorContractId,
+                    Credit = z.accountsPayable.Sum
+                });
+            var allReceivable = multipleReceivable.Concat(singleReceivable);
 
-
-            var multipleReceivable = debtAdjustment.SelectMany(x => x.AccountsReceivable, (p, c) => new { p.Ref_Key, c.ContractId, c.CorContractId, c.Sum, p.Date, p });
-            var singleReceivable = debtAdjustment.Where(x => x.AccountsReceivable.Length == 0).SelectMany(x => x.AccountsPayable, (p, c) =>
-                new { p.Ref_Key, CounterpartyAgreementId = c.CorContractId, c.Sum, p.Date, p });
-
-
-
-
-
-            var allPayments = multiplePayments.Concat(singlePayment);
-
-
-
-
-
-
-            return [];
+            return allPayable.Concat(allReceivable);
         }
+
+
+
+
+
+
+
+
+
+
+
+
+        public async Task<List<IncomeAndExpenses>> IncomeAndExpensesAsync(Organizations organization) // Доходы и расходы
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var plusLiterAndCostItemInPayments = (await ExpensePaymentsAsync(organization));
+
+            var Payments = plusLiterAndCostItemInPayments.Select(p => new IncomeAndExpenses()
+            {
+                Date = p.Date,
+                Payment = p.PaymentAmount,
+                ContractId = p.ContractId,
+                TypeOperation = p.TypeOperation,
+                DocumentName = "Списание с расчетного счета"
+            });
+
+            var receiptGoodsServices = (await gettingData.ReceiptGoodsServicesAsync()).Value.Where(x => x.Posted == true);
+            var ReceiptGoodsServices = receiptGoodsServices.Select(p => new IncomeAndExpenses()
+            {
+                Date = DateOnly.FromDateTime(p.Date),
+                Receipt = p.DocumentAmount,
+                ContractId = p.ContractId,
+                DocumentName = "Поступление товаров и услуг"
+            });
+
+            var receiptProcessing = (await gettingData.ReceiptProcessingAsync()).Value.Where(x => x.Posted == true);
+            var ReceiptProcessing = receiptProcessing.Select(p => new IncomeAndExpenses()
+            {
+                Date = DateOnly.FromDateTime(p.Date),
+                Receipt = p.DocumentAmount,
+                ContractId = p.ContractId,
+                DocumentName = "Поступление из переработки"
+            });
+
+            var paymentsPlusreceiptGoodsServices = Payments.Concat(ReceiptGoodsServices);
+            var plusReceiptProcessing = paymentsPlusreceiptGoodsServices.Concat(ReceiptProcessing);
+
+            var selling = (await gettingData.SellingAsync()).Value
+                .Where(x => x.Posted == true)
+                                .Select(y => new IncomeAndExpenses
+                                {
+                                    Date = DateOnly.FromDateTime(y.Date),
+                                    Payment = y.DocumentAmount,
+                                    ContractId = y.CounterpartyAgreementId,
+                                    DocumentName = "Реализация товаров и услуг"
+                                });
+
+            var plusSelling = plusReceiptProcessing.Concat(selling);
+
+
+
+            var receiptToCurrentAccount = (await IncomePaymentsAsync(organization))
+                                .Select(y => new IncomeAndExpenses
+                                {
+                                    Date = y.Date,
+                                    Receipt = y.PaymentAmount,
+                                    ContractId = y.ContractId,
+                                    TypeOperation = y.TypeOperation,
+                                    DocumentName = "Поступление на расчетный счет"
+                                });
+
+            var plusreceiptToCurrentAccount = plusPayableDoubleEntry.Concat(receiptToCurrentAccount);
+
+            var operations = gettingData.GetOperations();
+            var operationDebit = operations
+                    .Select(y => new IncomeAndExpenses
+                    {
+                        Date = y.Date,
+                        Payment = y.Sum,
+                        ContractId = y.ContractDebit,
+                        DocumentName = "Операция"
+                    });
+
+            var plusOperationDebit = plusreceiptToCurrentAccount.Concat(operationDebit);
+
+            var operationCredit = operations
+                    .Select(y => new IncomeAndExpenses
+                    {
+                        Date = y.Date,
+                        Receipt = y.Sum,
+                        ContractId = y.ContractCredit,
+                        DocumentName = "Операция"
+                    });
+
+            var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
+
+            var implementationConstructionWorks = (await gettingData.ImplementationConstructionWorksAsync()).Value
+                    ?.Where(x => x.Posted == true)
+                    ?.Select(y => new IncomeAndExpenses
+                    {
+                        Date = DateOnly.FromDateTime(y.Date),
+                        Payment = y.DocumentAmount,
+                        ContractId = y.ContractId,
+                        DocumentName = "Реализация строительных работ и услуг"
+                    });
+
+            var plusImplementationConstructionWorks = implementationConstructionWorks != null ? plusOperationCredit.Concat(implementationConstructionWorks)
+                                                                                              : plusOperationCredit;
+            var incomeAndExpenses = plusImplementationConstructionWorks.Select(x => new IncomeAndExpenses
+            {
+                ContractId = x.subC.ContractId,
+                DocumentName = x.p.DocumentName,
+                Receipt = x.p.Receipt,
+                Payment = x.p.Payment,
+                Date = x.p.Date,
+                //DocumentNDSAmount = x.p.DocumentNDSAmount,
+                //InvoiceReceivedNDS = x.p.InvoiceReceivedNDS,
+                //Contractor = x.subC.Contractor,
+                //Number = x.subC.Number,
+                //RateNDS = x.subC.RateNDS,
+                //GeneralContracting = x.subC.GeneralContracting,
+                //ConstructionObject = x.subC.Liter,
+                //ContractClosed = x.subC.ContractClosed,
+                //ContractorOrSupplier = x.subC.ContractorOrSupplier,
+                //CostItem = x.subC.CostItem,
+                //DateContract = x.subC.Date,
+                //SumContract = x.subC.Sum,
+                //WarrantyLien = x.subC.WarrantyLien,
+                //LiterPayment = x.p.LiterPayment,
+                //CostItemPayment = x.p.CostItemPayment,
+                //Name = x.subC.Name,
+                //RateNDS2026 = x.subC.RateNDS2026,
+                //AreaOfActivity = x.subC.AreaOfActivity,
+                TypeOperation = x.p.TypeOperation
+            });
+
+            return incomeAndExpenses.OrderBy(x => x.Date).ToList();
+        }
+
 
 
 

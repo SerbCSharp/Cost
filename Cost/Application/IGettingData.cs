@@ -34,6 +34,7 @@ namespace Cost.Application
         Task<ContractsCounterparties> ContractsCounterpartiesAsync(); // Договоры контрагентов
         IEnumerable<Contracts> GetContracts(); // Договора
         Task<DebtAdjustment> DebtAdjustmentAsync(); // Корректировка долга
+        IEnumerable<Operations> GetOperations(); // Бухгалтерские операции
 
 
 
@@ -42,7 +43,6 @@ namespace Cost.Application
         Task<Receipts> ReceiptProcessingAsync(); // Поступление из переработки
         Task<Selling> SellingAsync(); // Реализация
         List<Facility> GetFacility(); // Объекты строительства
-        List<Operations> GetOperations(); // Бухгалтерские операции
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
         List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity(); // AreaOfActivity по литеру и статье затрат в оплатах
         Task<ActOfCompletion> ActOfCompletionAsync(); // Акты об окончании СМР

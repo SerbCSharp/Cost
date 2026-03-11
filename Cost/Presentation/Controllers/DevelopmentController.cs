@@ -49,6 +49,17 @@ namespace Cost.Presentation.Controllers
             return NoContent();
         }
 
+        /// <summary>Доходы и расходы</summary>
+        /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
+        [HttpGet("IncomeAndExpenses")]
+        public async Task<IActionResult> IncomeAndExpensesAsync([Required] Organizations Organization, DateOnly date)
+        {
+            var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization, date);
+            _exportingReportsToExcel.IncomeAndExpenses(incomeAndExpenses);
+            return NoContent();
+        }
+
+
 
 
 
@@ -74,16 +85,6 @@ namespace Cost.Presentation.Controllers
         {
             var cost = await _generatingReports.CostAsync(Organization);
             _exportingReportsToExcel.Cost(cost);
-            return NoContent();
-        }
-
-        /// <summary>Доходы и расходы</summary>
-        /// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
-        [HttpGet("IncomeAndExpenses")]
-        public async Task<IActionResult> IncomeAndExpensesAsync([Required] Organizations Organization, DateOnly date)
-        {
-            var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization, date);
-            _exportingReportsToExcel.IncomeAndExpenses(incomeAndExpenses);
             return NoContent();
         }
 

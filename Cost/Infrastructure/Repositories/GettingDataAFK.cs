@@ -308,7 +308,7 @@ namespace Cost.Infrastructure.Repositories
             }).ToList();
         }
 
-        public List<Operations> GetOperations() // Бухгалтерские операции
+        public IEnumerable<Operations> GetOperations() // Бухгалтерские операции
         {
             string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");

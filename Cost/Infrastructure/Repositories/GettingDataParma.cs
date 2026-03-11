@@ -310,7 +310,7 @@ namespace Cost.Infrastructure.Repositories
             }).ToList();
         }
 
-        public List<Operations> GetOperations() // Бухгалтерские операции
+        public IEnumerable<Operations> GetOperations() // Бухгалтерские операции
         {
             string filePath = "C:\\Cost\\Parma\\Catalogs.xlsx";
             FileInfo fileInfo = new FileInfo(filePath);

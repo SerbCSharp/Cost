@@ -194,6 +194,98 @@ namespace Cost.Presentation.ReportsToExcel
 
 
 
+        public void IncomeAndExpenses(IEnumerable<IncomeAndExpenses> incomeAndExpenses)
+        {
+            string filePath = "C:\\Cost\\IncomeAndExpenses.xlsx";
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets["IncomeAndExpenses"];
+            if (sheet == null)
+                sheet = package.Workbook.Worksheets.Add("IncomeAndExpenses");
+
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+
+            // Шапка
+            sheet.Cells[1, 1].Value = "Дата";
+            sheet.Cells[1, 2].Value = "Выполнение";
+            sheet.Cells[1, 3].Value = "Оплата";
+            sheet.Cells[1, 4].Value = "Документ";
+            sheet.Cells[1, 5].Value = "ContractId";
+            //sheet.Cells[1, 6].Value = "Контрагент";
+            //sheet.Cells[1, 7].Value = "Договор";
+            //sheet.Cells[1, 8].Value = "ГП";
+            //sheet.Cells[1, 9].Value = "ГУ";
+            //sheet.Cells[1, 10].Value = "Ставка НДС";
+            //sheet.Cells[1, 11].Value = "Расчетные ГП";
+            //sheet.Cells[1, 12].Value = "Расчетная НДС";
+            //sheet.Cells[1, 13].Value = "НДС к уплате (расчетный)";
+            //sheet.Cells[1, 14].Value = "DocumentNDSAmount";
+            //sheet.Cells[1, 15].Value = "InvoiceReceivedNDS";
+            sheet.Cells[1, 16].Value = "Вид операции";
+            //sheet.Cells[1, 17].Value = "Направление";
+            sheet.Cells[1, 1, 1, 17].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 17].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            var column = 0;
+            foreach (var item in incomeAndExpenses)
+            {
+                sheet.Cells[row, column + 1].Value = item.Date;
+                sheet.Cells[row, column + 2].Value = item.Receipt;
+                sheet.Cells[row, column + 3].Value = item.Payment;
+                sheet.Cells[row, column + 4].Value = item.DocumentName;
+                sheet.Cells[row, column + 5].Value = item.ContractId;
+                //sheet.Cells[row, column + 6].Value = item.Contractor;
+                //sheet.Cells[row, column + 7].Value = item.Number;
+                //sheet.Cells[row, column + 8].Value = item.GeneralContracting;
+                //sheet.Cells[row, column + 9].Value = item.WarrantyLien;
+                //sheet.Cells[row, column + 10].Value = item.RateNDS;
+                //sheet.Cells[row, column + 11].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*H{row},0)";
+                //sheet.Cells[row, column + 12].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*J{row}/(1+J{row}),0)";
+                //sheet.Cells[row, column + 13].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*(0.2-J{row}),0)";
+                //sheet.Cells[row, column + 14].Value = item.DocumentNDSAmount;
+                //sheet.Cells[row, column + 15].Value = item.InvoiceReceivedNDS;
+                sheet.Cells[row, column + 16].Value = item.TypeOperation;
+                //sheet.Cells[row, column + 17].Value = item.AreaOfActivity;
+                row++;
+            }
+            //sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B2:B{row - 1})";
+            //sheet.Cells[row, column + 3].Formula = $"=SUBTOTAL(9,C2:C{row - 1})";
+            //sheet.Cells[row, column + 11].Formula = $"=SUBTOTAL(9,K2:K{row - 1})";
+            //sheet.Cells[row, column + 12].Formula = $"=SUBTOTAL(9,L2:L{row - 1})";
+            //sheet.Cells[row, column + 13].Formula = $"=SUBTOTAL(9,M2:M{row - 1})";
+
+            sheet.Cells[row, 2, row, 13].Style.Font.Bold = true;
+            sheet.Cells[1, 1, row, 17].AutoFitColumns();
+            sheet.Column(5).Hidden = true;
+            sheet.Column(6).Width = 50;
+
+            var range = sheet.Cells[1, 1, row - 1, 17];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+
+            sheet.Cells[2, 1, row, 1].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Cells[2, 2, row, 3].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 8, row, 10].Style.Numberformat.Format = "0%";
+            //sheet.Cells[2, 11, row, 13].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            range.AutoFilter = true;
+            sheet.View.FreezePanes(2, 1);
+
+            package.SaveAs(new FileInfo(filePath));
+        }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -551,90 +643,6 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[6, 2, row, 4].Style.Numberformat.Format = "### ### ### ##0.00";
 
             range.AutoFilter = true;
-
-            package.SaveAs(new FileInfo(filePath));
-        }
-
-        public void IncomeAndExpenses(List<IncomeAndExpenses> incomeAndExpenses)
-        {
-            string filePath = "C:\\Cost\\IncomeAndExpenses.xlsx";
-            using var package = new ExcelPackage();
-
-            var sheet = package.Workbook.Worksheets["IncomeAndExpenses"];
-            if (sheet == null)
-                sheet = package.Workbook.Worksheets.Add("IncomeAndExpenses");
-
-            sheet.Cells.Style.Font.Name = "Calibri";
-            sheet.Cells.Style.Font.Size = 11;
-
-            // Шапка
-            sheet.Cells[1, 1].Value = "Дата";
-            sheet.Cells[1, 2].Value = "Выполнение";
-            sheet.Cells[1, 3].Value = "Оплата";
-            sheet.Cells[1, 4].Value = "Документ";
-            sheet.Cells[1, 5].Value = "ContractId";
-            sheet.Cells[1, 6].Value = "Контрагент";
-            sheet.Cells[1, 7].Value = "Договор";
-            sheet.Cells[1, 8].Value = "ГП";
-            sheet.Cells[1, 9].Value = "ГУ";
-            sheet.Cells[1, 10].Value = "Ставка НДС";
-            sheet.Cells[1, 11].Value = "Расчетные ГП";
-            sheet.Cells[1, 12].Value = "Расчетная НДС";
-            sheet.Cells[1, 13].Value = "НДС к уплате (расчетный)";
-            sheet.Cells[1, 14].Value = "DocumentNDSAmount";
-            sheet.Cells[1, 15].Value = "InvoiceReceivedNDS";
-            sheet.Cells[1, 16].Value = "Вид операции";
-            sheet.Cells[1, 17].Value = "Направление";
-            sheet.Cells[1, 1, 1, 17].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 17].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
-            var row = 2;
-            var column = 0;
-            foreach (var item in incomeAndExpenses)
-            {
-                sheet.Cells[row, column + 1].Value = item.Date;
-                sheet.Cells[row, column + 2].Value = item.Receipt;
-                sheet.Cells[row, column + 3].Value = item.Payment;
-                sheet.Cells[row, column + 4].Value = item.DocumentName;
-                sheet.Cells[row, column + 5].Value = item.ContractId;
-                sheet.Cells[row, column + 6].Value = item.Contractor;
-                sheet.Cells[row, column + 7].Value = item.Number;
-                sheet.Cells[row, column + 8].Value = item.GeneralContracting;
-                sheet.Cells[row, column + 9].Value = item.WarrantyLien;
-                sheet.Cells[row, column + 10].Value = item.RateNDS;
-                sheet.Cells[row, column + 11].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*H{row},0)";
-                sheet.Cells[row, column + 12].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*J{row}/(1+J{row}),0)";
-                sheet.Cells[row, column + 13].Formula = $"IF(OR(D{row}=\"Поступление товаров и услуг\",D{row}=\"Поступление из переработки\"),B{row}*(0.2-J{row}),0)";
-                sheet.Cells[row, column + 14].Value = item.DocumentNDSAmount;
-                sheet.Cells[row, column + 15].Value = item.InvoiceReceivedNDS;
-                sheet.Cells[row, column + 16].Value = item.TypeOperation;
-                sheet.Cells[row, column + 17].Value = item.AreaOfActivity;
-                row++;
-            }
-            sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B2:B{row - 1})";
-            sheet.Cells[row, column + 3].Formula = $"=SUBTOTAL(9,C2:C{row - 1})";
-            sheet.Cells[row, column + 11].Formula = $"=SUBTOTAL(9,K2:K{row - 1})";
-            sheet.Cells[row, column + 12].Formula = $"=SUBTOTAL(9,L2:L{row - 1})";
-            sheet.Cells[row, column + 13].Formula = $"=SUBTOTAL(9,M2:M{row - 1})";
-
-            sheet.Cells[row, 2, row, 13].Style.Font.Bold = true;
-            sheet.Cells[1, 1, row, 17].AutoFitColumns();
-            sheet.Column(5).Hidden = true;
-            sheet.Column(6).Width = 50;
-
-            var range = sheet.Cells[1, 1, row - 1, 17];
-            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-
-            sheet.Cells[2, 1, row, 1].Style.Numberformat.Format = "dd.mm.yyyy";
-            sheet.Cells[2, 2, row, 3].Style.Numberformat.Format = "### ### ### ##0.00";
-            sheet.Cells[2, 8, row, 10].Style.Numberformat.Format = "0%";
-            sheet.Cells[2, 11, row, 13].Style.Numberformat.Format = "### ### ### ##0.00";
-
-            range.AutoFilter = true;
-            sheet.View.FreezePanes(2, 1);
 
             package.SaveAs(new FileInfo(filePath));
         }
