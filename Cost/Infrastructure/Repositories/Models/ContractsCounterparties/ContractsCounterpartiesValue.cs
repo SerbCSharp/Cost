@@ -14,10 +14,10 @@ namespace Cost.Infrastructure.Repositories.Models.ContractsCounterparties
         public string Name { get; set; }
 
         [JsonPropertyName("Дата")]
-        public DateTime Date { get; set; }
+        public DateTime? Date { get; set; }
 
         [JsonPropertyName("Сумма")]
-        public decimal Sum { get; set; }
+        public decimal? Sum { get; set; }
 
         [JsonPropertyName("Owner_Key")]
         public string ContractorId { get; set; } // Подрядчик

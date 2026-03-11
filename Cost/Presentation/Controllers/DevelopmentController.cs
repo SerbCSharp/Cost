@@ -24,7 +24,7 @@ namespace Cost.Presentation.Controllers
         [HttpGet("Browse")]
         public async Task<IActionResult> BrowseAsync([Required] Organizations Organization)
         {
-            var browse = await _generatingReports.ExpensePaymentsAsync(Organization);
+            var browse = await _generatingReports.AccountingTransaction(Organization);
             _exportingReportsToExcel.Browse(browse);
             return NoContent();
         }
@@ -38,6 +38,17 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.WeDoNotHaveTheseContracts(noContracts);
             return NoContent();
         }
+
+        /// <summary>Расходные оплаты</summary>
+        /// <response>Записывает информацию в Payments.xlsx</response>
+        [HttpGet("Payments")]
+        public async Task<IActionResult> PaymentsAsync([Required] Organizations Organization)
+        {
+            var payments = await _generatingReports.PaymentsAsync(Organization);
+            _exportingReportsToExcel.Payments(payments);
+            return NoContent();
+        }
+
 
 
 
@@ -74,18 +85,6 @@ namespace Cost.Presentation.Controllers
             var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization, date);
             _exportingReportsToExcel.IncomeAndExpenses(incomeAndExpenses);
             return NoContent();
-        }
-
-        /// <summary>Оплаты</summary>
-        /// <response>Записывает информацию в Payments.xlsx</response>
-        [HttpGet("Payments")]
-        public async Task<IActionResult> PaymentsAsync([Required] Organizations Organization)
-        {
-            //var payments = await _generatingReports.ExpensePaymentsAsync(Organization);
-            var payments = await _generatingReports.PaymentsAsync(Organization);
-            _exportingReportsToExcel.Payments(payments);
-            return NoContent();
-
         }
 
         /// <summary>Движение по договорам</summary>

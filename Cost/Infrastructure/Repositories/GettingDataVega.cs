@@ -3,7 +3,6 @@ using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
-using Cost.Infrastructure.Repositories.Models.BillPayment;
 using Cost.Infrastructure.Repositories.Models.BuyerPaymentInvoice;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.CostItems;
@@ -13,9 +12,7 @@ using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
 using Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
-using Cost.Infrastructure.Repositories.Models.Payments;
 using Cost.Infrastructure.Repositories.Models.Receipts;
-using Cost.Infrastructure.Repositories.Models.ReceiptToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.Selling;
 using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
 using Microsoft.Extensions.Options;
@@ -31,6 +28,7 @@ namespace Cost.Infrastructure.Repositories
         private readonly HttpClient httpClient;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly Base1CConfiguration _base1CConfiguration;
+        private const string ApiUrl = "http://localhost/vega/odata/standard.odata/";
 
         public decimal StartBalance => 2122997.74M;
         public DateOnly StartDate => new DateOnly(2026, 1, 1);
@@ -46,101 +44,57 @@ namespace Cost.Infrastructure.Repositories
             _httpClientFactory = httpClientFactory;
             httpClient = _httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64Credentials);
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
         }
 
-        public async Task<Counterparties> CounterpartiesAsync() // Контрагенты
+        public async Task<DebitToCurrentAccount> DebitToCurrentAccountAsync() // Списание с расчетного счета
         {
-            var counterpartiesUrl = "http://localhost/vega/odata/standard.odata/Catalog_Контрагенты?$format=json&$select=Ref_Key,Description,Parent_Key";
-            using HttpResponseMessage counterpartiesResponse = await httpClient.GetAsync(counterpartiesUrl);
-            return await counterpartiesResponse.Content.ReadFromJsonAsync<Counterparties>();
+            var paymentUrl = ApiUrl + "Document_СписаниеСРасчетногоСчета?$format=json"
+                + "&$select=Ref_Key,Date,СуммаДокумента,ДоговорКонтрагента_Key,РасшифровкаПлатежа,НазначениеПлатежа,ВидОперации"
+                + "&$filter=(DeletionMark eq false) and (Posted eq true)";
+            using HttpResponseMessage paymentResponse = await httpClient.GetAsync(paymentUrl);
+            return await paymentResponse.Content.ReadFromJsonAsync<DebitToCurrentAccount>();
         }
 
-        public async Task<ContractsCounterparties> ContractsCounterpartiesAsync() // Договоры контрагентов
+        public async Task<AdditionalInformation> AdditionalInformationAsync() // Дополнительные сведения
         {
-            var contractsCounterpartiesUrl = "http://localhost/vega/odata/standard.odata/Catalog_ДоговорыКонтрагентов?$format=json";
-            using HttpResponseMessage contractsCounterpartiesResponse = await httpClient.GetAsync(contractsCounterpartiesUrl);
-            var result = await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
-            result.CodeContract = 5500;
-            return result;
-        }
-
-        public async Task<Receipts> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
-        {
-            var receiptsUrl = "http://localhost/vega/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json"
-                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key";
-            using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
-            return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
-        }
-
-        public async Task<Payments> PaymentsAsync() // Списание с расчетного счета
-        {
-            var paymentsUrl = "http://localhost/vega/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json"
-                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key,DeletionMark,РасшифровкаПлатежа,НазначениеПлатежа,Number,ВидОперации";
-            using HttpResponseMessage paymentsResponse = await httpClient.GetAsync(paymentsUrl);
-            return await paymentsResponse.Content.ReadFromJsonAsync<Payments>();
-        }
-
-        public async Task<ReceiptToCurrentAccount> ReceiptToCurrentAccountAsync() // Поступление на расчетный счет
-        {
-            var receiptToCurrentAccountUrl = "http://localhost/vega/odata/standard.odata/Document_ПоступлениеНаРасчетныйСчет?$format=json";
-            using HttpResponseMessage receiptToCurrentAccountResponse = await httpClient.GetAsync(receiptToCurrentAccountUrl);
-            return await receiptToCurrentAccountResponse.Content.ReadFromJsonAsync<ReceiptToCurrentAccount>();
+            var additionalInformationUrl = ApiUrl + "InformationRegister_ДополнительныеСведения?$format=json"
+                + "&$select=Объект,Значение,Значение_Type";
+            using HttpResponseMessage additionalInformationResponse = await httpClient.GetAsync(additionalInformationUrl);
+            return await additionalInformationResponse.Content.ReadFromJsonAsync<AdditionalInformation>();
         }
 
         public async Task<NomenclatureGroups> NomenclatureGroupsAsync() // Номенклатурные группы
         {
-            var nomenclatureGroupsUrl = "http://localhost/vega/odata/standard.odata/Catalog_НоменклатурныеГруппы?$format=json";
+            var nomenclatureGroupsUrl = ApiUrl + "Catalog_НоменклатурныеГруппы?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
             using HttpResponseMessage nomenclatureGroupsResponse = await httpClient.GetAsync(nomenclatureGroupsUrl);
             return await nomenclatureGroupsResponse.Content.ReadFromJsonAsync<NomenclatureGroups>();
         }
 
         public async Task<CostItems> CostItemsAsync() // Статьи затрат
         {
-            var costItemsUrl = "http://localhost/vega/odata/standard.odata/Catalog_СтатьиЗатрат?$format=json";
+            var costItemsUrl = ApiUrl + "Catalog_СтатьиЗатрат?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
             using HttpResponseMessage costItemsResponse = await httpClient.GetAsync(costItemsUrl);
             return await costItemsResponse.Content.ReadFromJsonAsync<CostItems>();
         }
 
-        public async Task<DebtAdjustment> DebtAdjustmentAsync() // Корректировка долга
-        {
-            var debtAdjustmentUrl = "http://localhost/vega/odata/standard.odata/Document_КорректировкаДолга?$format=json";
-            using HttpResponseMessage debtAdjustmentResponse = await httpClient.GetAsync(debtAdjustmentUrl);
-            return await debtAdjustmentResponse.Content.ReadFromJsonAsync<DebtAdjustment>();
-        }
-
-        public async Task<Receipts> ReceiptProcessingAsync() // Поступление из переработки
-        {
-            var receiptsUrl = "http://localhost/vega/odata/standard.odata/Document_ПоступлениеИзПереработки?$format=json";
-            using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
-            return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
-        }
-
-        public async Task<Selling> SellingAsync() // Реализация
-        {
-            var sellingUrl = "http://localhost/vega/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json";
-            using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
-            return await sellingResponse.Content.ReadFromJsonAsync<Selling>();
-        }
-
-        public async Task<AdditionalInformation> AdditionalInformationAsync() // Дополнительные сведения
-        {
-            var additionalInformationUrl = "http://localhost/vega/odata/standard.odata/InformationRegister_ДополнительныеСведения?$format=json";
-            using HttpResponseMessage additionalInformationResponse = await httpClient.GetAsync(additionalInformationUrl);
-            return await additionalInformationResponse.Content.ReadFromJsonAsync<AdditionalInformation>();
-        }
-
-        public List<Facility> GetFacility() // Объекты строительства
+        public IEnumerable<ExpensePaymentsFromExcel> ExpensePaymentsFromExcel() // Литер и статья затрат в старых оплатах
         {
             string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
-            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            FileInfo fileInfo = new FileInfo(filePath);
+            FileInfo fileInfo = new(filePath);
             using var package = new ExcelPackage(fileInfo);
-            var sheet = package.Workbook.Worksheets[Name: "Objects"];
-            DataTable dataTable = new DataTable();
+            var sheet = package.Workbook.Worksheets[Name: "Payments"];
+            DataTable dataTable = new();
 
             for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
             {
-                if (sheet.Cells[1, i].Value.ToString() == "TotalArea")
+                if (sheet.Cells[1, i].Value.ToString() == "Date")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
+                else if (sheet.Cells[1, i].Value.ToString() == "PaymentAmount")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
@@ -156,23 +110,71 @@ namespace Cost.Infrastructure.Repositories
                 dataTable.Rows.Add(dataRow);
             }
 
-            return dataTable.AsEnumerable().Select(row => new Facility
+            return dataTable.AsEnumerable().Select(row => new ExpensePaymentsFromExcel
             {
                 Liter = row.Field<string>("Liter"),
-                Name = row.Field<string>("Name"),
-                ObjectNameIn1C = row.Field<string>("ObjectNameIn1C"),
-                TotalArea = row.Field<decimal>("TotalArea")
-            }).ToList();
+                CostItems = row.Field<string>("CostItems"),
+                PaymentId = row.Field<string>("PaymentId"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
+                PaymentAmount = row.Field<decimal>("PaymentAmount"),
+                PurposePayment = row.Field<string>("PurposePayment"),
+            });
+        }
+
+        public async Task<SupplierPaymentInvoice> SupplierPaymentInvoiceAsync() // Счет на оплату поставщика
+        {
+            var supplierPaymentInvoiceUrl = ApiUrl + "Document_СчетНаОплатуПоставщика?$format=json"
+                + "&$select=Ref_Key,Комментарий"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage supplierPaymentInvoiceResponse = await httpClient.GetAsync(supplierPaymentInvoiceUrl);
+            return await supplierPaymentInvoiceResponse.Content.ReadFromJsonAsync<SupplierPaymentInvoice>();
+        }
+
+        public async Task<DepositToCurrentAccount> DepositToCurrentAccountAsync() // Поступление на расчетный счет
+        {
+            var depositToCurrentAccountUrl = ApiUrl + "Document_ПоступлениеНаРасчетныйСчет?$format=json"
+                + "&$select=Ref_Key,Date,СуммаДокумента,ДоговорКонтрагента_Key,РасшифровкаПлатежа,НазначениеПлатежа,ВидОперации"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage depositToCurrentAccountResponse = await httpClient.GetAsync(depositToCurrentAccountUrl);
+            return await depositToCurrentAccountResponse.Content.ReadFromJsonAsync<DepositToCurrentAccount>();
+        }
+
+        public async Task<BuyerPaymentInvoice> BuyerPaymentInvoiceAsync() // Счет на оплату покупателю
+        {
+            var buyerPaymentInvoiceUrl = ApiUrl + "Document_СчетНаОплатуПокупателю?$format=json"
+                + "&$select=Ref_Key,Комментарий"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage buyerPaymentInvoiceResponse = await httpClient.GetAsync(buyerPaymentInvoiceUrl);
+            return await buyerPaymentInvoiceResponse.Content.ReadFromJsonAsync<BuyerPaymentInvoice>();
+        }
+
+        public async Task<Counterparties> CounterpartiesAsync() // Контрагенты
+        {
+            var counterpartiesUrl = ApiUrl + "Catalog_Контрагенты?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage counterpartiesResponse = await httpClient.GetAsync(counterpartiesUrl);
+            return await counterpartiesResponse.Content.ReadFromJsonAsync<Counterparties>();
+        }
+
+        public async Task<ContractsCounterparties> ContractsCounterpartiesAsync() // Договоры контрагентов
+        {
+            var contractsCounterpartiesUrl = ApiUrl + "Catalog_ДоговорыКонтрагентов?$format=json"
+                + "&$select=Ref_Key,Номер,Description,Дата,Сумма,Owner_Key,Code"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage contractsCounterpartiesResponse = await httpClient.GetAsync(contractsCounterpartiesUrl);
+            var result = await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
+            result.CodeContract = 5500;
+            return result;
         }
 
         public IEnumerable<Contracts> GetContracts() // Договора
         {
             string filePath = "C:\\Cost\\Vega\\Catalogs.xlsx";
-            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            FileInfo fileInfo = new FileInfo(filePath);
+            FileInfo fileInfo = new(filePath);
             using var package = new ExcelPackage(fileInfo);
             var sheet = package.Workbook.Worksheets[Name: "Contracts"];
-            DataTable dataTable = new DataTable();
+            DataTable dataTable = new();
 
             for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
             {
@@ -222,7 +224,98 @@ namespace Cost.Infrastructure.Repositories
                 ContractClosed = row.Field<string>("Статус"),
                 AmountUntil2026 = row.Field<decimal>("AmountUntil2026"),
                 RateNDS2026 = row.Field<decimal>("RateNDS2026"),
-                AreaOfActivity = row.Field<string>("Направление")
+            });
+        }
+
+        public async Task<DebtAdjustment> DebtAdjustmentAsync() // Корректировка долга
+        {
+            var debtAdjustmentUrl = ApiUrl + "Document_КорректировкаДолга?$format=json"
+                + "&$select=Ref_Key,Date,СуммаДокумента,ДоговорКонтрагента_Key,РасшифровкаПлатежа,НазначениеПлатежа,ВидОперации"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage debtAdjustmentResponse = await httpClient.GetAsync(debtAdjustmentUrl);
+            return await debtAdjustmentResponse.Content.ReadFromJsonAsync<DebtAdjustment>();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public async Task<Receipts> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
+        {
+            var receiptsUrl = "http://localhost/vega/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json"
+                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key";
+            using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
+            return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
+        }
+
+        public async Task<Receipts> ReceiptProcessingAsync() // Поступление из переработки
+        {
+            var receiptsUrl = "http://localhost/vega/odata/standard.odata/Document_ПоступлениеИзПереработки?$format=json";
+            using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
+            return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
+        }
+
+        public async Task<Selling> SellingAsync() // Реализация
+        {
+            var sellingUrl = "http://localhost/vega/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json";
+            using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
+            return await sellingResponse.Content.ReadFromJsonAsync<Selling>();
+        }
+
+        public List<Facility> GetFacility() // Объекты строительства
+        {
+            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+            FileInfo fileInfo = new FileInfo(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "Objects"];
+            DataTable dataTable = new DataTable();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                if (sheet.Cells[1, i].Value.ToString() == "TotalArea")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new Facility
+            {
+                Liter = row.Field<string>("Liter"),
+                Name = row.Field<string>("Name"),
+                ObjectNameIn1C = row.Field<string>("ObjectNameIn1C"),
+                TotalArea = row.Field<decimal>("TotalArea")
             }).ToList();
         }
 
@@ -268,47 +361,6 @@ namespace Cost.Infrastructure.Repositories
             }).ToList();
         }
 
-        public IEnumerable<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments() // Литер и статья затрат в оплатах
-        {
-            string filePath = "C:\\Cost\\Vega\\Catalogs.xlsx";
-            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            FileInfo fileInfo = new FileInfo(filePath);
-            using var package = new ExcelPackage(fileInfo);
-            var sheet = package.Workbook.Worksheets[Name: "Payments"];
-            DataTable dataTable = new DataTable();
-
-            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
-            {
-                if (sheet.Cells[1, i].Value.ToString() == "Date")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
-                else if (sheet.Cells[1, i].Value.ToString() == "PaymentAmount")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
-                else
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
-            }
-
-            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
-            {
-                DataRow dataRow = dataTable.NewRow();
-                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
-                {
-                    dataRow[j - 1] = sheet.Cells[i, j].Value;
-                }
-                dataTable.Rows.Add(dataRow);
-            }
-
-            return dataTable.AsEnumerable().Select(row => new LiterAndCostItemInPayments
-            {
-                Liter = row.Field<string>("Liter"),
-                CostItems = row.Field<string>("CostItems"),
-                PaymentId = row.Field<string>("PaymentId"),
-                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
-                //Number = row.Field<string>("Number"),
-                PaymentAmount = row.Field<decimal>("PaymentAmount"),
-                PurposePayment = row.Field<string>("PurposePayment"),
-            }).ToList();
-        }
-
         public async Task<string> TmpAsync()
         {
             var operationUrl = "http://localhost/vega/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
@@ -316,13 +368,6 @@ namespace Cost.Infrastructure.Repositories
             string content1 = await operationResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content1);
             return content1;
-        }
-
-        public async Task<BillPayment> BillPaymentAsync() // Оплата счетов
-        {
-            var billPaymentUrl = "http://localhost/vega/odata/standard.odata/AccumulationRegister_ОплатаСчетов?$format=json";
-            using HttpResponseMessage billPaymentResponse = await httpClient.GetAsync(billPaymentUrl);
-            return await billPaymentResponse.Content.ReadFromJsonAsync<BillPayment>();
         }
 
         public async Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync() // Реализация строительных работ
@@ -334,7 +379,7 @@ namespace Cost.Infrastructure.Repositories
 
         public List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity()
         {
-            string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
+            string filePath = "C:\\Cost\\Vega\\Catalogs.xlsx";
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             FileInfo fileInfo = new FileInfo(filePath);
             using var package = new ExcelPackage(fileInfo);
@@ -365,31 +410,6 @@ namespace Cost.Infrastructure.Repositories
         }
 
         public Task<ActOfCompletion> ActOfCompletionAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<DebitToCurrentAccount> DebitToCurrentAccountAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<ExpensePaymentsFromExcel> ExpensePaymentsFromExcel()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<SupplierPaymentInvoice> SupplierPaymentInvoiceAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<DepositToCurrentAccount> DepositToCurrentAccountAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<BuyerPaymentInvoice> BuyerPaymentInvoiceAsync()
         {
             throw new NotImplementedException();
         }

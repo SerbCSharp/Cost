@@ -2,7 +2,6 @@
 using Cost.Infrastructure.Repositories.Models;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Infrastructure.Repositories.Models.AdditionalInformation;
-using Cost.Infrastructure.Repositories.Models.BillPayment;
 using Cost.Infrastructure.Repositories.Models.BuyerPaymentInvoice;
 using Cost.Infrastructure.Repositories.Models.ContractsCounterparties;
 using Cost.Infrastructure.Repositories.Models.CostItems;
@@ -12,9 +11,7 @@ using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
 using Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
-using Cost.Infrastructure.Repositories.Models.Payments;
 using Cost.Infrastructure.Repositories.Models.Receipts;
-using Cost.Infrastructure.Repositories.Models.ReceiptToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.Selling;
 using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
 
@@ -41,15 +38,11 @@ namespace Cost.Application
 
 
 
-        IEnumerable<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments(); // Литер и статья затрат в старых оплатах
         Task<Receipts> ReceiptGoodsServicesAsync(); // Поступление товаров и услуг
-        Task<Payments> PaymentsAsync(); // Списание с расчетного счета
-        Task<ReceiptToCurrentAccount> ReceiptToCurrentAccountAsync(); // Поступление на расчетный счет
         Task<Receipts> ReceiptProcessingAsync(); // Поступление из переработки
         Task<Selling> SellingAsync(); // Реализация
         List<Facility> GetFacility(); // Объекты строительства
         List<Operations> GetOperations(); // Бухгалтерские операции
-        Task<BillPayment> BillPaymentAsync(); // Оплата счетов
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
         List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity(); // AreaOfActivity по литеру и статье затрат в оплатах
         Task<ActOfCompletion> ActOfCompletionAsync(); // Акты об окончании СМР
