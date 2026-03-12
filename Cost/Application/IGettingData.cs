@@ -39,12 +39,9 @@ namespace Cost.Application
         Task<ReceiptGoodsServices> ReceiptGoodsServicesAsync(); // Поступление товаров и услуг
         Task<ReceiptProcessing> ReceiptProcessingAsync(); // Поступление из переработки
         Task<SaleGoodsServices> SaleGoodsServicesAsync(); // Реализация товаров и услуг
-
-
-
-        List<Facility> GetFacility(); // Объекты строительства
+        IEnumerable<Facility> GetFacility(); // Объекты строительства
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
-        List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity(); // AreaOfActivity по литеру и статье затрат в оплатах
+        IEnumerable<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity(); // AreaOfActivity по литеру и статье затрат в оплатах
         Task<ActOfCompletion> ActOfCompletionAsync(); // Акты об окончании СМР
         Task<string> TmpAsync();
     }

@@ -85,41 +85,7 @@ namespace Cost.Infrastructure.Repositories
 
         public IEnumerable<ExpensePaymentsFromExcel> ExpensePaymentsFromExcel() // Литер и статья затрат в старых оплатах
         {
-            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
-            FileInfo fileInfo = new(filePath);
-            using var package = new ExcelPackage(fileInfo);
-            var sheet = package.Workbook.Worksheets[Name: "Payments"];
-            DataTable dataTable = new();
-
-            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
-            {
-                if (sheet.Cells[1, i].Value.ToString() == "Date")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
-                else if (sheet.Cells[1, i].Value.ToString() == "PaymentAmount")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
-                else
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
-            }
-
-            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
-            {
-                DataRow dataRow = dataTable.NewRow();
-                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
-                {
-                    dataRow[j - 1] = sheet.Cells[i, j].Value;
-                }
-                dataTable.Rows.Add(dataRow);
-            }
-
-            return dataTable.AsEnumerable().Select(row => new ExpensePaymentsFromExcel
-            {
-                Liter = row.Field<string>("Liter"),
-                CostItems = row.Field<string>("CostItems"),
-                PaymentId = row.Field<string>("PaymentId"),
-                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
-                PaymentAmount = row.Field<decimal>("PaymentAmount"),
-                PurposePayment = row.Field<string>("PurposePayment"),
-            });
+            throw new NotImplementedException();
         }
 
         public async Task<SupplierPaymentInvoice> SupplierPaymentInvoiceAsync() // Счет на оплату поставщика
@@ -238,87 +204,13 @@ namespace Cost.Infrastructure.Repositories
             return await debtAdjustmentResponse.Content.ReadFromJsonAsync<DebtAdjustment>();
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        public async Task<ReceiptGoodsServices> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
-        {
-            var receiptsUrl = "http://localhost/PARMA/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json"
-                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key";
-            using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
-            return await receiptsResponse.Content.ReadFromJsonAsync<ReceiptGoodsServices>();
-        }
-
-        public async Task<ReceiptProcessing> ReceiptProcessingAsync() // Поступление из переработки
-        {
-            var receiptsUrl = "http://localhost/PARMA/odata/standard.odata/Document_ПоступлениеИзПереработки?$format=json";
-            using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
-            return await receiptsResponse.Content.ReadFromJsonAsync<ReceiptProcessing>();
-        }
-
-        public async Task<SaleGoodsServices> SaleGoodsServicesAsync() // Реализация
-        {
-            var sellingUrl = "http://localhost/PARMA/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json";
-            using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
-            return await sellingResponse.Content.ReadFromJsonAsync<SaleGoodsServices>();
-        }
-
-        public List<Facility> GetFacility() // Площади объектов строительства
-        {
-            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
-            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            FileInfo fileInfo = new FileInfo(filePath);
-            using var package = new ExcelPackage(fileInfo);
-            var sheet = package.Workbook.Worksheets[Name: "Objects"];
-            DataTable dataTable = new DataTable();
-
-            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
-            {
-                if (sheet.Cells[1, i].Value.ToString() == "TotalArea")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
-                else
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
-            }
-
-            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
-            {
-                DataRow dataRow = dataTable.NewRow();
-                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
-                {
-                    dataRow[j - 1] = sheet.Cells[i, j].Value;
-                }
-                dataTable.Rows.Add(dataRow);
-            }
-
-            return dataTable.AsEnumerable().Select(row => new Facility
-            {
-                Liter = row.Field<string>("Liter"),
-                Name = row.Field<string>("Name"),
-                ObjectNameIn1C = row.Field<string>("ObjectNameIn1C"),
-                TotalArea = row.Field<decimal>("TotalArea")
-            }).ToList();
-        }
-
         public IEnumerable<Operations> GetOperations() // Бухгалтерские операции
         {
             string filePath = "C:\\Cost\\Parma\\Catalogs.xlsx";
-            FileInfo fileInfo = new FileInfo(filePath);
+            FileInfo fileInfo = new(filePath);
             using var package = new ExcelPackage(fileInfo);
             var sheet = package.Workbook.Worksheets[Name: "Operations"];
-            DataTable dataTable = new DataTable();
+            DataTable dataTable = new();
 
             for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
             {
@@ -348,44 +240,75 @@ namespace Cost.Infrastructure.Repositories
                 Sum = row.Field<decimal>("Сумма"),
                 ContractDebit = row.Field<string>("Договор Дебет"),
                 ContractCredit = row.Field<string>("Договор Кредит"),
-            }).ToList();
+            });
         }
 
-        public IEnumerable<LiterAndCostItemInPayments> GetLiterAndCostItemInPayments() // Литер и статья затрат в оплатах
+        public async Task<ReceiptGoodsServices> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
         {
-            return new List<LiterAndCostItemInPayments>();
+            var receiptGoodsServicesUrl = ApiUrl + "Document_ПоступлениеТоваровУслуг?$format=json"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage receiptGoodsServicesResponse = await httpClient.GetAsync(receiptGoodsServicesUrl);
+            return await receiptGoodsServicesResponse.Content.ReadFromJsonAsync<ReceiptGoodsServices>();
         }
 
-        public async Task<string> TmpAsync()
+        public async Task<ReceiptProcessing> ReceiptProcessingAsync() // Поступление из переработки
         {
-            var operationUrl = "http://localhost/PARMA/odata/standard.odata/Document_ПоступлениеНаРасчетныйСчет?$format=json";
-            //var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_СчетНаОплатуПоставщика?$format=json";
-            //var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_СчетНаОплатуПокупателю?$format=json";
+            var receiptProcessingUrl = ApiUrl + "Document_ПоступлениеИзПереработки?$format=json"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage receiptProcessingResponse = await httpClient.GetAsync(receiptProcessingUrl);
+            return await receiptProcessingResponse.Content.ReadFromJsonAsync<ReceiptProcessing>();
+        }
 
-            //var paymentsUrl = "http://localhost/PARMA/odata/standard.odata/Document_СписаниеСРасчетногоСчета?$format=json"
-            //var receiptToCurrentAccountUrl = "http://localhost/PARMA/odata/standard.odata/Document_ПоступлениеНаРасчетныйСчет?$format=json";
-
-            using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
-            string content1 = await operationResponse.Content.ReadAsStringAsync();
-            Console.WriteLine(content1);
-            return content1;
+        public async Task<SaleGoodsServices> SaleGoodsServicesAsync() // Реализация товаров и услуг
+        {
+            var saleGoodsServicesUrl = ApiUrl + "Document_РеализацияТоваровУслуг?$format=json"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage saleGoodsServicesResponse = await httpClient.GetAsync(saleGoodsServicesUrl);
+            return await saleGoodsServicesResponse.Content.ReadFromJsonAsync<SaleGoodsServices>();
         }
 
         public async Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync() // Реализация строительных работ
         {
-            var sellingUrl = "http://localhost/PARMA/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
-            using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
-            return await sellingResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
+            var implementationConstructionWorksUrl = ApiUrl + "Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage implementationConstructionWorksResponse = await httpClient.GetAsync(implementationConstructionWorksUrl);
+            return await implementationConstructionWorksResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
         }
 
-        public List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity() // AreaOfActivity по литеру и статье затрат в оплатах
+        public async Task<ActOfCompletion> ActOfCompletionAsync() // Акты об окончании СМР
+        {
+            var actOfCompletionUrl = ApiUrl + "Document_ИмпЗаказСМР?$format=json"
+                + "&$select=ДатаНачала,ДатаОкончания,ДоговорКонтрагента_Key,Комментарий"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage actOfCompletionResponse = await httpClient.GetAsync(actOfCompletionUrl);
+            return await actOfCompletionResponse.Content.ReadFromJsonAsync<ActOfCompletion>();
+        }
+
+        public IEnumerable<Facility> GetFacility() // Площади объектов строительства
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<string> TmpAsync()
+        {
+            var tmpUrl = ApiUrl + "Document_СчетНаОплатуПоставщика?$format=json";
+            using HttpResponseMessage tmpResponse = await httpClient.GetAsync(tmpUrl);
+            string content = await tmpResponse.Content.ReadAsStringAsync();
+            Console.WriteLine(content);
+            return content;
+        }
+
+        public IEnumerable<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity() // AreaOfActivity по литеру и статье затрат в оплатах
         {
             string filePath = "C:\\Cost\\Parma\\Catalogs.xlsx";
-            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            FileInfo fileInfo = new FileInfo(filePath);
+            FileInfo fileInfo = new(filePath);
             using var package = new ExcelPackage(fileInfo);
             var sheet = package.Workbook.Worksheets[Name: "AreaOfActivity"];
-            DataTable dataTable = new DataTable();
+            DataTable dataTable = new();
 
             for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
             {
@@ -407,12 +330,7 @@ namespace Cost.Infrastructure.Repositories
                 Liter = row.Field<string>("Liter"),
                 CostItems = row.Field<string>("CostItems"),
                 AreaOfActivity = row.Field<string>("AreaOfActivity")
-            }).ToList();
-        }
-
-        public Task<ActOfCompletion> ActOfCompletionAsync()
-        {
-            throw new NotImplementedException();
+            });
         }
     }
 }

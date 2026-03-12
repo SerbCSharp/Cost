@@ -158,15 +158,15 @@ namespace Cost.Presentation.Controllers
         //    return NoContent();
         //}
 
-        ///// <summary>Текущая задолженность</summary>
-        ///// <response>Записывает информацию в CurrentDebt.xlsx</response>
-        //[HttpGet("CurrentDebt")]
-        //public async Task<IActionResult> CurrentDebtAsync([Required] Organizations Organization)
-        //{
-        //    var cost = await _generatingReports.CurrentDebtAsync(Organization);
-        //    _exportingReportsToExcel.CurrentDebt(cost);
-        //    return NoContent();
-        //}
+        /// <summary>Текущая задолженность</summary>
+        /// <response>Записывает информацию в CurrentDebt.xlsx</response>
+        [HttpGet("CurrentDebt")]
+        public async Task<IActionResult> CurrentDebtAsync([Required] Organizations Organization)
+        {
+            var currentDebt = await _generatingReports.CurrentDebtAsync(Organization);
+            _exportingReportsToExcel.CurrentDebt(currentDebt);
+            return NoContent();
+        }
 
         /// <summary>Акты об окончании СМР</summary>
         /// <response>Записывает информацию в ActOfCompletion.xlsx</response>

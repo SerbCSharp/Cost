@@ -4,9 +4,6 @@ namespace Cost.Infrastructure.Repositories.Models.ActOfCompletion
 {
     public class ActOfCompletionValue
     {
-        public bool DeletionMark { get; set; }
-        public bool Posted { get; set; }
-
         [JsonPropertyName("ДоговорКонтрагента_Key")]
         public string ContractId { get; set; }
 

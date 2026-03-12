@@ -310,23 +310,24 @@ namespace Cost.Infrastructure.Repositories
                 + "&$filter=DeletionMark eq false and Posted eq true";
             using HttpResponseMessage implementationConstructionWorksResponse = await httpClient.GetAsync(implementationConstructionWorksUrl);
             return await implementationConstructionWorksResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
-
-
-
-
-
-
-
         }
 
-        public List<Facility> GetFacility() // Площади объектов строительства
+        public async Task<ActOfCompletion> ActOfCompletionAsync() // Акты об окончании СМР
+        {
+            var actOfCompletionUrl = ApiUrl + "Document_ИмпЗаказСМР?$format=json"
+                + "&$select=ДатаНачала,ДатаОкончания,ДоговорКонтрагента_Key,Комментарий"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage actOfCompletionResponse = await httpClient.GetAsync(actOfCompletionUrl);
+            return await actOfCompletionResponse.Content.ReadFromJsonAsync<ActOfCompletion>();
+        }
+
+        public IEnumerable<Facility> GetFacility() // Площади объектов строительства
         {
             string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
-            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
-            FileInfo fileInfo = new FileInfo(filePath);
+            FileInfo fileInfo = new(filePath);
             using var package = new ExcelPackage(fileInfo);
             var sheet = package.Workbook.Worksheets[Name: "Objects"];
-            DataTable dataTable = new DataTable();
+            DataTable dataTable = new();
 
             for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
             {
@@ -352,26 +353,19 @@ namespace Cost.Infrastructure.Repositories
                 Name = row.Field<string>("Name"),
                 ObjectNameIn1C = row.Field<string>("ObjectNameIn1C"),
                 TotalArea = row.Field<decimal>("TotalArea")
-            }).ToList();
+            });
         }
 
         public async Task<string> TmpAsync()
         {
-            var operationUrl = "http://localhost/afk_de/odata/standard.odata/Document_СчетНаОплатуПоставщика?$format=json";
-            using HttpResponseMessage operationResponse = await httpClient.GetAsync(operationUrl);
-            string content1 = await operationResponse.Content.ReadAsStringAsync();
-            Console.WriteLine(content1);
-            return content1;
+            var tmpUrl = ApiUrl + "Document_СчетНаОплатуПоставщика?$format=json";
+            using HttpResponseMessage tmpResponse = await httpClient.GetAsync(tmpUrl);
+            string content = await tmpResponse.Content.ReadAsStringAsync();
+            Console.WriteLine(content);
+            return content;
         }
 
-        public async Task<ActOfCompletion> ActOfCompletionAsync() // Акты об окончании СМР
-        {
-            var actOfCompletionUrl = "http://localhost/afk_de/odata/standard.odata/Document_ИмпЗаказСМР?$format=json";
-            using HttpResponseMessage actOfCompletionResponse = await httpClient.GetAsync(actOfCompletionUrl);
-            return await actOfCompletionResponse.Content.ReadFromJsonAsync<ActOfCompletion>();
-        }
-
-        public List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity()
+        public IEnumerable<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity()
         {
             throw new NotImplementedException();
         }
