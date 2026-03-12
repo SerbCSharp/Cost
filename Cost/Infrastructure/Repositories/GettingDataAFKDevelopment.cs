@@ -12,8 +12,9 @@ using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
 using Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
-using Cost.Infrastructure.Repositories.Models.Receipts;
-using Cost.Infrastructure.Repositories.Models.Selling;
+using Cost.Infrastructure.Repositories.Models.ReceiptGoodsServices;
+using Cost.Infrastructure.Repositories.Models.ReceiptProcessing;
+using Cost.Infrastructure.Repositories.Models.SaleGoodsServices;
 using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
 using Microsoft.Extensions.Options;
 using OfficeOpenXml;
@@ -275,40 +276,47 @@ namespace Cost.Infrastructure.Repositories
             });
         }
 
-
-
-
-
-
-
-
-        public async Task<Receipts> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
+        public async Task<ReceiptGoodsServices> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
         {
-            var receiptsUrl = "http://localhost/afk_de/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json"
-                + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key";
-            using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
-            return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
+            var receiptGoodsServicesUrl = ApiUrl + "Document_ПоступлениеТоваровУслуг?$format=json"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage receiptGoodsServicesResponse = await httpClient.GetAsync(receiptGoodsServicesUrl);
+            return await receiptGoodsServicesResponse.Content.ReadFromJsonAsync<ReceiptGoodsServices>();
         }
 
-        public async Task<Receipts> ReceiptProcessingAsync() // Поступление из переработки
+        public async Task<ReceiptProcessing> ReceiptProcessingAsync() // Поступление из переработки
         {
-            var receiptsUrl = "http://localhost/afk_de/odata/standard.odata/Document_ПоступлениеИзПереработки?$format=json";
-            using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
-            return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
+            var receiptProcessingUrl = ApiUrl + "Document_ПоступлениеИзПереработки?$format=json"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage receiptProcessingResponse = await httpClient.GetAsync(receiptProcessingUrl);
+            return await receiptProcessingResponse.Content.ReadFromJsonAsync<ReceiptProcessing>();
         }
 
-        public async Task<Selling> SellingAsync() // Реализация
+        public async Task<SaleGoodsServices> SaleGoodsServicesAsync() // Реализация товаров и услуг
         {
-            var sellingUrl = "http://localhost/afk_de/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json";
-            using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
-            return await sellingResponse.Content.ReadFromJsonAsync<Selling>();
+            var saleGoodsServicesUrl = ApiUrl + "Document_РеализацияТоваровУслуг?$format=json"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage saleGoodsServicesResponse = await httpClient.GetAsync(saleGoodsServicesUrl);
+            return await saleGoodsServicesResponse.Content.ReadFromJsonAsync<SaleGoodsServices>();
         }
 
         public async Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync() // Реализация строительных работ
         {
-            var sellingUrl = "http://localhost/afk_de/odata/standard.odata/Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json";
-            using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
-            return await sellingResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
+            var implementationConstructionWorksUrl = ApiUrl + "Document_ИмпРеализацияСтроительныхРаботУслуг?$format=json"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage implementationConstructionWorksResponse = await httpClient.GetAsync(implementationConstructionWorksUrl);
+            return await implementationConstructionWorksResponse.Content.ReadFromJsonAsync<ImplementationConstructionWorks>();
+
+
+
+
+
+
+
         }
 
         public List<Facility> GetFacility() // Площади объектов строительства

@@ -1,11 +1,10 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Cost.Infrastructure.Repositories.Models.Receipts
+namespace Cost.Infrastructure.Repositories.Models.ReceiptGoodsServices
 {
-    public class ReceiptsValue
+    public class ReceiptGoodsServicesValue
     {
         public DateTime Date { get; set; }
-        public bool Posted { get; set; }
 
         [JsonPropertyName("СуммаДокумента")]
         public decimal DocumentAmount { get; set; }

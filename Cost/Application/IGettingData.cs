@@ -11,8 +11,9 @@ using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
 using Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
-using Cost.Infrastructure.Repositories.Models.Receipts;
-using Cost.Infrastructure.Repositories.Models.Selling;
+using Cost.Infrastructure.Repositories.Models.ReceiptGoodsServices;
+using Cost.Infrastructure.Repositories.Models.ReceiptProcessing;
+using Cost.Infrastructure.Repositories.Models.SaleGoodsServices;
 using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
 
 namespace Cost.Application
@@ -35,13 +36,12 @@ namespace Cost.Application
         IEnumerable<Contracts> GetContracts(); // Договора
         Task<DebtAdjustment> DebtAdjustmentAsync(); // Корректировка долга
         IEnumerable<Operations> GetOperations(); // Бухгалтерские операции
+        Task<ReceiptGoodsServices> ReceiptGoodsServicesAsync(); // Поступление товаров и услуг
+        Task<ReceiptProcessing> ReceiptProcessingAsync(); // Поступление из переработки
+        Task<SaleGoodsServices> SaleGoodsServicesAsync(); // Реализация товаров и услуг
 
 
 
-
-        Task<Receipts> ReceiptGoodsServicesAsync(); // Поступление товаров и услуг
-        Task<Receipts> ReceiptProcessingAsync(); // Поступление из переработки
-        Task<Selling> SellingAsync(); // Реализация
         List<Facility> GetFacility(); // Объекты строительства
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
         List<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity(); // AreaOfActivity по литеру и статье затрат в оплатах

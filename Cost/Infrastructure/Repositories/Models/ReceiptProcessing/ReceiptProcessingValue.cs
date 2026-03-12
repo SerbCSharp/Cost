@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks
+namespace Cost.Infrastructure.Repositories.Models.ReceiptProcessing
 {
-    public class ImplementationConstructionWorksValue
+    public class ReceiptProcessingValue
     {
         public DateTime Date { get; set; }
 

@@ -12,8 +12,9 @@ using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
 using Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
-using Cost.Infrastructure.Repositories.Models.Receipts;
-using Cost.Infrastructure.Repositories.Models.Selling;
+using Cost.Infrastructure.Repositories.Models.ReceiptGoodsServices;
+using Cost.Infrastructure.Repositories.Models.ReceiptProcessing;
+using Cost.Infrastructure.Repositories.Models.SaleGoodsServices;
 using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
 using Microsoft.Extensions.Options;
 using OfficeOpenXml;
@@ -224,14 +225,15 @@ namespace Cost.Infrastructure.Repositories
                 ContractClosed = row.Field<string>("Статус"),
                 AmountUntil2026 = row.Field<decimal>("AmountUntil2026"),
                 RateNDS2026 = row.Field<decimal>("RateNDS2026"),
+                AreaOfActivity = row.Field<string>("Направление")
             });
         }
 
         public async Task<DebtAdjustment> DebtAdjustmentAsync() // Корректировка долга
         {
             var debtAdjustmentUrl = ApiUrl + "Document_КорректировкаДолга?$format=json"
-                + "&$select=Ref_Key,Date,СуммаДокумента,ДоговорКонтрагента_Key,РасшифровкаПлатежа,НазначениеПлатежа,ВидОперации"
-                + "&$filter=DeletionMark eq false and Posted eq true and year(Date) ge 2023";
+                + "&$select=Ref_Key,Date,DeletionMark,КредиторскаяЗадолженность,ДебиторскаяЗадолженность"
+                + "&$filter=DeletionMark eq false and Posted eq true";
             using HttpResponseMessage debtAdjustmentResponse = await httpClient.GetAsync(debtAdjustmentUrl);
             return await debtAdjustmentResponse.Content.ReadFromJsonAsync<DebtAdjustment>();
         }
@@ -248,28 +250,28 @@ namespace Cost.Infrastructure.Repositories
 
 
 
-        public async Task<Receipts> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
+        public async Task<ReceiptGoodsServices> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
         {
             var receiptsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеТоваровУслуг?$format=json"
                 + "&$select=Ref_Key,Date,Posted,СуммаДокумента,ДоговорКонтрагента_Key&$filter=year(Date) ge 2023";
             using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
-            return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
+            return await receiptsResponse.Content.ReadFromJsonAsync<ReceiptGoodsServices>();
         }
 
-        public async Task<Receipts> ReceiptProcessingAsync() // Поступление из переработки
+        public async Task<ReceiptProcessing> ReceiptProcessingAsync() // Поступление из переработки
         {
             var receiptsUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_ПоступлениеИзПереработки?$format=json"
                 +"&$filter=year(Date) ge 2023";
             using HttpResponseMessage receiptsResponse = await httpClient.GetAsync(receiptsUrl);
-            return await receiptsResponse.Content.ReadFromJsonAsync<Receipts>();
+            return await receiptsResponse.Content.ReadFromJsonAsync<ReceiptProcessing>();
         }
 
-        public async Task<Selling> SellingAsync() // Реализация
+        public async Task<SaleGoodsServices> SaleGoodsServicesAsync() // Реализация
         {
             var sellingUrl = "http://localhost/afk_bs0_2020_new/odata/standard.odata/Document_РеализацияТоваровУслуг?$format=json"
                 +"&$filter=year(Date) ge 2023";
             using HttpResponseMessage sellingResponse = await httpClient.GetAsync(sellingUrl);
-            return await sellingResponse.Content.ReadFromJsonAsync<Selling>();
+            return await sellingResponse.Content.ReadFromJsonAsync<SaleGoodsServices>();
         }
 
         public List<Facility> GetFacility() // Объекты строительства
