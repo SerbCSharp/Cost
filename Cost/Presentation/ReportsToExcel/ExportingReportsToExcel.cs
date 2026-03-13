@@ -289,7 +289,7 @@ namespace Cost.Presentation.ReportsToExcel
 
 
 
-        public void CurrentDebt(IEnumerable<Domain.Cost> cost) // Текущая задолженность
+        public void CurrentDebt(IEnumerable<Expense> cost) // Текущая задолженность
         {
             string filePath = "C:\\Cost\\CurrentDebt.xlsx";
             using var package = new ExcelPackage();
@@ -326,7 +326,7 @@ namespace Cost.Presentation.ReportsToExcel
             foreach (var item in cost)
             {
                 sheet.Cells[row, column + 1].Value = item.ResidentialComplex;
-                sheet.Cells[row, column + 2].Value = item.ConstructionObject;
+                sheet.Cells[row, column + 2].Value = item.Liter;
                 sheet.Cells[row, column + 3].Value = item.ContractorOrSupplier;
                 sheet.Cells[row, column + 4].Value = item.CostItem;
                 sheet.Cells[row, column + 5].Value = item.Number;
@@ -419,14 +419,14 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 15].Value = "Стоимость строительства";
             sheet.Cells[1, 16].Value = "Наименование";
             sheet.Cells[1, 17].Value = "Стоимость строительства с ∆НДС";
-            sheet.Cells[1, 18].Value = "Оплата фактическая";
-            sheet.Cells[1, 19].Value = "Остаток оплат до сдачи объекта";
+            //sheet.Cells[1, 18].Value = "Оплата фактическая";
+            //sheet.Cells[1, 19].Value = "Остаток оплат до сдачи объекта";
             sheet.Cells[1, 20].Value = "ContractId";
             sheet.Cells[1, 21].Value = "Выполнение до 2026";
             sheet.Cells[1, 22].Value = "НДС с 2026";
-            sheet.Cells[1, 23].Value = "Год оплаты";
+            //sheet.Cells[1, 23].Value = "Год оплаты";
             sheet.Cells[1, 24].Value = "Входящий НДС";
-            sheet.Cells[1, 25].Value = "Выполнение за вычетом ГП и НДС";
+            //sheet.Cells[1, 25].Value = "Выполнение за вычетом ГП и НДС";
             sheet.Cells[1, 1, 1, 25].Style.Font.Bold = true;
             sheet.Cells[1, 1, 1, 25].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
@@ -451,14 +451,14 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 15].Value = item.ConstructionCost;
                 sheet.Cells[row, column + 16].Value = item.Name;
                 sheet.Cells[row, column + 17].Value = item.ConstructionCostNDS;
-                sheet.Cells[row, column + 18].Formula = $"IF(J{row}=\"Подрядчик\",F{row}-E{row}*(L{row}+M{row}),0)";
-                sheet.Cells[row, column + 19].Formula = $"=IF(J{row}=\"Подрядчик\",O{row}-O{row}*(L{row}+M{row})-R{row},0)";
+                //sheet.Cells[row, column + 18].Formula = $"IF(J{row}=\"Подрядчик\",F{row}-E{row}*(L{row}+M{row}),0)";
+                //sheet.Cells[row, column + 19].Formula = $"=IF(J{row}=\"Подрядчик\",O{row}-O{row}*(L{row}+M{row})-R{row},0)";
                 sheet.Cells[row, column + 20].Value = item.ContractId;
                 sheet.Cells[row, column + 21].Value = item.AmountUntil2026;
                 sheet.Cells[row, column + 22].Value = item.RateNDS2026;
-                sheet.Cells[row, column + 23].Value = item.Year;
+                //sheet.Cells[row, column + 23].Value = item.Year;
                 sheet.Cells[row, column + 24].Value = item.InputNDS;
-                sheet.Cells[row, column + 25].Value = item.Expenses;
+                //sheet.Cells[row, column + 25].Value = item.Expenses;
                 row++;
             }
 
@@ -467,9 +467,9 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[row, column + 6].Formula = $"=SUBTOTAL(9,F2:F{row - 1})";
             sheet.Cells[row, column + 15].Formula = $"=SUBTOTAL(9,O2:O{row - 1})";
             sheet.Cells[row, column + 17].Formula = $"=SUBTOTAL(9,Q2:Q{row - 1})";
-            sheet.Cells[row, column + 19].Formula = $"=SUBTOTAL(9,S2:S{row - 1})";
+            //sheet.Cells[row, column + 19].Formula = $"=SUBTOTAL(9,S2:S{row - 1})";
             sheet.Cells[row, column + 24].Formula = $"=SUBTOTAL(9,X2:X{row - 1})";
-            sheet.Cells[row, column + 25].Formula = $"=SUBTOTAL(9,Y2:Y{row - 1})";
+            //sheet.Cells[row, column + 25].Formula = $"=SUBTOTAL(9,Y2:Y{row - 1})";
             sheet.Cells[row, 2, row, 25].Style.Font.Bold = true;
 
 
@@ -479,9 +479,9 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Column(7).Width = 50;
             sheet.Column(8).Width = 50;
             sheet.Column(16).Hidden = true;
-            sheet.Column(18).Hidden = true;
+            //sheet.Column(18).Hidden = true;
             sheet.Column(20).Hidden = true;
-            sheet.Column(23).Hidden = true;
+            //sheet.Column(23).Hidden = true;
 
             var range = sheet.Cells[1, 1, row - 1, 25];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
@@ -647,7 +647,7 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
-        public void CashFlow(List<CashFlow> cashFlow) // ДДС
+        public void CashFlow((IEnumerable<CashFlow>, decimal) tuple, string organization, DateOnly startDate, DateOnly endDate) // ДДС
         {
             string filePath = "C:\\Cost\\CashFlow.xlsx";
             using var package = new ExcelPackage();
@@ -656,16 +656,14 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells.Style.Font.Name = "Calibri";
             sheet.Cells.Style.Font.Size = 11;
 
-            var head = cashFlow.FirstOrDefault();
-
             // Шапка
             sheet.Cells[1, 1, 1, 4].Merge = true;
-            sheet.Cells[1, 1].Value = $"ДДС по направлениям ({head.Organization})";
+            sheet.Cells[1, 1].Value = $"ДДС по направлениям ({organization})";
             sheet.Cells[1, 1].Style.Font.Size = 20;
             sheet.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             sheet.Cells[2, 2, 2, 4].Merge = true;
-            sheet.Cells[2, 2].Value = $"с {head.StartDate.ToShortDateString()} по {head.EndDate.ToShortDateString()}";
+            sheet.Cells[2, 2].Value = $"с {startDate} по {endDate}";
             sheet.Cells[2, 2].Style.Font.Size = 16;
             sheet.Cells[2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
@@ -674,7 +672,7 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[4, 2].Value = "Сальдо на начало:";
             sheet.Cells[4, 2, 4, 4].Style.Font.Size = 12;
             sheet.Cells[4, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            sheet.Cells[4, 4].Value = head.StartBalance;
+            sheet.Cells[4, 4].Value = tuple.Item2;
             sheet.Cells[4, 4].Style.Numberformat.Format = "### ### ### ##0.00";
 
             sheet.Cells[6, 1, 6, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -685,7 +683,7 @@ namespace Cost.Presentation.ReportsToExcel
 
             var row = 7;
             var column = 0;
-            foreach (var item in cashFlow)
+            foreach (var item in tuple.Item1)
             {
                 sheet.Cells[row, column + 1].Value = item.AreaOfActivity;
                 sheet.Cells[row, column + 2].Value = item.Receipt;

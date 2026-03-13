@@ -85,15 +85,15 @@ namespace Cost.Presentation.Controllers
             return NoContent();
         }
 
-        ///// <summary>Отчет о стоимости строительства</summary>
-        ///// <response>Записывает информацию в Cost.xlsx</response>
-        //[HttpGet("Cost")]
-        //public async Task<IActionResult> CostAsync([Required] Organizations Organization)
-        //{
-        //    var cost = await _generatingReports.CostAsync(Organization);
-        //    _exportingReportsToExcel.Cost(cost);
-        //    return NoContent();
-        //}
+        /// <summary>Отчет о стоимости строительства</summary>
+        /// <response>Записывает информацию в Cost.xlsx</response>
+        [HttpGet("Cost")]
+        public async Task<IActionResult> CostAsync([Required] Organizations Organization)
+        {
+            var cost = await _generatingReports.CostAsync(Organization);
+            _exportingReportsToExcel.Cost(cost);
+            return NoContent();
+        }
 
         ///// <summary>Движение по договорам</summary>
         ///// <response>Записывает информацию в WeDoNotHaveTheseContracts.xlsx</response>
@@ -141,7 +141,7 @@ namespace Cost.Presentation.Controllers
             endDate = endDate.Year == 1 ? DateOnly.FromDateTime(DateTime.Now) : endDate;
 
             var cashFlow = await _generatingReports.CashFlowAsync(Organization, startDate, endDate);
-            _exportingReportsToExcel.CashFlow(cashFlow);
+            _exportingReportsToExcel.CashFlow(cashFlow, Organization.ToString(), startDate, endDate);
             return NoContent();
         }
 
