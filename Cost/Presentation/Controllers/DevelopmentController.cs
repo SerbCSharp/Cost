@@ -21,9 +21,9 @@ namespace Cost.Presentation.Controllers
         /// <summary>Универсальный просмотрщик коллекций</summary>
         /// <response>Записывает информацию в Browse.xlsx</response>
         [HttpGet("Browse")]
-        public async Task<IActionResult> BrowseAsync([Required] Organizations Organization)
+        public async Task<IActionResult> BrowseAsync([Required] Organizations organization)
         {
-            var browse = await _generatingReports.IncomeAndExpensesAsync(Organization);
+            var browse = await _generatingReports.IncomeAndExpensesAsync(organization);
             _exportingReportsToExcel.Browse(browse);
             return NoContent();
         }
@@ -31,9 +31,9 @@ namespace Cost.Presentation.Controllers
         /// <summary>Отсутствующие у нас договора</summary>
         /// <response>Записывает информацию в WeDoNotHaveTheseContracts.xlsx</response>
         [HttpGet("WeDoNotHaveTheseContracts")]
-        public async Task<IActionResult> WeDoNotHaveTheseContractsAsync([Required] Organizations Organization)
+        public async Task<IActionResult> WeDoNotHaveTheseContractsAsync([Required] Organizations organization)
         {
-            var noContracts = await _generatingReports.WeDoNotHaveTheseContractsAsync(Organization);
+            var noContracts = await _generatingReports.WeDoNotHaveTheseContractsAsync(organization);
             _exportingReportsToExcel.WeDoNotHaveTheseContracts(noContracts);
             return NoContent();
         }
@@ -41,140 +41,63 @@ namespace Cost.Presentation.Controllers
         /// <summary>Расходные оплаты</summary>
         /// <response>Записывает информацию в Payments.xlsx</response>
         [HttpGet("Payments")]
-        public async Task<IActionResult> PaymentsAsync([Required] Organizations Organization)
+        public async Task<IActionResult> PaymentsAsync([Required] Organizations organization)
         {
-            var payments = await _generatingReports.PaymentsAsync(Organization);
+            var payments = await _generatingReports.PaymentsAsync(organization);
             _exportingReportsToExcel.Payments(payments);
             return NoContent();
         }
 
-
-
-
-
-
-
-
-
-        ///// <summary>Доходы и расходы</summary>
-        ///// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
-        //[HttpGet("IncomeAndExpenses")]
-        //public async Task<IActionResult> IncomeAndExpensesAsync([Required] Organizations Organization)
-        //{
-        //    var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync1(Organization, new DateOnly());
-        //    //_exportingReportsToExcel.IncomeAndExpenses(incomeAndExpenses);
-        //    return NoContent();
-        //}
-
-
-
-
-
-
-
-
-
         /// <summary>Акт сверки</summary>
         /// <response>Записывает информацию в Transcript.xlsx</response>
         [HttpGet("ReconciliationStatement")]
-        public async Task<IActionResult> ReconciliationStatementAsync([Required] Organizations Organization, [Required] string ContractName, string Contractor)
+        public async Task<IActionResult> ReconciliationStatementAsync([Required] Organizations organization, [Required] string contractName, string contractor)
         {
-            //  добавить string
-            var reconciliationStatement = await _generatingReports.ReconciliationStatementAsync(ContractName, Organization, Contractor);
+            var reconciliationStatement = await _generatingReports.ReconciliationStatementAsync(contractName, organization, contractor);
             _exportingReportsToExcel.ReconciliationStatement(reconciliationStatement);
             return NoContent();
         }
 
         /// <summary>Отчет о стоимости строительства</summary>
         /// <response>Записывает информацию в Cost.xlsx</response>
-        [HttpGet("Cost")]
-        public async Task<IActionResult> CostAsync([Required] Organizations Organization)
+        [HttpGet("Expense")]
+        public async Task<IActionResult> ExpenseAsync([Required] Organizations organization)
         {
-            var cost = await _generatingReports.CostAsync(Organization);
-            _exportingReportsToExcel.Cost(cost);
+            var expense = await _generatingReports.ExpenseAsync(organization);
+            _exportingReportsToExcel.Cost(expense);
             return NoContent();
         }
 
-        ///// <summary>Движение по договорам</summary>
-        ///// <response>Записывает информацию в WeDoNotHaveTheseContracts.xlsx</response>
-        //[HttpGet("MovementUnderContracts")]
-        //public async Task<IActionResult> MovementUnderContractsAsync([Required] Organizations Organization)
-        //{
-        //    var contracts = await _generatingReports.MovementUnderContractsAsync(Organization);
-        //    _exportingReportsToExcel.WeDoNotHaveTheseContracts(contracts);
-        //    return NoContent();
-        //}
-
-        ///// <summary>Выполнения до 2026 года</summary>
-        ///// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
-        //[HttpGet("IncomeAndExpensesTmp")]
-        //public async Task<IActionResult> IncomeAndExpensesTmpAsync([Required] Organizations Organization, DateOnly date)
-        //{
-        //    var incomeAndExpenses = await _generatingReports.IncomeAndExpensesAsync(Organization);
-        //    var result = incomeAndExpenses.Where(w => w.Date.Year != 2026).GroupBy(x => x.ContractId).Select(y => new IncomeAndExpenses
-        //    {
-        //        ContractId = y.Key,
-        //        Credit = y.Sum(z => z.Credit),
-        //        Debit = y.Sum(z => z.Debit)
-        //    }).ToList();
-
-        //    _exportingReportsToExcel.IncomeAndExpenses(result);
-        //    return NoContent();
-        //}
-
-        ///// <summary>Отчет о доходах от строительства объектов</summary>
-        ///// <response>Записывает информацию в Income.xlsx</response>
-        //[HttpGet("Income")]
-        //public async Task<IActionResult> IncomeAsync([Required] Organizations Organization)
-        //{
-        //    var income = await _generatingReports.IncomeAsync(Organization);
-        //    _exportingReportsToExcel.Income(income);
-        //    return NoContent();
-        //}
+        /// <summary>Отчет о доходах от строительства объектов</summary>
+        /// <response>Записывает информацию в Income.xlsx</response>
+        [HttpGet("Income")]
+        public async Task<IActionResult> IncomeAsync([Required] Organizations organization)
+        {
+            var income = await _generatingReports.IncomeAsync(organization);
+            _exportingReportsToExcel.Income(income);
+            return NoContent();
+        }
 
         /// <summary>ДДС</summary>
         /// <response>Записывает информацию в CashFlow.xlsx</response>
         [HttpGet("CashFlow")]
-        public async Task<IActionResult> CashFlowAsync([Required] Organizations Organization, DateOnly startDate, DateOnly endDate)
+        public async Task<IActionResult> CashFlowAsync([Required] Organizations organization, DateOnly startDate, DateOnly endDate)
         {
             startDate = startDate.Year == 1 ? new DateOnly(2026, 1, 1) : startDate;
             endDate = endDate.Year == 1 ? DateOnly.FromDateTime(DateTime.Now) : endDate;
 
-            var cashFlow = await _generatingReports.CashFlowAsync(Organization, startDate, endDate);
-            _exportingReportsToExcel.CashFlow(cashFlow, Organization.ToString(), startDate, endDate);
+            var cashFlow = await _generatingReports.CashFlowAsync(organization, startDate, endDate);
+            _exportingReportsToExcel.CashFlow(cashFlow, organization.ToString(), startDate, endDate);
             return NoContent();
         }
-
-        ///// <summary>Договора, у которых надо указать направление деятельности</summary>
-        ///// <response>Записывает информацию в IncomeAndExpenses.xlsx</response>
-        //[HttpGet("NoAreaOfActivity")]
-        //public async Task<IActionResult> NoAreaOfActivityAsync([Required] Organizations Organization, DateOnly startDate, DateOnly endDate)
-        //{
-        //    startDate = startDate.Year == 1 ? new DateOnly(2026, 1, 1) : startDate;
-        //    endDate = endDate.Year == 1 ? DateOnly.FromDateTime(DateTime.Now) : endDate;
-
-        //    var cashFlow = await _generatingReports.NoAreaOfActivityAsync(Organization, startDate, endDate);
-        //    _exportingReportsToExcel.IncomeAndExpenses(cashFlow);
-        //    return NoContent();
-        //}
 
         /// <summary>Текущая задолженность</summary>
         /// <response>Записывает информацию в CurrentDebt.xlsx</response>
         [HttpGet("CurrentDebt")]
-        public async Task<IActionResult> CurrentDebtAsync([Required] Organizations Organization)
+        public async Task<IActionResult> CurrentDebtAsync([Required] Organizations organization)
         {
-            var currentDebt = await _generatingReports.CurrentDebtAsync(Organization);
+            var currentDebt = await _generatingReports.CurrentDebtAsync(organization);
             _exportingReportsToExcel.CurrentDebt(currentDebt);
-            return NoContent();
-        }
-
-        /// <summary>Акты об окончании СМР</summary>
-        /// <response>Записывает информацию в ActOfCompletion.xlsx</response>
-        [HttpGet("ActOfCompletion")]
-        public async Task<IActionResult> ActOfCompletionAsync([Required] Organizations Organization)
-        {
-            var actOfCompletion = await _generatingReports.ActOfCompletionAsync(Organization);
-            _exportingReportsToExcel.ActOfCompletion(actOfCompletion);
             return NoContent();
         }
     }

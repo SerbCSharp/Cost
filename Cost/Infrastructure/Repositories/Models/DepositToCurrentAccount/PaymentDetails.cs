@@ -4,8 +4,6 @@ namespace Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount
 {
     public class PaymentDetails
     {
-        public string Ref_Key { get; set; }
-
         [JsonPropertyName("ДоговорКонтрагента_Key")]
         public string ContractId { get; set; }
 

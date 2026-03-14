@@ -4,7 +4,6 @@ namespace Cost.Infrastructure.Repositories.Models.DebtAdjustment
 {
     public class DebtAdjustmentValue
     {
-        public string Ref_Key { get; set; }
         public DateTime Date { get; set; }
 
         [JsonPropertyName("КредиторскаяЗадолженность")]

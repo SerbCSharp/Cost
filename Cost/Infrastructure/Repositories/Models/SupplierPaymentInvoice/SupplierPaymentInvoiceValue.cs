@@ -9,8 +9,5 @@ namespace Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice
 
         [JsonPropertyName("Комментарий")]
         public string Comment { get; set; }
-
-        [JsonPropertyName("ДоговорКонтрагента_Key")]
-        public string ContractId { get; set; }
     }
 }

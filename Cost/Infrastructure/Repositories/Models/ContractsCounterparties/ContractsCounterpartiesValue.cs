@@ -4,9 +4,6 @@ namespace Cost.Infrastructure.Repositories.Models.ContractsCounterparties
 {
     public class ContractsCounterpartiesValue
     {
-        [JsonPropertyName("Ref_Key")]
-        public string CounterpartyAgreementId { get; set; }
-
         [JsonPropertyName("Номер")]
         public string Number { get; set; }
 

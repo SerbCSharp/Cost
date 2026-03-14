@@ -161,7 +161,7 @@ namespace Cost.Infrastructure.Repositories
         public async Task<ContractsCounterparties> ContractsCounterpartiesAsync() // Договоры контрагентов
         {
             var contractsCounterpartiesUrl = ApiUrl + "Catalog_ДоговорыКонтрагентов?$format=json"
-                + "&$select=Ref_Key,Номер,Description,Дата,Сумма,Owner_Key,Code"
+                + "&$select=Номер,Description,Дата,Сумма,Owner_Key,Code"
                 + "&$filter=DeletionMark eq false";
             using HttpResponseMessage contractsCounterpartiesResponse = await httpClient.GetAsync(contractsCounterpartiesUrl);
             var result = await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
@@ -217,7 +217,7 @@ namespace Cost.Infrastructure.Repositories
                 Sum = row.Field<decimal>("Сумма договора"),
                 RateNDS = row.Field<decimal>("Ставка НДС"),
                 GeneralContracting = row.Field<decimal>("ГП"),
-                WarrantyLien = row.Field<decimal>("ГУ"),
+                SecurityDeposit = row.Field<decimal>("ГУ"),
                 ContractorOrSupplier = row.Field<string>("Подрядчик/Поставщик"),
                 Liter = row.Field<string>("Литер"),
                 CostItem = row.Field<string>("Статья затрат"),
@@ -231,7 +231,7 @@ namespace Cost.Infrastructure.Repositories
         public async Task<DebtAdjustment> DebtAdjustmentAsync() // Корректировка долга
         {
             var debtAdjustmentUrl = ApiUrl + "Document_КорректировкаДолга?$format=json"
-                + "&$select=Ref_Key,Date,DeletionMark,КредиторскаяЗадолженность,ДебиторскаяЗадолженность"
+                + "&$select=Date,DeletionMark,КредиторскаяЗадолженность,ДебиторскаяЗадолженность"
                 + "&$filter=DeletionMark eq false and Posted eq true";
             using HttpResponseMessage debtAdjustmentResponse = await httpClient.GetAsync(debtAdjustmentUrl);
             return await debtAdjustmentResponse.Content.ReadFromJsonAsync<DebtAdjustment>();

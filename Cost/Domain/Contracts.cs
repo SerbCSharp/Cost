@@ -15,7 +15,7 @@
         public decimal RateNDS { get; set; }
         public string ContractClosed { get; set; }
         public decimal GeneralContracting { get; set; }
-        public decimal WarrantyLien { get; set; }
+        public decimal SecurityDeposit { get; set; }
         public decimal AmountUntil2026 { get; set; }
         public decimal RateNDS2026 { get; set; }
         public string Code { get; set; }

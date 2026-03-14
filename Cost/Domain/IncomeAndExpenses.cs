@@ -10,9 +10,6 @@
         public string Liter { get; set; }
         public string CostItem { get; set; }
         public string TypeOperation { get; set; }
-        //public string Contractor { get; set; }
-        //public string Number { get; set; }
-        //public string AreaOfActivity { get; set; }
         public string PaymentPurpose { get; set; }
     }
 }
