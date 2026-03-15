@@ -1,4 +1,5 @@
 ﻿using Cost.Domain;
+using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.ReportsToExcel;
 
@@ -173,7 +174,7 @@ namespace Cost.Application
                     Contractor = x.Description,
                     Number = y.Number,
                     Name = y.Name,
-                    Date = DateOnly.FromDateTime(y.Date ?? new DateTime()) ,
+                    Date = DateOnly.FromDateTime(y.Date ?? new DateTime()),
                     Sum = y.Sum ?? 0,
                     Code = y.Code
                 });
@@ -753,6 +754,12 @@ namespace Cost.Application
             });
 
             return income.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number);
+        }
+
+        public async Task<IEnumerable<ActOfCompletionValue>> ActOfCompletionAsync(Organizations organization) // Акты об окончании СМР
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+            return (await gettingData.ActOfCompletionAsync()).Value;
         }
     }
 }
