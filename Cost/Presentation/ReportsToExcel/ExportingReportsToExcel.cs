@@ -278,7 +278,7 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
-        public void Cost(IEnumerable<Expense> cost) // Стоимость строительства
+        public void Expense(IEnumerable<Expense> cost) // Стоимость строительства
         {
             string filePath = "C:\\Cost\\Cost.xlsx";
             using var package = new ExcelPackage();

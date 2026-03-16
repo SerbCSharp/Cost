@@ -64,7 +64,7 @@ namespace Cost.Presentation.Controllers
         public async Task<IActionResult> ExpenseAsync([Required] Organizations organization)
         {
             var expense = await _generatingReports.ExpenseAsync(organization);
-            _exportingReportsToExcel.Cost(expense);
+            _exportingReportsToExcel.Expense(expense);
             return NoContent();
         }
 

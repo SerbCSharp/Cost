@@ -118,8 +118,7 @@ namespace Cost.Infrastructure.Repositories
         public async Task<Counterparties> CounterpartiesAsync() // Контрагенты
         {
             var counterpartiesUrl = ApiUrl + "Catalog_Контрагенты?$format=json"
-                + "&$select=Ref_Key,Description"
-                + "&$filter=DeletionMark eq false";
+                + "&$select=Ref_Key,Description";
             using HttpResponseMessage counterpartiesResponse = await httpClient.GetAsync(counterpartiesUrl);
             return await counterpartiesResponse.Content.ReadFromJsonAsync<Counterparties>();
         }
@@ -127,8 +126,7 @@ namespace Cost.Infrastructure.Repositories
         public async Task<ContractsCounterparties> ContractsCounterpartiesAsync() // Договоры контрагентов
         {
             var contractsCounterpartiesUrl = ApiUrl + "Catalog_ДоговорыКонтрагентов?$format=json"
-                + "&$select=Номер,Description,Дата,Сумма,Owner_Key,Code"
-                + "&$filter=DeletionMark eq false";
+                + "&$select=Ref_Key,Номер,Description,Дата,Сумма,Owner_Key,Code";
             using HttpResponseMessage contractsCounterpartiesResponse = await httpClient.GetAsync(contractsCounterpartiesUrl);
             var result = await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
             result.CodeContract = 30;
