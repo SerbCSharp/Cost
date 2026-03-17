@@ -85,7 +85,41 @@ namespace Cost.Infrastructure.Repositories
 
         public IEnumerable<ExpensePaymentsFromExcel> ExpensePaymentsFromExcel() // Литер и статья затрат в старых оплатах
         {
-            throw new NotImplementedException();
+            string filePath = "C:\\Cost\\Parma\\Catalogs.xlsx";
+            FileInfo fileInfo = new(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "Payments"];
+            DataTable dataTable = new();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                if (sheet.Cells[1, i].Value.ToString() == "Date")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
+                else if (sheet.Cells[1, i].Value.ToString() == "PaymentAmount")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new ExpensePaymentsFromExcel
+            {
+                Liter = row.Field<string>("Liter"),
+                CostItems = row.Field<string>("CostItems"),
+                PaymentId = row.Field<string>("PaymentId"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
+                PaymentAmount = row.Field<decimal>("PaymentAmount"),
+                PurposePayment = row.Field<string>("PurposePayment"),
+            });
         }
 
         public async Task<SupplierPaymentInvoice> SupplierPaymentInvoiceAsync() // Счет на оплату поставщика
@@ -126,7 +160,8 @@ namespace Cost.Infrastructure.Repositories
         public async Task<ContractsCounterparties> ContractsCounterpartiesAsync() // Договоры контрагентов
         {
             var contractsCounterpartiesUrl = ApiUrl + "Catalog_ДоговорыКонтрагентов?$format=json"
-                + "&$select=Ref_Key,Номер,Description,Дата,Сумма,Owner_Key,Code";
+                + "&$select=Ref_Key,Номер,Description,Дата,Сумма,Owner_Key,Code"
+                + "&$filter=DeletionMark eq false";
             using HttpResponseMessage contractsCounterpartiesResponse = await httpClient.GetAsync(contractsCounterpartiesUrl);
             var result = await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
             result.CodeContract = 30;
@@ -288,12 +323,42 @@ namespace Cost.Infrastructure.Repositories
 
         public IEnumerable<Facility> GetFacility() // Площади объектов строительства
         {
-            throw new NotImplementedException();
+            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
+            FileInfo fileInfo = new(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "Objects"];
+            DataTable dataTable = new();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                if (sheet.Cells[1, i].Value.ToString() == "TotalArea")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new Facility
+            {
+                Liter = row.Field<string>("Liter"),
+                Name = row.Field<string>("Name"),
+                ObjectNameIn1C = row.Field<string>("ObjectNameIn1C"),
+                TotalArea = row.Field<decimal>("TotalArea")
+            });
         }
 
         public async Task<string> TmpAsync()
         {
-            var tmpUrl = ApiUrl + "Document_СчетНаОплатуПоставщика?$format=json";
+            var tmpUrl = ApiUrl + "Document_ТребованиеНакладная?$format=json";
             using HttpResponseMessage tmpResponse = await httpClient.GetAsync(tmpUrl);
             string content = await tmpResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content);

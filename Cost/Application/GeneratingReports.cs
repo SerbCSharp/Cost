@@ -19,6 +19,7 @@ namespace Cost.Application
         public async Task<IEnumerable<Payment>> ExpensePaymentsAsync(Organizations organization) // Расходные оплаты
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+            //var serb = await gettingData.TmpAsync();
             var payments = (await gettingData.DebitToCurrentAccountAsync()).Value;
             var multiplePayments = payments.Where(x => x.PaymentDetails.Length > 0)
                 .SelectMany(y => y.PaymentDetails, (x, y) => new { payment = x, PaymentDetails = y })
@@ -99,7 +100,7 @@ namespace Cost.Application
                 TypeOperation = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.TypeOperation,
                 CommentFromPaymentInvoice = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.subvSupplierPaymentInvoice?.Comment,
                 PaymentDetailsId = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.PaymentDetailsId
-            }).OrderBy(x => x.Date);
+            }).OrderByDescending(x => x.Date);
 
             return result;
         }
@@ -353,7 +354,7 @@ namespace Cost.Application
             var plusOperationCredit = plusOperationDebit.Concat(operationCredit);
 
             var implementationConstructionWorks = (await gettingData.ImplementationConstructionWorksAsync()).Value
-                .Select(y => new IncomeAndExpenses
+                ?.Select(y => new IncomeAndExpenses
                 {
                     Date = DateOnly.FromDateTime(y.Date),
                     Debit = y.DocumentAmount,
@@ -525,20 +526,18 @@ namespace Cost.Application
                                 from subvContracts in leftJoin.DefaultIfEmpty()
                                 select (vIncomeAndExpenses, subvContracts);
 
-            var reconciliationStatement = plusContracts.GroupBy(y => y.subvContracts.ContractId)
-                  .Select(z => new ReconciliationStatement
+            return plusContracts.Where(x => x.subvContracts?.Name == contractName && x.subvContracts?.Contractor == contractor)
+                  .Select(y => new ReconciliationStatement
                   {
-                      ContractId = z.Key,
-                      Credit = z.Sum(s => s.vIncomeAndExpenses.Credit),
-                      Debit = z.Sum(s => s.vIncomeAndExpenses.Debit),
-                      Contractor = z.FirstOrDefault().subvContracts.Contractor,
-                      Date = z.FirstOrDefault().subvContracts.Date,
-                      Sum = z.FirstOrDefault().subvContracts.Sum,
-                      Name = z.FirstOrDefault().subvContracts.Name,
-                      DocumentName = z.FirstOrDefault().vIncomeAndExpenses.DocumentName
+                      ContractId = y.vIncomeAndExpenses.ContractId,
+                      Credit = y.vIncomeAndExpenses.Credit,
+                      Debit = y.vIncomeAndExpenses.Debit,
+                      Contractor = y.subvContracts.Contractor,
+                      Date = y.subvContracts.Date,
+                      Sum = y.subvContracts.Sum,
+                      Name = y.subvContracts.Name,
+                      DocumentName = y.vIncomeAndExpenses.DocumentName
                   });
-
-            return reconciliationStatement.Where(x => x.Name == contractName && x.Contractor == contractor);
         }
 
         public async Task<IEnumerable<Income>> IncomeAsync(Organizations organization) // Доходы от строительства объектов
@@ -554,7 +553,8 @@ namespace Cost.Application
                                 from subvContracts in leftJoin.DefaultIfEmpty()
                                 select (vIncomeAndExpenses, subvContracts);
 
-            var buyersContracts = plusContracts.Where(x => x.subvContracts.ContractorOrSupplier == "Покупатель")
+
+            var buyersContracts = plusContracts.Where(x => x.subvContracts?.ContractorOrSupplier == "Покупатель")
                               .GroupBy(y => y.subvContracts.ContractId)
                               .Select(z => new Income
                               {

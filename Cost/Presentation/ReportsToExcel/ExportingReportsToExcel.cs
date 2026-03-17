@@ -310,9 +310,9 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 19].Value = "Выполнение до 2026";
             sheet.Cells[1, 20].Value = "НДС с 2026";
             sheet.Cells[1, 21].Value = "Входящий НДС";
-            sheet.Cells[1, 22].Value = "Выполнение за вычетом ГП и НДС";
-            sheet.Cells[1, 1, 1, 22].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 22].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            //sheet.Cells[1, 22].Value = "Выполнение за вычетом ГП и НДС";
+            sheet.Cells[1, 1, 1, 21].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 21].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             var row = 2;
             var column = 0;
@@ -339,7 +339,7 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 19].Value = item.AmountUntil2026;
                 sheet.Cells[row, column + 20].Value = item.RateNDS2026;
                 sheet.Cells[row, column + 21].Value = item.InputNDS;
-                sheet.Cells[row, column + 22].Value = item.Expenses;
+                //sheet.Cells[row, column + 22].Value = item.Expenses;
                 row++;
             }
 
@@ -348,12 +348,12 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[row, column + 6].Formula = $"=SUBTOTAL(9,F2:F{row - 1})";
             sheet.Cells[row, column + 15].Formula = $"=SUBTOTAL(9,O2:O{row - 1})";
             sheet.Cells[row, column + 17].Formula = $"=SUBTOTAL(9,Q2:Q{row - 1})";
-            sheet.Cells[row, column + 21].Formula = $"=SUBTOTAL(9,X2:X{row - 1})";
-            sheet.Cells[row, column + 22].Formula = $"=SUBTOTAL(9,Y2:Y{row - 1})";
-            sheet.Cells[row, 2, row, 22].Style.Font.Bold = true;
+            sheet.Cells[row, column + 21].Formula = $"=SUBTOTAL(9,U2:U{row - 1})";
+            //sheet.Cells[row, column + 22].Formula = $"=SUBTOTAL(9,V2:V{row - 1})";
+            sheet.Cells[row, 2, row, 21].Style.Font.Bold = true;
 
 
-            sheet.Cells[1, 1, row, 22].AutoFitColumns();
+            sheet.Cells[1, 1, row, 21].AutoFitColumns();
             sheet.Column(1).Width = 50;
             sheet.Column(2).Width = 50;
             sheet.Column(7).Width = 50;
@@ -361,7 +361,7 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Column(16).Hidden = true;
             sheet.Column(18).Hidden = true;
 
-            var range = sheet.Cells[1, 1, row - 1, 22];
+            var range = sheet.Cells[1, 1, row - 1, 21];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -375,7 +375,7 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[2, 17, row, 17].Style.Numberformat.Format = "### ### ### ##0.00";
             sheet.Cells[2, 19, row, 19].Style.Numberformat.Format = "### ### ### ##0.00";
             sheet.Cells[2, 20, row, 20].Style.Numberformat.Format = "0%";
-            sheet.Cells[2, 21, row, 22].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 21, row, 21].Style.Numberformat.Format = "### ### ### ##0.00";
 
             package.SaveAs(new FileInfo(filePath));
         }
