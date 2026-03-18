@@ -23,7 +23,7 @@ namespace Cost.Presentation.Controllers
         [HttpGet("Browse")]
         public async Task<IActionResult> BrowseAsync([Required] Organizations organization)
         {
-            var browse = await _generatingReports.ActOfCompletionAsync(organization);
+            var browse = await _generatingReports.IncomeAndExpensesAsync(organization);
             _exportingReportsToExcel.Browse(browse);
             return NoContent();
         }

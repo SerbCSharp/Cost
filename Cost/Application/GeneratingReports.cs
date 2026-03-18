@@ -486,12 +486,7 @@ namespace Cost.Application
                     item.ResidentialComplex = "Смородина";
                     item.Number = item.Contractor + "   " + item.Number;
                     if (item.ContractorOrSupplier == "Подрядчик")
-                    {
-                        if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")
-                            item.CurrentDebt = item.Receipt - item.Receipt * item.GeneralContracting - item.Payment;
-                        else
-                            item.CurrentDebt = item.Receipt - item.Receipt * (item.GeneralContracting + item.SecurityDeposit) - item.Payment;
-                    }
+                        item.CurrentDebt = item.Receipt - item.Payment;
                 }
 
                 if (item.Liter.Contains("Кипарис", StringComparison.OrdinalIgnoreCase))
@@ -499,12 +494,7 @@ namespace Cost.Application
                     item.ResidentialComplex = "Кипарис";
                     item.Number = item.Contractor + "   " + item.Number;
                     if (item.ContractorOrSupplier == "Подрядчик")
-                    {
-                        if (item.ContractClosed == "Закрыт" || item.ContractClosed == "Расторгнут")
-                            item.CurrentDebt = item.Receipt - item.Receipt * item.GeneralContracting - item.Payment;
-                        else
-                            item.CurrentDebt = item.Receipt - item.Receipt * (item.GeneralContracting + item.SecurityDeposit) - item.Payment;
-                    }
+                        item.CurrentDebt = item.Receipt - item.Payment;
                 }
             }
             return expense.Where(x => !string.IsNullOrEmpty(x.ResidentialComplex))
@@ -526,7 +516,11 @@ namespace Cost.Application
                                 from subvContracts in leftJoin.DefaultIfEmpty()
                                 select (vIncomeAndExpenses, subvContracts);
 
-            return plusContracts.Where(x => x.subvContracts?.Name == contractName && x.subvContracts?.Contractor == contractor)
+            var reconciliationStatement = string.IsNullOrEmpty(contractor) ? 
+                plusContracts.Where(x => x.subvContracts?.Name == contractName) :
+                plusContracts.Where(x => x.subvContracts?.Name == contractName && x.subvContracts?.Contractor == contractor);
+
+            return reconciliationStatement
                   .Select(y => new ReconciliationStatement
                   {
                       ContractId = y.vIncomeAndExpenses.ContractId,
