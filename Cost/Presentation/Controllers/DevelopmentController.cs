@@ -100,5 +100,15 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.CurrentDebt(currentDebt);
             return NoContent();
         }
+
+        /// <summary>Выполнения до 2026 года</summary>
+        /// <response>Записывает информацию в Browse.xlsx</response>
+        [HttpGet("AmountUntil2026")]
+        public async Task<IActionResult> AmountUntil2026Async([Required] Organizations organization)
+        {
+            var browse = await _generatingReports.AmountUntil2026Async(organization);
+            _exportingReportsToExcel.Browse(browse);
+            return NoContent();
+        }
     }
 }

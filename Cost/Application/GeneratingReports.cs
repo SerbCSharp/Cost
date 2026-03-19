@@ -692,7 +692,8 @@ namespace Cost.Application
             });
 
             var supplierAll = plusContracts.Where(x => x.subvContracts?.ContractorOrSupplier == "Поставщик")
-                .GroupBy(y => new { y.vIncomeAndExpenses.ContractId, y.vIncomeAndExpenses.Liter, y.vIncomeAndExpenses.CostItem, y.vIncomeAndExpenses.Date.Year }).Where(w => !string.IsNullOrEmpty(w.Key.Liter)).Select(z => new Expense
+                .GroupBy(y => new { y.vIncomeAndExpenses.ContractId, y.vIncomeAndExpenses.Liter, y.vIncomeAndExpenses.CostItem, y.vIncomeAndExpenses.Date.Year })
+                .Where(w => !string.IsNullOrEmpty(w.Key.Liter)).Select(z => new Expense
                 {
                     ContractId = z.Key.ContractId,
                     Receipt = 0,
@@ -766,6 +767,22 @@ namespace Cost.Application
                                    RateNDS2026 = vBuilderPlusSupplier.RateNDS2026,
                                };
             return plusFacility.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number);
+        }
+
+        public async Task<IEnumerable<IncomeAndExpenses>> AmountUntil2026Async(Organizations organization) // Выполнения до 2026 года
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var incomeAndExpenses = await IncomeAndExpensesAsync(organization);
+            return incomeAndExpenses
+                .Where(w => w.Date.Year < 2026 && (w.DocumentName != "Списание с расчетного счета" && w.DocumentName != "Поступление на расчетный счет"))
+                .GroupBy(x => x.ContractId)
+                .Select(y => new IncomeAndExpenses
+                {
+                    ContractId = y.Key,
+                    Credit = y.Sum(z => z.Credit),
+                    Debit = y.Sum(z => z.Debit)
+                });
         }
     }
 }
