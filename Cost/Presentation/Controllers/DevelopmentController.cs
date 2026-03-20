@@ -110,5 +110,15 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.Browse(browse);
             return NoContent();
         }
+
+        /// <summary>Сколько осталось доплатить по счетам</summary>
+        /// <response>Записывает информацию в HowMuchIsLeftToPayExtra.xlsx</response>
+        [HttpGet("HowMuchIsLeftToPayExtra")]
+        public async Task<IActionResult> HowMuchIsLeftToPayExtraAsync([Required] Organizations organization)
+        {
+            var howMuchIsLeftToPayExtra = await _generatingReports.HowMuchIsLeftToPayExtraAsync(organization);
+            _exportingReportsToExcel.HowMuchIsLeftToPayExtra(howMuchIsLeftToPayExtra, organization.ToString());
+            return NoContent();
+        }
     }
 }

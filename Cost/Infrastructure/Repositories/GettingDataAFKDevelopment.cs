@@ -125,7 +125,7 @@ namespace Cost.Infrastructure.Repositories
         public async Task<SupplierPaymentInvoice> SupplierPaymentInvoiceAsync() // Счет на оплату поставщика
         {
             var supplierPaymentInvoiceUrl = ApiUrl + "Document_СчетНаОплатуПоставщика?$format=json"
-                + "&$select=Ref_Key,Комментарий"
+                + "&$select=Ref_Key,Комментарий,Date,СуммаДокумента,Number,ДоговорКонтрагента_Key,Контрагент_Key"
                 + "&$filter=DeletionMark eq false";
             using HttpResponseMessage supplierPaymentInvoiceResponse = await httpClient.GetAsync(supplierPaymentInvoiceUrl);
             return await supplierPaymentInvoiceResponse.Content.ReadFromJsonAsync<SupplierPaymentInvoice>();

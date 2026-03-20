@@ -583,5 +583,58 @@ namespace Cost.Presentation.ReportsToExcel
 
             package.SaveAs(new FileInfo(filePath));
         }
+
+        public void HowMuchIsLeftToPayExtra(IEnumerable<HowMuchIsLeftToPayExtra> howMuchIsLeftToPayExtra, string organization) // Сколько осталось доплатить по счетам
+        {
+            string filePath = $"C:\\Cost\\{organization}HowMuchIsLeftToPayExtra.xlsx";
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets.Add("Оплата по счетам");
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+            sheet.View.FreezePanes(2, 1);
+
+            // Шапка
+            sheet.Cells[1, 1].Value = "Номер";
+            sheet.Cells[1, 2].Value = "Дата";
+            sheet.Cells[1, 3].Value = "Договор";
+            sheet.Cells[1, 4].Value = "Контрагент";
+            sheet.Cells[1, 5].Value = "Сумма счета";
+            sheet.Cells[1, 6].Value = "Оплатили";
+            sheet.Cells[1, 7].Value = "Привязка оплаты к счету";
+            sheet.Cells[1, 1, 1, 7].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            var column = 0;
+            foreach (var item in howMuchIsLeftToPayExtra)
+            {
+                sheet.Cells[row, column + 1].Value = item.Number;
+                sheet.Cells[row, column + 2].Value = item.Date;
+                sheet.Cells[row, column + 3].Value = item.Contract;
+                sheet.Cells[row, column + 4].Value = item.Contractor;
+                sheet.Cells[row, column + 5].Value = item.SupplierPaymentInvoiceAmount;
+                sheet.Cells[row, column + 6].Value = item.PaymentAmount;
+                sheet.Cells[row, column + 7].Value = item.PaymentId;
+                row++;
+            }
+
+            sheet.Cells[row, 2, row, 7].Style.Font.Bold = true;
+            sheet.Cells[1, 1, row, 17].AutoFitColumns();
+            sheet.Cells[2, 2, row, 2].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Cells[2, 5, row, 6].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            sheet.Column(3).Width = 50;
+            sheet.Column(4).Width = 50;
+
+            var range = sheet.Cells[1, 1, row - 1, 7];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range.AutoFilter = true;
+
+            package.SaveAs(new FileInfo(filePath));
+        }
     }
 }

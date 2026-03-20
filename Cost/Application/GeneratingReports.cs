@@ -19,7 +19,6 @@ namespace Cost.Application
         public async Task<IEnumerable<Payment>> ExpensePaymentsAsync(Organizations organization) // Расходные оплаты
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
-            //var serb = await gettingData.TmpAsync();
             var payments = (await gettingData.DebitToCurrentAccountAsync()).Value;
             var multiplePayments = payments.Where(x => x.PaymentDetails.Length > 0)
                 .SelectMany(y => y.PaymentDetails, (x, y) => new { payment = x, PaymentDetails = y })
@@ -783,6 +782,73 @@ namespace Cost.Application
                     Credit = y.Sum(z => z.Credit),
                     Debit = y.Sum(z => z.Debit)
                 });
+        }
+
+        public async Task<IEnumerable<HowMuchIsLeftToPayExtra>> HowMuchIsLeftToPayExtraAsync(Organizations organization) // Сколько осталось доплатить по счетам
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var supplierPaymentInvoice = (await gettingData.SupplierPaymentInvoiceAsync()).Value;
+            var payments = (await gettingData.DebitToCurrentAccountAsync()).Value;
+            var multiplePayments = payments.Where(x => x.PaymentDetails.Length > 0)
+                .SelectMany(y => y.PaymentDetails, (x, y) => new { payment = x, PaymentDetails = y })
+                .Select(z => new Payment
+                {
+                    PaymentId = z.payment.PaymentId,
+                    Date = DateOnly.FromDateTime(z.payment.Date),
+                    PaymentDetailsId = z.PaymentDetails.PaymentInvoiceId,
+                    ContractId = z.PaymentDetails.ContractId,
+                    PaymentAmount = z.PaymentDetails.PaymentAmount,
+                    PaymentPurpose = z.payment.PaymentPurpose,
+                    TypeOperation = z.payment.TypeOperation
+                });
+            var singlePayment = payments.Where(x => x.PaymentDetails.Length == 0)
+                .Select(y => new Payment
+                {
+                    PaymentId = y.PaymentId,
+                    Date = DateOnly.FromDateTime(y.Date),
+                    PaymentDetailsId = null,
+                    ContractId = y.ContractId,
+                    PaymentAmount = y.PaymentAmount,
+                    PaymentPurpose = y.PaymentPurpose,
+                    TypeOperation = y.TypeOperation
+                });
+            var allPayments = multiplePayments.Concat(singlePayment);
+
+            var supplierPaymentInvoicePlusPayments = from vSupplierPaymentInvoice in supplierPaymentInvoice
+                                                     join vAllPayments in allPayments
+                                                     on vSupplierPaymentInvoice.SupplierPaymentInvoiceId equals vAllPayments.PaymentDetailsId into leftJoin
+                                                     from subvAllPayments in leftJoin.DefaultIfEmpty()
+                                                     select new { vSupplierPaymentInvoice, subvAllPayments };
+
+            var counterparties = (await gettingData.CounterpartiesAsync()).Value;
+            var plusCounterparties = from vSupplierPaymentInvoicePlusPayments in supplierPaymentInvoicePlusPayments
+                                     join vCounterparties in counterparties
+                                     on vSupplierPaymentInvoicePlusPayments.vSupplierPaymentInvoice.ContractorId equals vCounterparties.Ref_Key into leftJoin
+                                     from subvCounterparties in leftJoin.DefaultIfEmpty()
+                                     select new { vSupplierPaymentInvoicePlusPayments, subvCounterparties };
+
+            var contractsCounterparties = (await gettingData.ContractsCounterpartiesAsync()).Value;
+            var plusContractsCounterparties = from vPlusCounterparties in plusCounterparties
+                                              join vContractsCounterparties in contractsCounterparties
+                                              on vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.vSupplierPaymentInvoice.ContractId
+                                              equals vContractsCounterparties.ContractId into leftJoin
+                                              from subvContractsCounterparties in leftJoin.DefaultIfEmpty()
+                                              select new { vPlusCounterparties, subvContractsCounterparties };
+
+            return plusContractsCounterparties
+                .Where(w => !string.IsNullOrEmpty(w.vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.vSupplierPaymentInvoice.SupplierPaymentInvoiceId))
+                .GroupBy(x => x.vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.vSupplierPaymentInvoice.SupplierPaymentInvoiceId)
+                .Select(y => new HowMuchIsLeftToPayExtra
+                {
+                    PaymentAmount = y.Sum(z => z.vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.subvAllPayments?.PaymentAmount ?? 0),
+                    Contract = y.FirstOrDefault().subvContractsCounterparties?.Number,
+                    Contractor = y.FirstOrDefault().vPlusCounterparties.subvCounterparties.Description,
+                    Date = y.FirstOrDefault().vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.vSupplierPaymentInvoice.Date,
+                    Number = y.FirstOrDefault().vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.vSupplierPaymentInvoice.Number,
+                    SupplierPaymentInvoiceAmount = y.FirstOrDefault().vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.vSupplierPaymentInvoice.PaymentAmount,
+                    PaymentId = y.FirstOrDefault().vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.subvAllPayments?.PaymentId
+                }).OrderBy(x => x.Date);
         }
     }
 }
