@@ -164,7 +164,7 @@ namespace Cost.Infrastructure.Repositories
                 + "&$filter=DeletionMark eq false";
             using HttpResponseMessage contractsCounterpartiesResponse = await httpClient.GetAsync(contractsCounterpartiesUrl);
             var result = await contractsCounterpartiesResponse.Content.ReadFromJsonAsync<ContractsCounterparties>();
-            result.CodeContract = 3760;
+            result.CodeContract = 3800;
             return result;
         }
 
