@@ -515,7 +515,7 @@ namespace Cost.Presentation.ReportsToExcel
 
         public void CashFlow((IEnumerable<CashFlow>, decimal) tuple, string organization, DateOnly startDate, DateOnly endDate) // ДДС
         {
-            string filePath = "C:\\Cost\\CashFlow.xlsx";
+            string filePath = $"C:\\Cost\\CashFlow{organization}.xlsx";
             using var package = new ExcelPackage();
 
             var sheet = package.Workbook.Worksheets.Add("ДДС");
@@ -580,6 +580,12 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[row + 2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             sheet.Cells[row + 2, 4].Formula = $"=SUBTOTAL(9,D7:D{row - 1})+D4";
             sheet.Cells[row + 2, 4].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            string fileSource = "C:\\Cost\\Browse.xlsx";
+            FileInfo fileInfo = new(fileSource);
+            using var packageSource = new ExcelPackage(fileInfo);
+            var worksheetSource = packageSource.Workbook.Worksheets[0];
+            package.Workbook.Worksheets.Add("Source", worksheetSource);
 
             package.SaveAs(new FileInfo(filePath));
         }
