@@ -19,6 +19,7 @@
         public decimal AmountUntil2026 { get; set; }
         public decimal RateNDS2026 { get; set; }
         public string Code { get; set; }
+        public string TypeOfActivity { get; set; }
         public string AreaOfActivity { get; set; }
 
         public bool Equals(Contracts other)

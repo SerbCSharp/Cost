@@ -130,42 +130,46 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.View.FreezePanes(2, 1);
 
             // Шапка
-            sheet.Cells[1, 1].Value = "Дата";
-            sheet.Cells[1, 2].Value = "Сумма";
-            sheet.Cells[1, 3].Value = "Литер";
-            sheet.Cells[1, 4].Value = "Статья затрат";
-            sheet.Cells[1, 5].Value = "PurposePayment";
-            sheet.Cells[1, 6].Value = "Контрагент";
-            sheet.Cells[1, 7].Value = "Договор";
-            sheet.Cells[1, 8].Value = "ContractId";
-            sheet.Cells[1, 9].Value = "Вид операции";
-            sheet.Cells[1, 10].Value = "PaymentDetailsId";
-            sheet.Cells[1, 11].Value = "CommentFromPaymentInvoice";
-            sheet.Cells[1, 1, 1, 11].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[1, 1].Value = "PaymentId";
+            sheet.Cells[1, 2].Value = "Number";
+            sheet.Cells[1, 3].Value = "Дата";
+            sheet.Cells[1, 4].Value = "Сумма";
+            sheet.Cells[1, 5].Value = "Литер";
+            sheet.Cells[1, 6].Value = "Статья затрат";
+            sheet.Cells[1, 7].Value = "PurposePayment";
+            sheet.Cells[1, 8].Value = "Контрагент";
+            sheet.Cells[1, 9].Value = "Договор";
+            sheet.Cells[1, 10].Value = "ContractId";
+            sheet.Cells[1, 11].Value = "Вид операции";
+            sheet.Cells[1, 12].Value = "PaymentDetailsId";
+            sheet.Cells[1, 13].Value = "CommentFromPaymentInvoice";
+            sheet.Cells[1, 1, 1, 13].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 13].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             var row = 2;
             var column = 0;
             foreach (var item in payments)
             {
-                sheet.Cells[row, column + 1].Value = item.Item1.Date;
-                sheet.Cells[row, column + 2].Value = item.Item1.PaymentAmount;
-                sheet.Cells[row, column + 3].Value = item.Item1.Liter;
-                sheet.Cells[row, column + 4].Value = item.Item1.CostItem;
-                sheet.Cells[row, column + 5].Value = item.Item1.PaymentPurpose;
-                sheet.Cells[row, column + 6].Value = item.Item2?.Contractor;
-                sheet.Cells[row, column + 7].Value = item.Item2?.Number;
-                sheet.Cells[row, column + 8].Value = item.Item1.ContractId;
-                sheet.Cells[row, column + 9].Value = item.Item1.TypeOperation;
-                sheet.Cells[row, column + 10].Value = item.Item1.PaymentDetailsId;
-                sheet.Cells[row, column + 11].Value = item.Item1.CommentFromPaymentInvoice;
+                sheet.Cells[row, column + 1].Value = item.Item1.PaymentId;
+                sheet.Cells[row, column + 2].Value = "";
+                sheet.Cells[row, column + 3].Value = item.Item1.Date;
+                sheet.Cells[row, column + 4].Value = item.Item1.PaymentAmount;
+                sheet.Cells[row, column + 5].Value = item.Item1.Liter;
+                sheet.Cells[row, column + 6].Value = item.Item1.CostItem;
+                sheet.Cells[row, column + 7].Value = item.Item1.PaymentPurpose;
+                sheet.Cells[row, column + 8].Value = item.Item2?.Contractor;
+                sheet.Cells[row, column + 9].Value = item.Item2?.Number;
+                sheet.Cells[row, column + 10].Value = item.Item1.ContractId;
+                sheet.Cells[row, column + 11].Value = item.Item1.TypeOperation;
+                sheet.Cells[row, column + 12].Value = item.Item1.PaymentDetailsId;
+                sheet.Cells[row, column + 13].Value = item.Item1.CommentFromPaymentInvoice;
                 row++;
             }
-            sheet.Cells[1, 1, row, 11].AutoFitColumns();
-            sheet.Cells[2, 1, row, 1].Style.Numberformat.Format = "dd.mm.yyyy";
-            sheet.Cells[2, 2, row, 2].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[1, 1, row, 13].AutoFitColumns();
+            sheet.Cells[2, 3, row, 3].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Cells[2, 4, row, 4].Style.Numberformat.Format = "### ### ### ##0.00";
 
-            var range = sheet.Cells[1, 1, row - 1, 11];
+            var range = sheet.Cells[1, 1, row - 1, 13];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -535,7 +539,7 @@ namespace Cost.Presentation.ReportsToExcel
 
             sheet.Cells[4, 1, 6, 4].Style.Font.Bold = true;
             sheet.Cells[4, 2, 4, 3].Merge = true;
-            sheet.Cells[4, 2].Value = "Сальдо на начало:";
+            sheet.Cells[4, 2].Value = "Остаток на начало:";
             sheet.Cells[4, 2, 4, 4].Style.Font.Size = 12;
             sheet.Cells[4, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             sheet.Cells[4, 4].Value = tuple.Item2;
@@ -575,7 +579,7 @@ namespace Cost.Presentation.ReportsToExcel
 
             sheet.Cells[row + 2, 1, row + 2, 4].Style.Font.Bold = true;
             sheet.Cells[row + 2, 2, row + 2, 3].Merge = true;
-            sheet.Cells[row + 2, 2].Value = "Сальдо на конец:";
+            sheet.Cells[row + 2, 2].Value = "Остаток на конец:";
             sheet.Cells[row + 2, 2, row + 2, 4].Style.Font.Size = 12;
             sheet.Cells[row + 2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             sheet.Cells[row + 2, 4].Formula = $"=SUBTOTAL(9,D7:D{row - 1})+D4";
@@ -586,6 +590,99 @@ namespace Cost.Presentation.ReportsToExcel
             using var packageSource = new ExcelPackage(fileInfo);
             var worksheetSource = packageSource.Workbook.Worksheets[0];
             package.Workbook.Worksheets.Add("Source", worksheetSource);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            var sheetFinal = package.Workbook.Worksheets.Add("ДДС final");
+            sheetFinal.Cells.Style.Font.Name = "Calibri";
+            sheetFinal.Cells.Style.Font.Size = 11;
+
+            // Шапка
+            sheetFinal.Cells[1, 1, 1, 4].Merge = true;
+            sheetFinal.Cells[1, 1].Value = $"ДДС окончательный ({organization})";
+            sheetFinal.Cells[1, 1].Style.Font.Size = 20;
+            sheetFinal.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            sheetFinal.Cells[2, 2, 2, 4].Merge = true;
+            sheetFinal.Cells[2, 2].Value = $"с {startDate} по {endDate}";
+            sheetFinal.Cells[2, 2].Style.Font.Size = 16;
+            sheetFinal.Cells[2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            sheetFinal.Cells[4, 1, 6, 4].Style.Font.Bold = true;
+            sheetFinal.Cells[4, 2, 4, 3].Merge = true;
+            sheetFinal.Cells[4, 2].Value = "Остаток на начало";
+            sheetFinal.Cells[4, 2, 4, 4].Style.Font.Size = 12;
+            sheetFinal.Cells[4, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheetFinal.Cells[4, 4].Value = tuple.Item2;
+            sheetFinal.Cells[4, 4].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            sheetFinal.Cells[6, 1, 6, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheetFinal.Cells[6, 1].Value = "Направления";
+            sheetFinal.Cells[6, 2].Value = "Поступления";
+            sheetFinal.Cells[6, 3].Value = "Выплаты";
+            sheetFinal.Cells[6, 4].Value = "Сальдо";
+
+            var rowFinal = 7;
+            var columnFinal = 0;
+            foreach (var item in tuple.Item1)
+            {
+                //sheet.Cells[row, column + 1].Value = item.AreaOfActivity;
+                //sheet.Cells[row, column + 2].Value = item.Receipt;
+                //sheet.Cells[row, column + 3].Value = item.Payment;
+                //sheet.Cells[row, column + 4].Formula = $"B{row}-C{row}";
+                row++;
+            }
+            //sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B6:B{row - 1})";
+            //sheet.Cells[row, column + 3].Formula = $"=SUBTOTAL(9,C6:C{row - 1})";
+            //sheet.Cells[row, column + 4].Formula = $"=SUBTOTAL(9,D6:D{row - 1})";
+            //sheet.Cells[row, 2, row, 4].Style.Font.Bold = true;
+
+            //sheet.Cells[1, 1, row, 4].AutoFitColumns();
+            //sheet.Cells[7, 2, row, 4].Style.Numberformat.Format = "### ### ### ##0.00";
+            //sheet.Column(4).Width = 15;
+
+            //var range = sheet.Cells[6, 1, row - 1, 4];
+            //range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            //range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            //range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            //range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            //range.AutoFilter = true;
+
+            //sheet.Cells[row + 2, 1, row + 2, 4].Style.Font.Bold = true;
+            //sheet.Cells[row + 2, 2, row + 2, 3].Merge = true;
+            //sheet.Cells[row + 2, 2].Value = "Остаток на конец";
+            //sheet.Cells[row + 2, 2, row + 2, 4].Style.Font.Size = 12;
+            //sheet.Cells[row + 2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            //sheet.Cells[row + 2, 4].Formula = $"=SUBTOTAL(9,D7:D{row - 1})+D4";
+            //sheet.Cells[row + 2, 4].Style.Numberformat.Format = "### ### ### ##0.00";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             package.SaveAs(new FileInfo(filePath));
         }

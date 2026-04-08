@@ -95,6 +95,8 @@ namespace Cost.Application
                 ContractId = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.ContractId,
                 Liter = string.IsNullOrEmpty(x.subvExpensePaymentsFromExcel?.Liter) ? x.vPlusCostItemName.vPlusLiterName.Description : x.subvExpensePaymentsFromExcel?.Liter,
                 CostItem = string.IsNullOrEmpty(x.subvExpensePaymentsFromExcel?.CostItems) ? x.vPlusCostItemName.Description : x.subvExpensePaymentsFromExcel?.CostItems,
+                TypeOfActivity = x.subvExpensePaymentsFromExcel?.TypeOfActivity,
+                AreaOfActivity = x.subvExpensePaymentsFromExcel?.AreaOfActivity,
                 PaymentPurpose = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.PaymentPurpose,
                 TypeOperation = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.TypeOperation,
                 CommentFromPaymentInvoice = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.subvSupplierPaymentInvoice?.Comment,
@@ -275,6 +277,9 @@ namespace Cost.Application
                     CostItem = x.CostItem,
                     TypeOperation = x.TypeOperation,
                     PaymentPurpose = x.PaymentPurpose,
+                    TypeOfActivity = x.TypeOfActivity,
+                    AreaOfActivity = x.AreaOfActivity,
+                    PaymentId = x.PaymentId,
                     DocumentName = "Списание с расчетного счета"
                 });
 
@@ -374,7 +379,10 @@ namespace Cost.Application
                     CostItem = x.CostItem,
                     Liter = x.Liter,
                     TypeOperation = x.TypeOperation,
-                    PaymentPurpose = x.PaymentPurpose
+                    PaymentPurpose = x.PaymentPurpose,
+                    TypeOfActivity = x.TypeOfActivity,
+                    AreaOfActivity = x.AreaOfActivity,
+                    PaymentId = x.PaymentId
                 });
 
             return incomeAndExpenses.OrderBy(x => x.Date);
@@ -388,60 +396,37 @@ namespace Cost.Application
                 && (w.DocumentName == "Списание с расчетного счета" || w.DocumentName == "Поступление на расчетный счет"));
 
             var contracts = gettingData.GetContracts();
-            var plusContracts = from vIncomeAndExpenses in incomeAndExpenses
+            var result = from vIncomeAndExpenses in incomeAndExpenses
                                 join vContracts in contracts
                                 on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
                                 from subvContracts in leftJoin.DefaultIfEmpty()
-                                select (vIncomeAndExpenses, subvContracts);
+                                select new CashFlow
+                                {
+                                    Date = vIncomeAndExpenses.Date,
+                                    Receipt = vIncomeAndExpenses.Credit,
+                                    Payment = vIncomeAndExpenses.Debit,
+                                    TypeOperation = vIncomeAndExpenses.TypeOperation,
+                                    TypeOfActivity = string.IsNullOrEmpty(vIncomeAndExpenses.TypeOfActivity) ? subvContracts?.TypeOfActivity : vIncomeAndExpenses.TypeOfActivity,
+                                    AreaOfActivity = AreaOfActivity(vIncomeAndExpenses.AreaOfActivity, subvContracts?.AreaOfActivity, vIncomeAndExpenses.TypeOperation),
+                                    Liter = vIncomeAndExpenses.Liter,
+                                    CostItem = vIncomeAndExpenses.CostItem,
+                                    ContractId = vIncomeAndExpenses.ContractId,
+                                    Contractor = subvContracts?.Contractor,
+                                    Number = subvContracts?.Number,
+                                    PaymentPurpose = vIncomeAndExpenses.PaymentPurpose,
+                                    PaymentId = vIncomeAndExpenses.PaymentId
+                                };
 
-            var incomeAndExpensesNotEmpty = plusContracts.Where(x => !string.IsNullOrEmpty(x.subvContracts?.AreaOfActivity))
-                .Select(y => new CashFlow
-                {
-                    Date = y.vIncomeAndExpenses.Date,
-                    Receipt = y.vIncomeAndExpenses.Credit,
-                    Payment = y.vIncomeAndExpenses.Debit,
-                    TypeOperation = y.vIncomeAndExpenses.TypeOperation,
-                    AreaOfActivity = y.subvContracts.AreaOfActivity,
-                    Liter = y.vIncomeAndExpenses.Liter,
-                    CostItem = y.vIncomeAndExpenses.CostItem,
-                    ContractId = y.vIncomeAndExpenses.ContractId,
-                    Contractor = y.subvContracts.Contractor,
-                    Number = y.subvContracts.Number,
-                    PaymentPurpose = y.vIncomeAndExpenses.PaymentPurpose
-                });
-
-            var incomeAndExpensesEmpty = plusContracts.Where(x => string.IsNullOrEmpty(x.subvContracts?.AreaOfActivity));
-            var literAndCostItemInAreaOfActivity = gettingData.GetLiterAndCostItemInAreaOfActivity();
-            var incomeAndExpensesEmptyPlusAreaOfActivity = from income in incomeAndExpensesEmpty
-                                                           join areaOfActivity in literAndCostItemInAreaOfActivity
-                                                           on income.vIncomeAndExpenses.Liter + income.vIncomeAndExpenses.CostItem equals areaOfActivity.Liter + areaOfActivity.CostItems
-                                                           into tmp
-                                                           from subareaOfActivity in tmp.DefaultIfEmpty()
-                                                           select new CashFlow
-                                                           {
-                                                               Date = income.vIncomeAndExpenses.Date,
-                                                               Receipt = income.vIncomeAndExpenses.Credit,
-                                                               Payment = income.vIncomeAndExpenses.Debit,
-                                                               PaymentPurpose = income.vIncomeAndExpenses.PaymentPurpose,
-                                                               TypeOperation = income.vIncomeAndExpenses.TypeOperation,
-                                                               AreaOfActivity = subareaOfActivity != null ? subareaOfActivity.AreaOfActivity : income.vIncomeAndExpenses.TypeOperation,
-                                                               Liter = income.vIncomeAndExpenses.Liter,
-                                                               CostItem = income.vIncomeAndExpenses.CostItem,
-                                                               ContractId = income.vIncomeAndExpenses.ContractId,
-                                                               Contractor = income.subvContracts?.Contractor,
-                                                               Number = income.subvContracts?.Number
-                                                           };
-
-            var result = incomeAndExpensesNotEmpty.Concat(incomeAndExpensesEmptyPlusAreaOfActivity);
-            _exportingReportsToExcel.Browse(result); // Source
+            _exportingReportsToExcel.Browse(result.Where(z => z.Date >= startDate && z.Date <= endDate)); // Source
 
             // -------------------------------------------------------
 
             var startCashFlow = result.Where(z => z.Date < startDate)
-                                                 .GroupBy(x => x.AreaOfActivity)
+                                                 .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
                                                  .Select(y => new CashFlow
                                                  {
-                                                     AreaOfActivity = y.Key,
+                                                     TypeOfActivity = y.Key.TypeOfActivity,
+                                                     AreaOfActivity = y.Key.AreaOfActivity,
                                                      Receipt = y.Sum(z => z.Receipt),
                                                      Payment = y.Sum(z => z.Payment),
                                                  });
@@ -457,10 +442,11 @@ namespace Cost.Application
 
             var cashFlow = result.Where(z => z.Date >= startDate
                                                      && z.Date <= endDate)
-                                            .GroupBy(x => x.AreaOfActivity)
+                                            .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
                                             .Select(y => new CashFlow
                                             {
-                                                AreaOfActivity = y.Key,
+                                                TypeOfActivity = y.Key.TypeOfActivity,
+                                                AreaOfActivity = y.Key.AreaOfActivity,
                                                 Receipt = y.Sum(z => z.Receipt),
                                                 Payment = y.Sum(z => z.Payment),
                                             })
@@ -849,6 +835,17 @@ namespace Cost.Application
                     SupplierPaymentInvoiceAmount = y.FirstOrDefault().vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.vSupplierPaymentInvoice.PaymentAmount,
                     PaymentId = y.FirstOrDefault().vPlusCounterparties.vSupplierPaymentInvoicePlusPayments.subvAllPayments?.PaymentId
                 }).OrderBy(x => x.Date);
+        }
+
+        public string AreaOfActivity(string paymentAreaOfActivity, string contractAreaOfActivity, string typeOperation)
+        {
+            string areaOfActivity;
+            if (string.IsNullOrWhiteSpace(paymentAreaOfActivity))
+                areaOfActivity = string.IsNullOrEmpty(contractAreaOfActivity) ? typeOperation : contractAreaOfActivity;
+            else
+                areaOfActivity = paymentAreaOfActivity;
+
+                return areaOfActivity;
         }
     }
 }

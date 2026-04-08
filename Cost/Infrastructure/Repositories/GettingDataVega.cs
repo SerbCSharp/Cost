@@ -119,6 +119,8 @@ namespace Cost.Infrastructure.Repositories
                 Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
                 PaymentAmount = row.Field<decimal>("PaymentAmount"),
                 PurposePayment = row.Field<string>("PurposePayment"),
+                TypeOfActivity = row.Field<string>("TypeOfActivity"),
+                AreaOfActivity = row.Field<string>("AreaOfActivity")
             });
         }
 
@@ -224,7 +226,8 @@ namespace Cost.Infrastructure.Repositories
                 ContractClosed = row.Field<string>("Статус"),
                 AmountUntil2026 = row.Field<decimal>("AmountUntil2026"),
                 RateNDS2026 = row.Field<decimal>("RateNDS2026"),
-                AreaOfActivity = row.Field<string>("Направление")
+                TypeOfActivity = row.Field<string>("TypeOfActivity"),
+                AreaOfActivity = row.Field<string>("AreaOfActivity")
             });
         }
 

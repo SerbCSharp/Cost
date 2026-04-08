@@ -2,6 +2,7 @@
 {
     public class CashFlow
     {
+        public string TypeOfActivity { get; set; }
         public string AreaOfActivity { get; set; }
         public decimal Payment { get; set; }
         public decimal Receipt { get; set; }
@@ -13,5 +14,6 @@
         public string TypeOperation { get; set; }
         public string Contractor { get; set; }
         public string Number { get; set; }
+        public string PaymentId { get; set; }
     }
 }
