@@ -15,5 +15,6 @@
         public string Contractor { get; set; }
         public string Number { get; set; }
         public string PaymentId { get; set; }
+        public decimal SumTypeOfActivity { get; set; }
     }
 }

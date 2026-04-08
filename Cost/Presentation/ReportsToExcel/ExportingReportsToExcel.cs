@@ -1,4 +1,5 @@
 ﻿using Cost.Domain;
+using Cost.Infrastructure.Repositories.Models;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System.Reflection;
@@ -595,6 +596,41 @@ namespace Cost.Presentation.ReportsToExcel
 
 
 
+            var groupTypeOfActivity = tuple.Item1.GroupBy(y => y.TypeOfActivity)
+                .Select(x => new { typeOfActivity = x.Key, sumTypeOfActivity = x.Sum(z => z.Receipt) - x.Sum(z => z.Payment) });
+
+            var cashFlow = from vCashFlow in tuple.Item1
+                           join vGroupTypeOfActivity in groupTypeOfActivity
+                           on vCashFlow.TypeOfActivity equals vGroupTypeOfActivity.typeOfActivity into leftJoin
+                           from subvGroupTypeOfActivity in leftJoin.DefaultIfEmpty()
+                           select new CashFlow
+                            
+                               {
+                                   ContractId = vBuilderPlusSupplier.ContractId,
+                                   Receipt = vBuilderPlusSupplier.Receipt,
+                                   Payment = vBuilderPlusSupplier.Payment,
+                                   Contractor = vBuilderPlusSupplier.Contractor,
+                                   Number = vBuilderPlusSupplier.Number,
+                                   RateNDS = vBuilderPlusSupplier.RateNDS,
+                                   GeneralContracting = vBuilderPlusSupplier.GeneralContracting,
+                                   Liter = vBuilderPlusSupplier.Liter,
+                                   ContractClosed = vBuilderPlusSupplier.ContractClosed,
+                                   ContractorOrSupplier = vBuilderPlusSupplier.ContractorOrSupplier,
+                                   CostItem = vBuilderPlusSupplier.CostItem,
+                                   Date = vBuilderPlusSupplier.Date,
+                                   Sum = vBuilderPlusSupplier.Sum,
+                                   SecurityDeposit = vBuilderPlusSupplier.SecurityDeposit,
+                                   Name = vBuilderPlusSupplier.Name,
+                                   NumberAA = vBuilderPlusSupplier.NumberAA,
+                                   ConstructionCost = vBuilderPlusSupplier.ConstructionCost,
+                                   TotalArea = subvTotalAreas?.TotalArea ?? 0,
+                                   Year = vBuilderPlusSupplier.Year,
+                                   ConstructionCostNDS = vBuilderPlusSupplier.ConstructionCostNDS,
+                                   InputNDS = vBuilderPlusSupplier.InputNDS,
+                                   Expenses = vBuilderPlusSupplier.Expenses,
+                                   AmountUntil2026 = vBuilderPlusSupplier.AmountUntil2026,
+                                   RateNDS2026 = vBuilderPlusSupplier.RateNDS2026,
+                               };
 
 
 
@@ -610,7 +646,7 @@ namespace Cost.Presentation.ReportsToExcel
 
             // Шапка
             sheetFinal.Cells[1, 1, 1, 4].Merge = true;
-            sheetFinal.Cells[1, 1].Value = $"ДДС окончательный ({organization})";
+            sheetFinal.Cells[1, 1].Value = $"Отчет о движении денежных средств ({organization})";
             sheetFinal.Cells[1, 1].Style.Font.Size = 20;
             sheetFinal.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
@@ -628,20 +664,28 @@ namespace Cost.Presentation.ReportsToExcel
             sheetFinal.Cells[4, 4].Style.Numberformat.Format = "### ### ### ##0.00";
 
             sheetFinal.Cells[6, 1, 6, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            sheetFinal.Cells[6, 1].Value = "Направления";
-            sheetFinal.Cells[6, 2].Value = "Поступления";
-            sheetFinal.Cells[6, 3].Value = "Выплаты";
-            sheetFinal.Cells[6, 4].Value = "Сальдо";
+            sheetFinal.Cells[6, 1].Value = "Показатель";
+            sheetFinal.Cells[6, 2].Value = "Сумма";
 
-            var rowFinal = 7;
-            var columnFinal = 1;
-            foreach (var item in tuple.Item1)
+            row = 7;
+            column = 1;
+            string typeOfActivity = "";
+            foreach (var item in cashFlow)
             {
-                sheetFinal.Cells[rowFinal + 1, columnFinal].Value = item.AreaOfActivity;
-                sheetFinal.Cells[rowFinal + 2, columnFinal].Value = item.Receipt;
-                sheetFinal.Cells[rowFinal + 3, columnFinal].Value = item.Payment;
-                //sheet.Cells[row, column + 4].Formula = $"B{row}-C{row}";
-                rowFinal = rowFinal + 3;
+                if (item.TypeOfActivity != typeOfActivity)
+                {
+                    sheetFinal.Cells[row, column].Value = typeOfActivity;
+                    sheetFinal.Cells[row, column + 1].Value = item.;
+                    typeOfActivity = item.TypeOfActivity;
+                    row++;
+                }
+                sheetFinal.Cells[row + 1, column].Value = item.AreaOfActivity;
+                sheetFinal.Cells[row + 1, column + 1].Value = item.Receipt - item.Payment;
+                sheetFinal.Cells[row + 2, column].Value = "Поступления";
+                sheetFinal.Cells[row + 2, column + 1].Value = item.Receipt;
+                sheetFinal.Cells[row + 3, column].Value = "Оплаты";
+                sheetFinal.Cells[row + 3, column +1].Value = item.Payment;
+                row = row + 3;
             }
             //sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B6:B{row - 1})";
             //sheet.Cells[row, column + 3].Formula = $"=SUBTOTAL(9,C6:C{row - 1})";
