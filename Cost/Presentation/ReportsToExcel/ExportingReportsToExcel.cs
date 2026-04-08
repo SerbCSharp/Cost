@@ -634,14 +634,14 @@ namespace Cost.Presentation.ReportsToExcel
             sheetFinal.Cells[6, 4].Value = "Сальдо";
 
             var rowFinal = 7;
-            var columnFinal = 0;
+            var columnFinal = 1;
             foreach (var item in tuple.Item1)
             {
-                //sheet.Cells[row, column + 1].Value = item.AreaOfActivity;
-                //sheet.Cells[row, column + 2].Value = item.Receipt;
-                //sheet.Cells[row, column + 3].Value = item.Payment;
+                sheetFinal.Cells[rowFinal + 1, columnFinal].Value = item.AreaOfActivity;
+                sheetFinal.Cells[rowFinal + 2, columnFinal].Value = item.Receipt;
+                sheetFinal.Cells[rowFinal + 3, columnFinal].Value = item.Payment;
                 //sheet.Cells[row, column + 4].Formula = $"B{row}-C{row}";
-                row++;
+                rowFinal = rowFinal + 3;
             }
             //sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B6:B{row - 1})";
             //sheet.Cells[row, column + 3].Formula = $"=SUBTOTAL(9,C6:C{row - 1})";
