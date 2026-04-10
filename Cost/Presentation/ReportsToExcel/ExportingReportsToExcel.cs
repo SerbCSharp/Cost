@@ -1,5 +1,5 @@
 ﻿using Cost.Domain;
-using Cost.Infrastructure.Repositories.Models;
+using Cost.Presentation.DTO.Response;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System.Reflection;
@@ -518,16 +518,51 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
-        public void CashFlow((IEnumerable<CashFlow>, decimal) tuple, string organization, DateOnly startDate, DateOnly endDate) // ДДС
+        public void CashFlow((IEnumerable<CashFlow>, decimal) tupleCashFlow, string organization, DateOnly startDate, DateOnly endDate) // ДДС
         {
+            // Остаток на начало
+
+            var startCashFlow = tupleCashFlow.Item1.Where(z => z.Date < startDate)
+                                                 .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
+                                                 .Select(y => new CashFlow
+                                                 {
+                                                     TypeOfActivity = y.Key.TypeOfActivity,
+                                                     AreaOfActivity = y.Key.AreaOfActivity,
+                                                     Receipt = y.Sum(z => z.Receipt),
+                                                     Payment = y.Sum(z => z.Payment),
+                                                 });
+
+            var startBalance = tupleCashFlow.Item2;
+
+            foreach (var item in startCashFlow)
+            {
+                startBalance = startBalance + item.Receipt - item.Payment;
+            }
+
+            // -------------------------------------------------------
+
+            var cashFlow = tupleCashFlow.Item1.Where(z => z.Date >= startDate
+                                                     && z.Date <= endDate)
+                                            .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
+                                            .Select(y => new CashFlow
+                                            {
+                                                TypeOfActivity = y.Key.TypeOfActivity,
+                                                AreaOfActivity = y.Key.AreaOfActivity,
+                                                Receipt = y.Sum(z => z.Receipt),
+                                                Payment = y.Sum(z => z.Payment),
+                                            })
+                                            .Where(z => z.AreaOfActivity != "ПереводСДругогоСчета"
+                                                     && z.AreaOfActivity != "ПереводНаДругойСчет")
+                                            .OrderBy(or => or.AreaOfActivity);
+
             string filePath = $"C:\\Cost\\CashFlow{organization}.xlsx";
             using var package = new ExcelPackage();
 
+            // Лист ДДС
             var sheet = package.Workbook.Worksheets.Add("ДДС");
             sheet.Cells.Style.Font.Name = "Calibri";
             sheet.Cells.Style.Font.Size = 11;
 
-            // Шапка
             sheet.Cells[1, 1, 1, 4].Merge = true;
             sheet.Cells[1, 1].Value = $"ДДС по направлениям ({organization})";
             sheet.Cells[1, 1].Style.Font.Size = 20;
@@ -543,7 +578,7 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[4, 2].Value = "Остаток на начало:";
             sheet.Cells[4, 2, 4, 4].Style.Font.Size = 12;
             sheet.Cells[4, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            sheet.Cells[4, 4].Value = tuple.Item2;
+            sheet.Cells[4, 4].Value = startBalance;
             sheet.Cells[4, 4].Style.Numberformat.Format = "### ### ### ##0.00";
 
             sheet.Cells[6, 1, 6, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -554,7 +589,7 @@ namespace Cost.Presentation.ReportsToExcel
 
             var row = 7;
             var column = 0;
-            foreach (var item in tuple.Item1)
+            foreach (var item in cashFlow)
             {
                 sheet.Cells[row, column + 1].Value = item.AreaOfActivity;
                 sheet.Cells[row, column + 2].Value = item.Receipt;
@@ -586,65 +621,92 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[row + 2, 4].Formula = $"=SUBTOTAL(9,D7:D{row - 1})+D4";
             sheet.Cells[row + 2, 4].Style.Numberformat.Format = "### ### ### ##0.00";
 
-            string fileSource = "C:\\Cost\\Browse.xlsx";
-            FileInfo fileInfo = new(fileSource);
-            using var packageSource = new ExcelPackage(fileInfo);
-            var worksheetSource = packageSource.Workbook.Worksheets[0];
-            package.Workbook.Worksheets.Add("Source", worksheetSource);
+            // Лист Source
+            var sheetSource = package.Workbook.Worksheets.Add("Source");
+            sheetSource.Cells.Style.Font.Name = "Calibri";
+            sheetSource.Cells.Style.Font.Size = 11;
+            sheetSource.View.FreezePanes(2, 1);
 
+            sheetSource.Cells[1, 1].Value = "Вид деятельности";
+            sheetSource.Cells[1, 2].Value = "Направление";
+            sheetSource.Cells[1, 3].Value = "Тип операции из 1С";
+            sheetSource.Cells[1, 4].Value = "Поступления";
+            sheetSource.Cells[1, 5].Value = "Оплаты";
+            sheetSource.Cells[1, 6].Value = "Дата";
+            sheetSource.Cells[1, 7].Value = "Объект";
+            sheetSource.Cells[1, 8].Value = "Статья затрат";
+            sheetSource.Cells[1, 9].Value = "Назначение платежа из 1С";
+            sheetSource.Cells[1, 10].Value = "Контрагент";
+            sheetSource.Cells[1, 11].Value = "Договор";
+            sheetSource.Cells[1, 1, 1, 11].Style.Font.Bold = true;
+            sheetSource.Cells[1, 1, 1, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
+            row = 2;
+            column = 0;
+            foreach (var item in tupleCashFlow.Item1.Where(z => z.Date >= startDate && z.Date <= endDate))
+            {
+                sheetSource.Cells[row, column + 1].Value = item.TypeOfActivity;
+                sheetSource.Cells[row, column + 2].Value = item.AreaOfActivity;
+                sheetSource.Cells[row, column + 3].Value = item.TypeOperation;
+                sheetSource.Cells[row, column + 4].Value = item.Receipt;
+                sheetSource.Cells[row, column + 5].Value = item.Payment;
+                sheetSource.Cells[row, column + 6].Value = item.Date;
+                sheetSource.Cells[row, column + 7].Value = item.Liter;
+                sheetSource.Cells[row, column + 8].Value = item.CostItem;
+                sheetSource.Cells[row, column + 9].Value = item.PaymentPurpose;
+                sheetSource.Cells[row, column + 10].Value = item.Contractor;
+                sheetSource.Cells[row, column + 11].Value = item.Number;
+                row++;
+            }
+            sheetSource.Cells[1, 1, row, 11].AutoFitColumns();
+            sheetSource.Cells[2, 6, row, 6].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheetSource.Cells[2, 4, row, 5].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheetSource.Column(1).Width = 30;
+            sheetSource.Column(7).Width = 30;
+            sheetSource.Column(8).Width = 30;
+            sheetSource.Column(9).Width = 50;
+            sheetSource.Column(10).Width = 30;
+            sheetSource.Column(11).Width = 30;
 
+            range = sheetSource.Cells[1, 1, row - 1, 11];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range.AutoFilter = true;
 
-
-            var groupTypeOfActivity = tuple.Item1.GroupBy(y => y.TypeOfActivity)
+            // Лист ДДС final
+            var groupTypeOfActivity = cashFlow.GroupBy(y => y.TypeOfActivity)
                 .Select(x => new { typeOfActivity = x.Key, sumTypeOfActivity = x.Sum(z => z.Receipt) - x.Sum(z => z.Payment) });
+            var order = new List<CashFlowOrder>
+            {
+                new() { Name = "Производственная деятельность (включая косвенные расходы)", Order = 1 },
+                new() { Name = "Инвестиционная деятельность", Order = 2 },
+                new() { Name = "Финансовая деятельность", Order = 3 }
+            };
+            var orderTypeOfActivity = from vGroupTypeOfActivity in groupTypeOfActivity
+                                      join vOrder in order
+                                      on vGroupTypeOfActivity.typeOfActivity equals vOrder.Name into leftJoin
+                                      from subvOrder in leftJoin.DefaultIfEmpty()
+                                      select new { vGroupTypeOfActivity, subvOrder?.Order };
 
-            var cashFlow = from vCashFlow in tuple.Item1
-                           join vGroupTypeOfActivity in groupTypeOfActivity
-                           on vCashFlow.TypeOfActivity equals vGroupTypeOfActivity.typeOfActivity into leftJoin
-                           from subvGroupTypeOfActivity in leftJoin.DefaultIfEmpty()
+            var cashFlowFinal = from vCashFlow in cashFlow
+                           join vOrderTypeOfActivity in orderTypeOfActivity
+                           on vCashFlow.TypeOfActivity equals vOrderTypeOfActivity.vGroupTypeOfActivity.typeOfActivity into leftJoin
+                           from subvOrderTypeOfActivity in leftJoin.DefaultIfEmpty()
+                           orderby subvOrderTypeOfActivity?.Order ?? 0
                            select new CashFlow
-                            
-                               {
-                                   ContractId = vBuilderPlusSupplier.ContractId,
-                                   Receipt = vBuilderPlusSupplier.Receipt,
-                                   Payment = vBuilderPlusSupplier.Payment,
-                                   Contractor = vBuilderPlusSupplier.Contractor,
-                                   Number = vBuilderPlusSupplier.Number,
-                                   RateNDS = vBuilderPlusSupplier.RateNDS,
-                                   GeneralContracting = vBuilderPlusSupplier.GeneralContracting,
-                                   Liter = vBuilderPlusSupplier.Liter,
-                                   ContractClosed = vBuilderPlusSupplier.ContractClosed,
-                                   ContractorOrSupplier = vBuilderPlusSupplier.ContractorOrSupplier,
-                                   CostItem = vBuilderPlusSupplier.CostItem,
-                                   Date = vBuilderPlusSupplier.Date,
-                                   Sum = vBuilderPlusSupplier.Sum,
-                                   SecurityDeposit = vBuilderPlusSupplier.SecurityDeposit,
-                                   Name = vBuilderPlusSupplier.Name,
-                                   NumberAA = vBuilderPlusSupplier.NumberAA,
-                                   ConstructionCost = vBuilderPlusSupplier.ConstructionCost,
-                                   TotalArea = subvTotalAreas?.TotalArea ?? 0,
-                                   Year = vBuilderPlusSupplier.Year,
-                                   ConstructionCostNDS = vBuilderPlusSupplier.ConstructionCostNDS,
-                                   InputNDS = vBuilderPlusSupplier.InputNDS,
-                                   Expenses = vBuilderPlusSupplier.Expenses,
-                                   AmountUntil2026 = vBuilderPlusSupplier.AmountUntil2026,
-                                   RateNDS2026 = vBuilderPlusSupplier.RateNDS2026,
-                               };
-
-
-
-
-
-
-
-
-
+                           {
+                               AreaOfActivity = vCashFlow.AreaOfActivity,
+                               TypeOfActivity = vCashFlow.TypeOfActivity,
+                               Receipt = vCashFlow.Receipt,
+                               Payment = vCashFlow.Payment,
+                               SumTypeOfActivity = subvOrderTypeOfActivity?.vGroupTypeOfActivity != null ? subvOrderTypeOfActivity.vGroupTypeOfActivity.sumTypeOfActivity :0
+                           };
             var sheetFinal = package.Workbook.Worksheets.Add("ДДС final");
             sheetFinal.Cells.Style.Font.Name = "Calibri";
             sheetFinal.Cells.Style.Font.Size = 11;
 
-            // Шапка
             sheetFinal.Cells[1, 1, 1, 4].Merge = true;
             sheetFinal.Cells[1, 1].Value = $"Отчет о движении денежных средств ({organization})";
             sheetFinal.Cells[1, 1].Style.Font.Size = 20;
@@ -655,78 +717,61 @@ namespace Cost.Presentation.ReportsToExcel
             sheetFinal.Cells[2, 2].Style.Font.Size = 16;
             sheetFinal.Cells[2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            sheetFinal.Cells[4, 1, 6, 4].Style.Font.Bold = true;
-            sheetFinal.Cells[4, 2, 4, 3].Merge = true;
-            sheetFinal.Cells[4, 2].Value = "Остаток на начало";
-            sheetFinal.Cells[4, 2, 4, 4].Style.Font.Size = 12;
-            sheetFinal.Cells[4, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            sheetFinal.Cells[4, 4].Value = tuple.Item2;
-            sheetFinal.Cells[4, 4].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheetFinal.Cells[4, 1, 4, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheetFinal.Cells[4, 1, 4, 2].Style.Font.Bold = true;
+            sheetFinal.Cells[4, 1].Value = "Показатель";
+            sheetFinal.Cells[4, 2].Value = "Сумма";
 
-            sheetFinal.Cells[6, 1, 6, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            sheetFinal.Cells[6, 1].Value = "Показатель";
-            sheetFinal.Cells[6, 2].Value = "Сумма";
+            sheetFinal.Cells[5, 1].Value = "Остаток на начало";
+            sheetFinal.Cells[5, 2].Value = startBalance;
+            sheetFinal.Cells[5, 1, 5, 2].Style.Font.Bold = true;
 
-            row = 7;
+            row = 5;
             column = 1;
-            string typeOfActivity = "";
-            foreach (var item in cashFlow)
+            string typeOfActivity = null;
+            var endBalance = startBalance;
+
+            foreach (var item in cashFlowFinal)
             {
                 if (item.TypeOfActivity != typeOfActivity)
                 {
-                    sheetFinal.Cells[row, column].Value = typeOfActivity;
-                    sheetFinal.Cells[row, column + 1].Value = item.;
-                    typeOfActivity = item.TypeOfActivity;
                     row++;
+                    sheetFinal.Cells[row, column].Value = item.TypeOfActivity;
+                    sheetFinal.Cells[row, column, row, column + 1].Style.Font.Bold = true;
+                    sheetFinal.Cells[row, column, row, column + 1].Style.Font.Size = 12;
+                    sheetFinal.Cells[row, column + 1].Value = item.SumTypeOfActivity;
+                    typeOfActivity = item.TypeOfActivity;
                 }
-                sheetFinal.Cells[row + 1, column].Value = item.AreaOfActivity;
+                sheetFinal.Cells[row + 1, column, row + 1, column + 1].Style.Font.Bold = true;
+                sheetFinal.Cells[row + 1, column].Value = item.AreaOfActivity.PadLeft(item.AreaOfActivity.Length + 5);
                 sheetFinal.Cells[row + 1, column + 1].Value = item.Receipt - item.Payment;
-                sheetFinal.Cells[row + 2, column].Value = "Поступления";
-                sheetFinal.Cells[row + 2, column + 1].Value = item.Receipt;
-                sheetFinal.Cells[row + 3, column].Value = "Оплаты";
-                sheetFinal.Cells[row + 3, column +1].Value = item.Payment;
-                row = row + 3;
+                endBalance = endBalance + item.Receipt - item.Payment;
+
+                if (item.TypeOfActivity != "Финансовая деятельность")
+                {
+                    sheetFinal.Cells[row + 2, column].Value = "Поступления".PadLeft("Поступления".Length + 10);
+                    sheetFinal.Cells[row + 2, column + 1].Value = item.Receipt;
+                    sheetFinal.Cells[row + 3, column].Value = "Оплаты".PadLeft("Оплаты".Length + 10);
+                    sheetFinal.Cells[row + 3, column + 1].Value = item.Payment;
+                    row = row + 3;
+                }
+                else
+                    row++;
             }
-            //sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B6:B{row - 1})";
-            //sheet.Cells[row, column + 3].Formula = $"=SUBTOTAL(9,C6:C{row - 1})";
-            //sheet.Cells[row, column + 4].Formula = $"=SUBTOTAL(9,D6:D{row - 1})";
-            //sheet.Cells[row, 2, row, 4].Style.Font.Bold = true;
 
-            //sheet.Cells[1, 1, row, 4].AutoFitColumns();
-            //sheet.Cells[7, 2, row, 4].Style.Numberformat.Format = "### ### ### ##0.00";
-            //sheet.Column(4).Width = 15;
+            sheetFinal.Cells[1, 1, row + 1, 2].AutoFitColumns();
+            sheetFinal.Cells[5, 2, row + 1, 2].Style.Numberformat.Format = "### ### ### ##0.00";
 
-            //var range = sheet.Cells[6, 1, row - 1, 4];
-            //range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            //range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            //range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            //range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-            //range.AutoFilter = true;
+            range = sheetFinal.Cells[4, 1, row + 1, 2];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range.AutoFilter = true;
 
-            //sheet.Cells[row + 2, 1, row + 2, 4].Style.Font.Bold = true;
-            //sheet.Cells[row + 2, 2, row + 2, 3].Merge = true;
-            //sheet.Cells[row + 2, 2].Value = "Остаток на конец";
-            //sheet.Cells[row + 2, 2, row + 2, 4].Style.Font.Size = 12;
-            //sheet.Cells[row + 2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            //sheet.Cells[row + 2, 4].Formula = $"=SUBTOTAL(9,D7:D{row - 1})+D4";
-            //sheet.Cells[row + 2, 4].Style.Numberformat.Format = "### ### ### ##0.00";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            sheetFinal.Cells[row + 1, 1, row + 1, 2].Style.Font.Bold = true;
+            sheetFinal.Cells[row + 1, 1].Value = "Остаток на конец";
+            sheetFinal.Cells[row + 1, 2].Value = endBalance;
 
             package.SaveAs(new FileInfo(filePath));
         }

@@ -419,44 +419,9 @@ namespace Cost.Application
 
             _exportingReportsToExcel.Browse(result.Where(z => z.Date >= startDate && z.Date <= endDate)); // Source
 
-            // -------------------------------------------------------
-
-            var startCashFlow = result.Where(z => z.Date < startDate)
-                                                 .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
-                                                 .Select(y => new CashFlow
-                                                 {
-                                                     TypeOfActivity = y.Key.TypeOfActivity,
-                                                     AreaOfActivity = y.Key.AreaOfActivity,
-                                                     Receipt = y.Sum(z => z.Receipt),
-                                                     Payment = y.Sum(z => z.Payment),
-                                                 });
-
             var startBalance = gettingData.StartBalance;
 
-            foreach (var item in startCashFlow)
-            {
-                startBalance = startBalance + item.Receipt - item.Payment;
-            }
-
-            // -------------------------------------------------------
-
-            var cashFlow = result.Where(z => z.Date >= startDate
-                                                     && z.Date <= endDate)
-                                            .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
-                                            .Select(y => new CashFlow
-                                            {
-                                                TypeOfActivity = y.Key.TypeOfActivity,
-                                                AreaOfActivity = y.Key.AreaOfActivity,
-                                                Receipt = y.Sum(z => z.Receipt),
-                                                Payment = y.Sum(z => z.Payment),
-                                            })
-                                            .Where(z => z.AreaOfActivity != "ПереводСДругогоСчета"
-                                                     && z.AreaOfActivity != "ПереводНаДругойСчет")
-                                            .OrderBy(or => or.AreaOfActivity);
-
-            var tuple = (cashFlow, startBalance);
-
-            return tuple;
+            return (result, startBalance);
         }
 
         public async Task<IEnumerable<Expense>> CurrentDebtAsync(Organizations organization) // Текущая задолженность
