@@ -86,7 +86,12 @@ namespace Cost.Presentation.Controllers
             startDate = startDate.Year == 1 ? new DateOnly(2026, 1, 1) : startDate;
             endDate = endDate.Year == 1 ? DateOnly.FromDateTime(DateTime.Now) : endDate;
 
-            var cashFlow = await _generatingReports.CashFlowAsync(organization, startDate, endDate);
+            var cashFlowSource = await _generatingReports.CashFlowSourceAsync(organization, startDate, endDate);
+            _exportingReportsToExcel.CashFlowSource(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate), organization.ToString());
+
+
+
+            var cashFlow = await _generatingReports.CashFlowAsync(cashFlowSource, organization, startDate, endDate);
             _exportingReportsToExcel.CashFlow(cashFlow, organization.ToString(), startDate, endDate);
             return NoContent();
         }

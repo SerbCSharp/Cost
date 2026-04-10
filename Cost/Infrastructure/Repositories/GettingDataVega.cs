@@ -338,7 +338,7 @@ namespace Cost.Infrastructure.Repositories
             return content;
         }
 
-        public IEnumerable<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity() // AreaOfActivity по литеру и статье затрат в оплатах
+        public IEnumerable<IndirectCosts> GetIndirectCosts() // Косвенные расходы
         {
             string filePath = "C:\\Cost\\Vega\\Catalogs.xlsx";
             FileInfo fileInfo = new(filePath);
@@ -348,7 +348,12 @@ namespace Cost.Infrastructure.Repositories
 
             for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
             {
-                dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+                if (sheet.Cells[1, i].Value.ToString() == "Number")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(int));
+                else if (sheet.Cells[1, i].Value.ToString() == "Sum")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
             }
 
             for (int i = 2; i <= sheet.Dimension.End.Row; i++)
@@ -361,11 +366,13 @@ namespace Cost.Infrastructure.Repositories
                 dataTable.Rows.Add(dataRow);
             }
 
-            return dataTable.AsEnumerable().Select(row => new AreaOfActivityInPayments
+            return dataTable.AsEnumerable().Select(row => new IndirectCosts
             {
-                Liter = row.Field<string>("Liter"),
-                CostItems = row.Field<string>("CostItems"),
-                AreaOfActivity = row.Field<string>("AreaOfActivity")
+                Number = row.Field<int>("Number"),
+                PaymentId = row.Field<string>("PaymentId"),
+                TypeOfActivity = row.Field<string>("TypeOfActivity"),
+                AreaOfActivity = row.Field<string>("AreaOfActivity"),
+                Sum = row.Field<decimal>("Sum")
             });
         }
     }

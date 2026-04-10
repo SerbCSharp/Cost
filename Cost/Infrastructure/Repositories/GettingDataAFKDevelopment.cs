@@ -364,7 +364,12 @@ namespace Cost.Infrastructure.Repositories
             return content;
         }
 
-        public IEnumerable<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity()
+        public IEnumerable<IndirectCosts> GetLiterAndCostItemInAreaOfActivity()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<IndirectCosts> GetIndirectCosts()
         {
             throw new NotImplementedException();
         }

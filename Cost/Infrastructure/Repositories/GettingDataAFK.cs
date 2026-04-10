@@ -368,35 +368,9 @@ namespace Cost.Infrastructure.Repositories
             return content;
         }
 
-        public IEnumerable<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity() // AreaOfActivity по литеру и статье затрат в оплатах
+        public IEnumerable<IndirectCosts> GetIndirectCosts()
         {
-            string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
-            FileInfo fileInfo = new(filePath);
-            using var package = new ExcelPackage(fileInfo);
-            var sheet = package.Workbook.Worksheets[Name: "AreaOfActivity"];
-            DataTable dataTable = new();
-
-            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
-            {
-                dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
-            }
-
-            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
-            {
-                DataRow dataRow = dataTable.NewRow();
-                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
-                {
-                    dataRow[j - 1] = sheet.Cells[i, j].Value;
-                }
-                dataTable.Rows.Add(dataRow);
-            }
-
-            return dataTable.AsEnumerable().Select(row => new AreaOfActivityInPayments
-            {
-                Liter = row.Field<string>("Liter"),
-                CostItems = row.Field<string>("CostItems"),
-                AreaOfActivity = row.Field<string>("AreaOfActivity")
-            });
+            throw new NotImplementedException();
         }
     }
 }

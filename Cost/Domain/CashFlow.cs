@@ -16,5 +16,6 @@
         public string ContractId { get; set; }
         public string TypeOperation { get; set; }
         public decimal SumTypeOfActivity { get; set; }
+        public decimal IndirectCosts { get; set; }
     }
 }

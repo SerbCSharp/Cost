@@ -41,7 +41,7 @@ namespace Cost.Application
         Task<SaleGoodsServices> SaleGoodsServicesAsync(); // Реализация товаров и услуг
         IEnumerable<Facility> GetFacility(); // Объекты строительства
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
-        IEnumerable<AreaOfActivityInPayments> GetLiterAndCostItemInAreaOfActivity(); // AreaOfActivity по литеру и статье затрат в оплатах
+        IEnumerable<IndirectCosts> GetIndirectCosts(); // Косвенные расходы
         Task<ActOfCompletion> ActOfCompletionAsync(); // Акты об окончании СМР
         Task<string> TmpAsync();
     }
