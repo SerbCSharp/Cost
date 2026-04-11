@@ -580,30 +580,10 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        public void CashFlow((IEnumerable<CashFlow>, decimal) tupleCashFlow, string organization, DateOnly startDate, DateOnly endDate) // ДДС
+        public void CashFlow(IEnumerable<CashFlow> cashFlow, decimal startBalance, string organization, DateOnly startDate, DateOnly endDate) // ДДС
         {
-            string filePath = $"C:\\Cost\\CashFlow{organization}2.xlsx";
-            using var package = new ExcelPackage();
+            var fileInfo = new FileInfo($"C:\\Cost\\CashFlow{organization}.xlsx");
+            using var package = new ExcelPackage(fileInfo);
 
             // Лист ДДС
             var sheet = package.Workbook.Worksheets.Add("ДДС");
@@ -625,7 +605,7 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[4, 2].Value = "Остаток на начало:";
             sheet.Cells[4, 2, 4, 4].Style.Font.Size = 12;
             sheet.Cells[4, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            sheet.Cells[4, 4].Value = tupleCashFlow.Item2;
+            sheet.Cells[4, 4].Value = startBalance;
             sheet.Cells[4, 4].Style.Numberformat.Format = "### ### ### ##0.00";
 
             sheet.Cells[6, 1, 6, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -636,7 +616,7 @@ namespace Cost.Presentation.ReportsToExcel
 
             var row = 7;
             var column = 0;
-            foreach (var item in tupleCashFlow.Item1)
+            foreach (var item in cashFlow)
             {
                 sheet.Cells[row, column + 1].Value = item.AreaOfActivity;
                 sheet.Cells[row, column + 2].Value = item.Receipt;
@@ -669,7 +649,6 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[row + 2, 4].Style.Numberformat.Format = "### ### ### ##0.00";
 
             // Лист ДДС final
-
             var sheetFinal = package.Workbook.Worksheets.Add("ДДС final");
             sheetFinal.Cells.Style.Font.Name = "Calibri";
             sheetFinal.Cells.Style.Font.Size = 11;
@@ -690,15 +669,15 @@ namespace Cost.Presentation.ReportsToExcel
             sheetFinal.Cells[4, 2].Value = "Сумма";
 
             sheetFinal.Cells[5, 1].Value = "Остаток на начало";
-            sheetFinal.Cells[5, 2].Value = tupleCashFlow.Item2;
+            sheetFinal.Cells[5, 2].Value = startBalance;
             sheetFinal.Cells[5, 1, 5, 2].Style.Font.Bold = true;
 
             row = 5;
             column = 1;
             string typeOfActivity = null;
-            var endBalance = tupleCashFlow.Item2;
+            var endBalance = startBalance;
 
-            foreach (var item in tupleCashFlow.Item1)
+            foreach (var item in cashFlow)
             {
                 if (item.TypeOfActivity != typeOfActivity)
                 {
@@ -742,7 +721,7 @@ namespace Cost.Presentation.ReportsToExcel
             sheetFinal.Cells[row + 1, 1].Value = "Остаток на конец";
             sheetFinal.Cells[row + 1, 2].Value = endBalance;
 
-            package.SaveAs(new FileInfo(filePath));
+            package.Save();
         }
 
         public void HowMuchIsLeftToPayExtra(IEnumerable<HowMuchIsLeftToPayExtra> howMuchIsLeftToPayExtra, string organization) // Сколько осталось доплатить по счетам

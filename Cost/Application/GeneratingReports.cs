@@ -423,52 +423,49 @@ namespace Cost.Application
             return result;
         }
 
-
-
-
-
-
-
-
-        public async Task<(IEnumerable<CashFlow>, decimal)> CashFlowAsync(IEnumerable<CashFlow> cashFlow, Organizations organization, DateOnly startDate, DateOnly endDate) // ДДС
+        public decimal StartBalance(IEnumerable<CashFlow> cashFlow, Organizations organization, DateOnly startDate)
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
             var startBalance = gettingData.StartBalance;
 
-            // Остаток на начало
-
             var startCashFlow = cashFlow.Where(z => z.Date < startDate)
-                                                 .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
-                                                 .Select(y => new CashFlow
-                                                 {
-                                                     TypeOfActivity = y.Key.TypeOfActivity,
-                                                     AreaOfActivity = y.Key.AreaOfActivity,
-                                                     Receipt = y.Sum(z => z.Receipt),
-                                                     Payment = y.Sum(z => z.Payment),
-                                                 });
+                                        .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
+                                        .Select(y => new CashFlow
+                                        {
+                                            TypeOfActivity = y.Key.TypeOfActivity,
+                                            AreaOfActivity = y.Key.AreaOfActivity,
+                                            Receipt = y.Sum(z => z.Receipt),
+                                            Payment = y.Sum(z => z.Payment),
+                                        });
 
             foreach (var item in startCashFlow)
             {
                 startBalance = startBalance + item.Receipt - item.Payment;
             }
 
-            // -------------------------------------------------------
+            return startBalance;
+        }
+
+        public IEnumerable<CashFlow> CashFlow(IEnumerable<CashFlow> cashFlow, Organizations organization, DateOnly startDate, DateOnly endDate) // ДДС
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+            var indirectCosts = gettingData.GetIndirectCosts();
+
+            var plusIndirectCosts = from vCashFlow in cashFlow
+                                    join vIndirectCosts in indirectCosts
+                                    on vCashFlow.PaymentId equals vIndirectCosts.PaymentId into leftJoin
+                                    from subvIndirectCosts in leftJoin.DefaultIfEmpty()
+                                    select new CashFlow
+                                    {
+                                        AreaOfActivity = vCashFlow.AreaOfActivity,
+                                        TypeOfActivity = vCashFlow.TypeOfActivity,
+                                        Receipt = vCashFlow.Receipt,
+                                        Payment = vCashFlow.Payment,
+                                        SumTypeOfActivity = subvOrderTypeOfActivity?.vGroupTypeOfActivity != null ? subvOrderTypeOfActivity.vGroupTypeOfActivity.sumTypeOfActivity : 0
+                                    };
 
 
 
-            var result = cashFlow.Where(z => z.Date >= startDate
-                                         && z.Date <= endDate)
-                                .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
-                                .Select(y => new CashFlow
-                                {
-                                    TypeOfActivity = y.Key.TypeOfActivity,
-                                    AreaOfActivity = y.Key.AreaOfActivity,
-                                    Receipt = y.Sum(z => z.Receipt),
-                                    Payment = y.Sum(z => z.Payment),
-                                })
-                                .Where(z => z.AreaOfActivity != "ПереводСДругогоСчета"
-                                         && z.AreaOfActivity != "ПереводНаДругойСчет")
-                                .OrderBy(or => or.AreaOfActivity);
 
 
 
@@ -476,16 +473,27 @@ namespace Cost.Application
 
 
 
-
+            var result = cashFlow.Where(z => z.Date >= startDate && z.Date <= endDate)
+                                 .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
+                                 .Select(y => new CashFlow
+                                 {
+                                     TypeOfActivity = y.Key.TypeOfActivity,
+                                     AreaOfActivity = y.Key.AreaOfActivity,
+                                     Receipt = y.Sum(z => z.Receipt),
+                                     Payment = y.Sum(z => z.Payment),
+                                 })
+                                 .Where(z => z.AreaOfActivity != "ПереводСДругогоСчета" && z.AreaOfActivity != "ПереводНаДругойСчет");
 
             var groupTypeOfActivity = result.GroupBy(y => y.TypeOfActivity)
-    .Select(x => new { typeOfActivity = x.Key, sumTypeOfActivity = x.Sum(z => z.Receipt) - x.Sum(z => z.Payment) });
+                                            .Select(x => new { typeOfActivity = x.Key, sumTypeOfActivity = x.Sum(z => z.Receipt) - x.Sum(z => z.Payment) });
+            
             var order = new List<CashFlowOrder>
             {
                 new() { Name = "Производственная деятельность (включая косвенные расходы)", Order = 1 },
                 new() { Name = "Инвестиционная деятельность", Order = 2 },
                 new() { Name = "Финансовая деятельность", Order = 3 }
             };
+            
             var orderTypeOfActivity = from vGroupTypeOfActivity in groupTypeOfActivity
                                       join vOrder in order
                                       on vGroupTypeOfActivity.typeOfActivity equals vOrder.Name into leftJoin
@@ -506,14 +514,7 @@ namespace Cost.Application
                                     SumTypeOfActivity = subvOrderTypeOfActivity?.vGroupTypeOfActivity != null ? subvOrderTypeOfActivity.vGroupTypeOfActivity.sumTypeOfActivity : 0
                                 };
 
-
-
-
-
-
-
-
-            return (result, startBalance);
+            return cashFlowFinal;
         }
 
         public async Task<IEnumerable<Expense>> CurrentDebtAsync(Organizations organization) // Текущая задолженность

@@ -88,11 +88,9 @@ namespace Cost.Presentation.Controllers
 
             var cashFlowSource = await _generatingReports.CashFlowSourceAsync(organization, startDate, endDate);
             _exportingReportsToExcel.CashFlowSource(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate), organization.ToString());
-
-
-
-            var cashFlow = await _generatingReports.CashFlowAsync(cashFlowSource, organization, startDate, endDate);
-            _exportingReportsToExcel.CashFlow(cashFlow, organization.ToString(), startDate, endDate);
+            var startBalance = _generatingReports.StartBalance(cashFlowSource, organization, startDate);
+            var cashFlow = _generatingReports.CashFlow(cashFlowSource, organization, startDate, endDate);
+            _exportingReportsToExcel.CashFlow(cashFlow, startBalance, organization.ToString(), startDate, endDate);
             return NoContent();
         }
 
