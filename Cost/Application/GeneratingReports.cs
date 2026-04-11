@@ -1,5 +1,7 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
+using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
+using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.DTO.Response;
 using Cost.Presentation.ReportsToExcel;
@@ -446,34 +448,82 @@ namespace Cost.Application
             return startBalance;
         }
 
-        public IEnumerable<CashFlow> CashFlow(IEnumerable<CashFlow> cashFlow, Organizations organization, DateOnly startDate, DateOnly endDate) // ДДС
+        public IEnumerable<CashFlow> CashFlow(List<CashFlow> cashFlow, Organizations organization, DateOnly startDate, DateOnly endDate) // ДДС
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
-            var indirectCosts = gettingData.GetIndirectCosts();
+
+            // -------------------------------------------------
+            var indirectCosts = gettingData.GetIndirectCosts().Where(x => x.Date >= startDate && x.Date <= endDate).ToList();
 
             var plusIndirectCosts = from vCashFlow in cashFlow
                                     join vIndirectCosts in indirectCosts
                                     on vCashFlow.PaymentId equals vIndirectCosts.PaymentId into leftJoin
                                     from subvIndirectCosts in leftJoin.DefaultIfEmpty()
-                                    select new CashFlow
-                                    {
-                                        AreaOfActivity = vCashFlow.AreaOfActivity,
-                                        TypeOfActivity = vCashFlow.TypeOfActivity,
-                                        Receipt = vCashFlow.Receipt,
-                                        Payment = vCashFlow.Payment,
-                                        SumTypeOfActivity = subvOrderTypeOfActivity?.vGroupTypeOfActivity != null ? subvOrderTypeOfActivity.vGroupTypeOfActivity.sumTypeOfActivity : 0
-                                    };
+                                    select new { vCashFlow, subvIndirectCosts };
 
+            var indirectCostsAdded = new List<CashFlow>();
+            foreach (var item in plusIndirectCosts)
+            {
+                if (!string.IsNullOrEmpty(item.subvIndirectCosts?.PaymentId))
+                {
+                    item.vCashFlow.DeletionMark = true;
+                    if (item.subvIndirectCosts.Ketov != 0)
+                        indirectCostsAdded.Add(new CashFlow
+                        {
+                            Date = item.vCashFlow.Date,
+                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+                            AreaOfActivity = "Субподряд (Кетов)",
+                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.Ketov
+                        });
+                    if (item.subvIndirectCosts.Gontar != 0)
+                        indirectCostsAdded.Add(new CashFlow
+                        {
+                            Date = item.vCashFlow.Date,
+                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+                            AreaOfActivity = "Субподряд (Гонтарь)",
+                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.Gontar
+                        });
+                    if (item.subvIndirectCosts.Endulsi != 0)
+                        indirectCostsAdded.Add(new CashFlow
+                        {
+                            Date = item.vCashFlow.Date,
+                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+                            AreaOfActivity = "Субподряд (Эндульси)",
+                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi
+                        });
+                    if (item.subvIndirectCosts.TechnicalCustomer != 0)
+                        indirectCostsAdded.Add(new CashFlow
+                        {
+                            Date = item.vCashFlow.Date,
+                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+                            AreaOfActivity = "Технический заказчик",
+                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer
+                        });
+                    if (item.subvIndirectCosts.TransportRental != 0)
+                        indirectCostsAdded.Add(new CashFlow
+                        {
+                            Date = item.vCashFlow.Date,
+                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+                            AreaOfActivity = "Аренда транспорта",
+                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental
+                        });
+                    if (item.subvIndirectCosts.Withdrawal != 0)
+                        indirectCostsAdded.Add(new CashFlow
+                        {
+                            Date = item.vCashFlow.Date,
+                            TypeOfActivity = "Финансовая деятельность",
+                            AreaOfActivity = "Отвлечение",
+                            Payment = item.vCashFlow.Payment * item.subvIndirectCosts.Withdrawal
+                        });
+                }
+            }
 
+            cashFlow.ToList().RemoveAll(x => x.DeletionMark);
+            var cashFlowAdded = cashFlow.Concat(indirectCostsAdded);
+            _exportingReportsToExcel.Browse(cashFlowAdded);
+            // -------------------------------------------------
 
-
-
-
-
-
-
-
-            var result = cashFlow.Where(z => z.Date >= startDate && z.Date <= endDate)
+            var result = cashFlowAdded.Where(z => z.Date >= startDate && z.Date <= endDate)
                                  .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
                                  .Select(y => new CashFlow
                                  {
@@ -481,11 +531,12 @@ namespace Cost.Application
                                      AreaOfActivity = y.Key.AreaOfActivity,
                                      Receipt = y.Sum(z => z.Receipt),
                                      Payment = y.Sum(z => z.Payment),
+                                     IndirectCosts = y.Sum(z => z.IndirectCosts)
                                  })
                                  .Where(z => z.AreaOfActivity != "ПереводСДругогоСчета" && z.AreaOfActivity != "ПереводНаДругойСчет");
 
             var groupTypeOfActivity = result.GroupBy(y => y.TypeOfActivity)
-                                            .Select(x => new { typeOfActivity = x.Key, sumTypeOfActivity = x.Sum(z => z.Receipt) - x.Sum(z => z.Payment) });
+                .Select(x => new { typeOfActivity = x.Key, sumTypeOfActivity = x.Sum(z => z.Receipt) - x.Sum(z => z.Payment) - x.Sum(z => z.IndirectCosts) });
             
             var order = new List<CashFlowOrder>
             {
@@ -500,7 +551,7 @@ namespace Cost.Application
                                       from subvOrder in leftJoin.DefaultIfEmpty()
                                       select new { vGroupTypeOfActivity, subvOrder?.Order };
 
-            var cashFlowFinal = from vCashFlow in cashFlow
+            var cashFlowFinal = from vCashFlow in cashFlowAdded
                                 join vOrderTypeOfActivity in orderTypeOfActivity
                                 on vCashFlow.TypeOfActivity equals vOrderTypeOfActivity.vGroupTypeOfActivity.typeOfActivity into leftJoin
                                 from subvOrderTypeOfActivity in leftJoin.DefaultIfEmpty()
@@ -511,6 +562,7 @@ namespace Cost.Application
                                     TypeOfActivity = vCashFlow.TypeOfActivity,
                                     Receipt = vCashFlow.Receipt,
                                     Payment = vCashFlow.Payment,
+                                    IndirectCosts = vCashFlow.IndirectCosts,
                                     SumTypeOfActivity = subvOrderTypeOfActivity?.vGroupTypeOfActivity != null ? subvOrderTypeOfActivity.vGroupTypeOfActivity.sumTypeOfActivity : 0
                                 };
 

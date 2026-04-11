@@ -348,9 +348,19 @@ namespace Cost.Infrastructure.Repositories
 
             for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
             {
-                if (sheet.Cells[1, i].Value.ToString() == "Number")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(int));
-                else if (sheet.Cells[1, i].Value.ToString() == "Sum")
+                if (sheet.Cells[1, i].Value.ToString() == "Date")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
+                else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Кетов)")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Гонтарь)")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Эндульси)")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Технический заказчик")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Аренда транспорта")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Отвлечение")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
@@ -368,11 +378,14 @@ namespace Cost.Infrastructure.Repositories
 
             return dataTable.AsEnumerable().Select(row => new IndirectCosts
             {
-                Number = row.Field<int>("Number"),
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
                 PaymentId = row.Field<string>("PaymentId"),
-                TypeOfActivity = row.Field<string>("TypeOfActivity"),
-                AreaOfActivity = row.Field<string>("AreaOfActivity"),
-                Sum = row.Field<decimal>("Sum")
+                Ketov = row.Field<decimal>("Субподряд (Кетов)"),
+                Gontar = row.Field<decimal>("Субподряд (Гонтарь)"),
+                Endulsi = row.Field<decimal>("Субподряд (Эндульси)"),
+                TechnicalCustomer = row.Field<decimal>("Технический заказчик"),
+                TransportRental = row.Field<decimal>("Аренда транспорта"),
+                Withdrawal = row.Field<decimal>("Отвлечение")
             });
         }
     }

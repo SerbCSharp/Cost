@@ -2,10 +2,13 @@
 {
     public class IndirectCosts
     {
-        public int Number { get; set; }
+        public DateOnly Date { get; set; }
         public string PaymentId { get; set; }
-        public string TypeOfActivity { get; set; }
-        public string AreaOfActivity { get; set; }
-        public decimal Sum { get; set; }
+        public decimal Ketov { get; set; }
+        public decimal Gontar { get; set; }
+        public decimal Endulsi { get; set; }
+        public decimal TechnicalCustomer { get; set; }
+        public decimal TransportRental { get; set; }
+        public decimal Withdrawal { get; set; }
     }
 }
