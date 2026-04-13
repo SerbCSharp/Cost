@@ -590,29 +590,29 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells.Style.Font.Name = "Calibri";
             sheet.Cells.Style.Font.Size = 11;
 
-            sheet.Cells[1, 1, 1, 4].Merge = true;
+            sheet.Cells[1, 1, 1, 5].Merge = true;
             sheet.Cells[1, 1].Value = $"ДДС по направлениям ({organization})";
             sheet.Cells[1, 1].Style.Font.Size = 20;
             sheet.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            sheet.Cells[2, 2, 2, 4].Merge = true;
-            sheet.Cells[2, 2].Value = $"с {startDate} по {endDate}";
-            sheet.Cells[2, 2].Style.Font.Size = 16;
-            sheet.Cells[2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[2, 4, 2, 5].Merge = true;
+            sheet.Cells[2, 4].Value = $"с {startDate} по {endDate}";
+            sheet.Cells[2, 4].Style.Font.Size = 16;
+            sheet.Cells[2, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 
-            sheet.Cells[4, 1, 6, 4].Style.Font.Bold = true;
-            sheet.Cells[4, 2, 4, 3].Merge = true;
-            sheet.Cells[4, 2].Value = "Остаток на начало:";
+            sheet.Cells[4, 1, 6, 5].Style.Font.Bold = true;
+            sheet.Cells[4, 4].Value = "Остаток на начало:";
             sheet.Cells[4, 2, 4, 4].Style.Font.Size = 12;
-            sheet.Cells[4, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            sheet.Cells[4, 4].Value = startBalance;
-            sheet.Cells[4, 4].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[4, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[4, 5].Value = startBalance;
+            sheet.Cells[4, 5].Style.Numberformat.Format = "### ### ### ##0.00";
 
-            sheet.Cells[6, 1, 6, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[6, 1, 6, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             sheet.Cells[6, 1].Value = "Направления";
             sheet.Cells[6, 2].Value = "Поступления";
-            sheet.Cells[6, 3].Value = "Выплаты";
-            sheet.Cells[6, 4].Value = "Сальдо";
+            sheet.Cells[6, 3].Value = "Выплаты (прямые расходы)";
+            sheet.Cells[6, 4].Value = "Выплаты (косвенные расходы)";
+            sheet.Cells[6, 5].Value = "Сальдо";
 
             var row = 7;
             var column = 0;
@@ -621,47 +621,48 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 1].Value = item.AreaOfActivity;
                 sheet.Cells[row, column + 2].Value = item.Receipt;
                 sheet.Cells[row, column + 3].Value = item.Payment;
-                sheet.Cells[row, column + 4].Formula = $"B{row}-C{row}";
+                sheet.Cells[row, column + 4].Value = item.IndirectCosts;
+                sheet.Cells[row, column + 5].Formula = $"B{row}-C{row}-D{row}";
                 row++;
             }
             sheet.Cells[row, column + 2].Formula = $"=SUBTOTAL(9,B6:B{row - 1})";
             sheet.Cells[row, column + 3].Formula = $"=SUBTOTAL(9,C6:C{row - 1})";
             sheet.Cells[row, column + 4].Formula = $"=SUBTOTAL(9,D6:D{row - 1})";
-            sheet.Cells[row, 2, row, 4].Style.Font.Bold = true;
+            sheet.Cells[row, column + 5].Formula = $"=SUBTOTAL(9,E6:E{row - 1})";
+            sheet.Cells[row, 2, row, 5].Style.Font.Bold = true;
 
-            sheet.Cells[1, 1, row, 4].AutoFitColumns();
-            sheet.Cells[7, 2, row, 4].Style.Numberformat.Format = "### ### ### ##0.00";
-            sheet.Column(4).Width = 15;
+            sheet.Cells[1, 1, row, 5].AutoFitColumns();
+            sheet.Cells[7, 2, row, 5].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Column(5).Width = 15;
 
-            var range = sheet.Cells[6, 1, row - 1, 4];
+            var range = sheet.Cells[6, 1, row - 1, 5];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
             range.AutoFilter = true;
 
-            sheet.Cells[row + 2, 1, row + 2, 4].Style.Font.Bold = true;
-            sheet.Cells[row + 2, 2, row + 2, 3].Merge = true;
-            sheet.Cells[row + 2, 2].Value = "Остаток на конец:";
+            sheet.Cells[row + 2, 1, row + 2, 5].Style.Font.Bold = true;
+            sheet.Cells[row + 2, 4].Value = "Остаток на конец:";
             sheet.Cells[row + 2, 2, row + 2, 4].Style.Font.Size = 12;
-            sheet.Cells[row + 2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            sheet.Cells[row + 2, 4].Formula = $"=SUBTOTAL(9,D7:D{row - 1})+D4";
-            sheet.Cells[row + 2, 4].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[row + 2, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheet.Cells[row + 2, 5].Formula = $"=SUBTOTAL(9,E7:E{row - 1})+E4";
+            sheet.Cells[row + 2, 5].Style.Numberformat.Format = "### ### ### ##0.00";
 
             // Лист ДДС final
             var sheetFinal = package.Workbook.Worksheets.Add("ДДС final");
             sheetFinal.Cells.Style.Font.Name = "Calibri";
             sheetFinal.Cells.Style.Font.Size = 11;
 
-            sheetFinal.Cells[1, 1, 1, 4].Merge = true;
+            sheetFinal.Cells[1, 1, 1, 2].Merge = true;
             sheetFinal.Cells[1, 1].Value = $"Отчет о движении денежных средств ({organization})";
             sheetFinal.Cells[1, 1].Style.Font.Size = 20;
             sheetFinal.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            sheetFinal.Cells[2, 2, 2, 4].Merge = true;
-            sheetFinal.Cells[2, 2].Value = $"с {startDate} по {endDate}";
-            sheetFinal.Cells[2, 2].Style.Font.Size = 16;
-            sheetFinal.Cells[2, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            sheetFinal.Cells[2, 1, 2, 2].Merge = true;
+            sheetFinal.Cells[2, 1].Value = $"с {startDate} по {endDate}";
+            sheetFinal.Cells[2, 1].Style.Font.Size = 16;
+            sheetFinal.Cells[2, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 
             sheetFinal.Cells[4, 1, 4, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             sheetFinal.Cells[4, 1, 4, 2].Style.Font.Bold = true;
@@ -690,8 +691,8 @@ namespace Cost.Presentation.ReportsToExcel
                 }
                 sheetFinal.Cells[row + 1, column, row + 1, column + 1].Style.Font.Bold = true;
                 sheetFinal.Cells[row + 1, column].Value = item.AreaOfActivity.PadLeft(item.AreaOfActivity.Length + 5);
-                sheetFinal.Cells[row + 1, column + 1].Value = item.Receipt - item.Payment;
-                endBalance = endBalance + item.Receipt - item.Payment;
+                sheetFinal.Cells[row + 1, column + 1].Value = item.Receipt - item.Payment - item.IndirectCosts;
+                endBalance = endBalance + item.Receipt - item.Payment - item.IndirectCosts;
 
                 if (item.TypeOfActivity != "Финансовая деятельность")
                 {
