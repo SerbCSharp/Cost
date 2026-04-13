@@ -518,12 +518,11 @@ namespace Cost.Application
                 }
             }
 
-            cashFlow.ToList().RemoveAll(x => x.DeletionMark);
+            var countRemove = cashFlow.RemoveAll(x => indirectCosts.Any(y => y.PaymentId == x.PaymentId));
             var cashFlowAdded = cashFlow.Concat(indirectCostsAdded);
-            _exportingReportsToExcel.Browse(cashFlowAdded);
             // -------------------------------------------------
 
-            var result = cashFlowAdded.Where(z => z.Date >= startDate && z.Date <= endDate)
+            var cashFlowGroup = cashFlowAdded.Where(z => z.Date >= startDate && z.Date <= endDate)
                                  .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
                                  .Select(y => new CashFlow
                                  {
@@ -535,7 +534,7 @@ namespace Cost.Application
                                  })
                                  .Where(z => z.AreaOfActivity != "ПереводСДругогоСчета" && z.AreaOfActivity != "ПереводНаДругойСчет");
 
-            var groupTypeOfActivity = result.GroupBy(y => y.TypeOfActivity)
+            var groupTypeOfActivity = cashFlowGroup.GroupBy(y => y.TypeOfActivity)
                 .Select(x => new { typeOfActivity = x.Key, sumTypeOfActivity = x.Sum(z => z.Receipt) - x.Sum(z => z.Payment) - x.Sum(z => z.IndirectCosts) });
             
             var order = new List<CashFlowOrder>
@@ -551,7 +550,7 @@ namespace Cost.Application
                                       from subvOrder in leftJoin.DefaultIfEmpty()
                                       select new { vGroupTypeOfActivity, subvOrder?.Order };
 
-            var cashFlowFinal = from vCashFlow in cashFlowAdded
+            var cashFlowFinal = from vCashFlow in cashFlowGroup
                                 join vOrderTypeOfActivity in orderTypeOfActivity
                                 on vCashFlow.TypeOfActivity equals vOrderTypeOfActivity.vGroupTypeOfActivity.typeOfActivity into leftJoin
                                 from subvOrderTypeOfActivity in leftJoin.DefaultIfEmpty()

@@ -368,9 +368,55 @@ namespace Cost.Infrastructure.Repositories
             return content;
         }
 
-        public IEnumerable<IndirectCosts> GetIndirectCosts()
+        public IEnumerable<IndirectCosts> GetIndirectCosts() // Косвенные расходы
         {
-            throw new NotImplementedException();
+            string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
+            FileInfo fileInfo = new(filePath);
+            using var package = new ExcelPackage(fileInfo);
+            var sheet = package.Workbook.Worksheets[Name: "AreaOfActivity"];
+            DataTable dataTable = new();
+
+            for (int i = sheet.Dimension.Start.Column; i <= sheet.Dimension.End.Column; i++)
+            {
+                if (sheet.Cells[1, i].Value.ToString() == "Date")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
+                else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Кетов)")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Гонтарь)")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Эндульси)")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Технический заказчик")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Аренда транспорта")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "Отвлечение")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
+            }
+
+            for (int i = 2; i <= sheet.Dimension.End.Row; i++)
+            {
+                DataRow dataRow = dataTable.NewRow();
+                for (int j = 1; j <= sheet.Dimension.End.Column; j++)
+                {
+                    dataRow[j - 1] = sheet.Cells[i, j].Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+
+            return dataTable.AsEnumerable().Select(row => new IndirectCosts
+            {
+                Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
+                PaymentId = row.Field<string>("PaymentId"),
+                Ketov = row.Field<decimal>("Субподряд (Кетов)"),
+                Gontar = row.Field<decimal>("Субподряд (Гонтарь)"),
+                Endulsi = row.Field<decimal>("Субподряд (Эндульси)"),
+                TechnicalCustomer = row.Field<decimal>("Технический заказчик"),
+                TransportRental = row.Field<decimal>("Аренда транспорта"),
+                Withdrawal = row.Field<decimal>("Отвлечение")
+            });
         }
     }
 }
