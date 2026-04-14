@@ -335,6 +335,7 @@ namespace Cost.Application
                     ContractId = x.ContractId,
                     TypeOperation = x.TypeOperation,
                     PaymentPurpose = x.PaymentPurpose,
+                    PaymentId = x.PaymentId,
                     DocumentName = "Поступление на расчетный счет"
                 });
             var plusIncomePayments = plusAccountingTransactions.Concat(incomePayments);
