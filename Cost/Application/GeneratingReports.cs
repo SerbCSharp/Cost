@@ -1,7 +1,5 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
-using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
-using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.DTO.Response;
 using Cost.Presentation.ReportsToExcel;
@@ -35,6 +33,11 @@ namespace Cost.Application
                     PaymentPurpose = z.payment.PaymentPurpose,
                     TypeOperation = z.payment.TypeOperation
                 });
+
+            //var serb = multiplePayments.Where(z => z.Date >= new DateOnly(2026, 4, 1) && z.Date <= new DateOnly(2026, 4, 10))
+            //    .GroupBy(x => x.PaymentId).Select(y => new { y.Key, Count = y.Count() }).ToList();
+            //_exportingReportsToExcel.Browse(serb);
+
             var singlePayment = payments.Where(x => x.PaymentDetails.Length == 0)
                 .Select(y => new Payment
                 {
@@ -455,6 +458,9 @@ namespace Cost.Application
 
             // -------------------------------------------------
             var indirectCosts = gettingData.GetIndirectCosts().Where(x => x.Date >= startDate && x.Date <= endDate).ToList();
+            //var serb = indirectCosts.Where(z => z.Date >= new DateOnly(2026, 4, 1) && z.Date <= new DateOnly(2026, 4, 10))
+            //    .GroupBy(x => x.PaymentId).Select(y => new { y.Key, Count = y.Count() }).ToList();
+            //_exportingReportsToExcel.Browse(indirectCosts);
 
             var plusIndirectCosts = from vCashFlow in cashFlow
                                     join vIndirectCosts in indirectCosts
@@ -467,14 +473,14 @@ namespace Cost.Application
             {
                 if (!string.IsNullOrEmpty(item.subvIndirectCosts?.PaymentId))
                 {
-                    item.vCashFlow.DeletionMark = true;
                     if (item.subvIndirectCosts.Ketov != 0)
                         indirectCostsAdded.Add(new CashFlow
                         {
                             Date = item.vCashFlow.Date,
                             TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
                             AreaOfActivity = "Субподряд (Кетов)",
-                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.Ketov
+                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Ketov,
+                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Ketov : 0
                         });
                     if (item.subvIndirectCosts.Gontar != 0)
                         indirectCostsAdded.Add(new CashFlow
@@ -482,7 +488,8 @@ namespace Cost.Application
                             Date = item.vCashFlow.Date,
                             TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
                             AreaOfActivity = "Субподряд (Гонтарь)",
-                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.Gontar
+                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Gontar,
+                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Gontar : 0
                         });
                     if (item.subvIndirectCosts.Endulsi != 0)
                         indirectCostsAdded.Add(new CashFlow
@@ -490,7 +497,8 @@ namespace Cost.Application
                             Date = item.vCashFlow.Date,
                             TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
                             AreaOfActivity = "Субподряд (Эндульси)",
-                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi
+                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi,
+                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi : 0
                         });
                     if (item.subvIndirectCosts.TechnicalCustomer != 0)
                         indirectCostsAdded.Add(new CashFlow
@@ -498,7 +506,8 @@ namespace Cost.Application
                             Date = item.vCashFlow.Date,
                             TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
                             AreaOfActivity = "Технический заказчик",
-                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer
+                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer,
+                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer : 0
                         });
                     if (item.subvIndirectCosts.TransportRental != 0)
                         indirectCostsAdded.Add(new CashFlow
@@ -506,7 +515,8 @@ namespace Cost.Application
                             Date = item.vCashFlow.Date,
                             TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
                             AreaOfActivity = "Аренда транспорта",
-                            IndirectCosts = item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental
+                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental,
+                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental : 0
                         });
                     if (item.subvIndirectCosts.Withdrawal != 0)
                         indirectCostsAdded.Add(new CashFlow

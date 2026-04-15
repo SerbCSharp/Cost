@@ -31,8 +31,8 @@ namespace Cost.Infrastructure.Repositories
         private readonly Base1CConfiguration _base1CConfiguration;
         private const string ApiUrl = "http://localhost/afk_de/odata/standard.odata/";
 
-        public decimal StartBalance => 2750248.4M;
-        public DateOnly StartDate => new(2026, 1, 1);
+        public decimal StartBalance => 25141259.79M;
+        public DateOnly StartDate => new(2025, 1, 1);
 
         public GettingDataAFKDevelopment(IOptions<Base1CConfiguration> base1CConfiguration, IHttpClientFactory httpClientFactory)
         {
@@ -388,6 +388,8 @@ namespace Cost.Infrastructure.Repositories
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "Отвлечение")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "DirectOrIndirect")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(bool));
                 else
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
             }
@@ -411,7 +413,8 @@ namespace Cost.Infrastructure.Repositories
                 Endulsi = row.Field<decimal>("Субподряд (Эндульси)"),
                 TechnicalCustomer = row.Field<decimal>("Технический заказчик"),
                 TransportRental = row.Field<decimal>("Аренда транспорта"),
-                Withdrawal = row.Field<decimal>("Отвлечение")
+                Withdrawal = row.Field<decimal>("Отвлечение"),
+                DirectOrIndirect = row.Field<bool>("DirectOrIndirect"),
             });
         }
     }

@@ -10,5 +10,6 @@
         public decimal TechnicalCustomer { get; set; }
         public decimal TransportRental { get; set; }
         public decimal Withdrawal { get; set; }
+        public bool DirectOrIndirect { get; set; }        
     }
 }

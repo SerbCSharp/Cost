@@ -392,6 +392,8 @@ namespace Cost.Infrastructure.Repositories
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "Отвлечение")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
+                else if (sheet.Cells[1, i].Value.ToString() == "DirectOrIndirect")
+                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(bool));
                 else
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString());
             }
@@ -415,7 +417,8 @@ namespace Cost.Infrastructure.Repositories
                 Endulsi = row.Field<decimal>("Субподряд (Эндульси)"),
                 TechnicalCustomer = row.Field<decimal>("Технический заказчик"),
                 TransportRental = row.Field<decimal>("Аренда транспорта"),
-                Withdrawal = row.Field<decimal>("Отвлечение")
+                Withdrawal = row.Field<decimal>("Отвлечение"),
+                DirectOrIndirect = row.Field<bool>("DirectOrIndirect"),
             });
         }
     }
