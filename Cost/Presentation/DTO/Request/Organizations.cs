@@ -5,6 +5,7 @@
         AFKDevelopment,
         Vega,
         AFK,
-        Parma
+        Parma,
+        VegaUSN
     }
 }

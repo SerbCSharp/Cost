@@ -21,6 +21,7 @@ builder.Services.AddScoped<GettingDataAFKDevelopment>();
 builder.Services.AddScoped<GettingDataAFK>();
 builder.Services.AddScoped<GettingDataVega>();
 builder.Services.AddScoped<GettingDataParma>();
+builder.Services.AddScoped<GettingDataVegaUSN>();
 builder.Services.AddScoped<IGettingDataFactory, GettingDataFactory>();
 
 var app = builder.Build();

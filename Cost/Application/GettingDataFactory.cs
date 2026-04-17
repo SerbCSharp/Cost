@@ -22,6 +22,8 @@ namespace Cost.Application
                     return _serviceProvider.GetRequiredService<GettingDataAFK>();
                 case "Parma":
                     return _serviceProvider.GetRequiredService<GettingDataParma>();
+                case "VegaUSN":
+                    return _serviceProvider.GetRequiredService<GettingDataVegaUSN>();
                 default:
                     return _serviceProvider.GetRequiredService<GettingDataAFKDevelopment>();
             }

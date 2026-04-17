@@ -58,7 +58,7 @@ namespace Cost.Application
                                                      from subvSupplierPaymentInvoice in leftJoin.DefaultIfEmpty()
                                                      select new { vAllPayments, subvSupplierPaymentInvoice };
 
-            var additionalInformation = (await gettingData.AdditionalInformationAsync()).Value;
+            var additionalInformation = (await gettingData.AdditionalInformationAsync()).Value ?? [];
             var literId = additionalInformation.Where(x => x.ValueType.Contains("НоменклатурныеГруппы", StringComparison.OrdinalIgnoreCase));
             var paymentsPlusLiterId = from vPaymentsPlusSupplierPaymentInvoice in paymentsPlusSupplierPaymentInvoice
                                       join vLiterId in literId
@@ -517,6 +517,24 @@ namespace Cost.Application
                             AreaOfActivity = "Аренда транспорта",
                             IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental,
                             Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental : 0
+                        });
+                    if (item.subvIndirectCosts.SalesDepartment != 0)
+                        indirectCostsAdded.Add(new CashFlow
+                        {
+                            Date = item.vCashFlow.Date,
+                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+                            AreaOfActivity = "Отдел продаж",
+                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.SalesDepartment,
+                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.SalesDepartment : 0
+                        });
+                    if (item.subvIndirectCosts.Rent != 0)
+                        indirectCostsAdded.Add(new CashFlow
+                        {
+                            Date = item.vCashFlow.Date,
+                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+                            AreaOfActivity = "Аренда",
+                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Rent,
+                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Rent : 0
                         });
                     if (item.subvIndirectCosts.Withdrawal != 0)
                         indirectCostsAdded.Add(new CashFlow
