@@ -3,8 +3,8 @@
     public enum Organizations
     {
         AFKDevelopment,
-        Vega,
         AFK,
+        Vega,
         Parma,
         VegaUSN
     }
