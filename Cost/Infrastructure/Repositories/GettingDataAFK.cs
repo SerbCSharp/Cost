@@ -382,8 +382,6 @@ namespace Cost.Infrastructure.Repositories
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(DateTime));
                 else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Кетов)")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
-                else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Гонтарь)")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Эндульси)")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "Технический заказчик")
@@ -413,7 +411,6 @@ namespace Cost.Infrastructure.Repositories
                 Date = DateOnly.FromDateTime(row.Field<DateTime>("Date")),
                 PaymentId = row.Field<string>("PaymentId"),
                 Ketov = row.Field<decimal>("Субподряд (Кетов)"),
-                Gontar = row.Field<decimal>("Субподряд (Гонтарь)"),
                 Endulsi = row.Field<decimal>("Субподряд (Эндульси)"),
                 TechnicalCustomer = row.Field<decimal>("Технический заказчик"),
                 TransportRental = row.Field<decimal>("Аренда транспорта"),

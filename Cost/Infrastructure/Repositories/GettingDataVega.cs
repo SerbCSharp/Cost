@@ -354,12 +354,6 @@ namespace Cost.Infrastructure.Repositories
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Гонтарь)")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
-                else if (sheet.Cells[1, i].Value.ToString() == "Субподряд (Эндульси)")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
-                else if (sheet.Cells[1, i].Value.ToString() == "Технический заказчик")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
-                else if (sheet.Cells[1, i].Value.ToString() == "Аренда транспорта")
-                    dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "Отвлечение")
                     dataTable.Columns.Add(sheet.Cells[1, i].Value.ToString(), typeof(decimal));
                 else if (sheet.Cells[1, i].Value.ToString() == "DirectOrIndirect")
@@ -384,9 +378,6 @@ namespace Cost.Infrastructure.Repositories
                 PaymentId = row.Field<string>("PaymentId"),
                 Ketov = row.Field<decimal>("Субподряд (Кетов)"),
                 Gontar = row.Field<decimal>("Субподряд (Гонтарь)"),
-                Endulsi = row.Field<decimal>("Субподряд (Эндульси)"),
-                TechnicalCustomer = row.Field<decimal>("Технический заказчик"),
-                TransportRental = row.Field<decimal>("Аренда транспорта"),
                 Withdrawal = row.Field<decimal>("Отвлечение"),
                 DirectOrIndirect = row.Field<bool>("DirectOrIndirect"),
             });
