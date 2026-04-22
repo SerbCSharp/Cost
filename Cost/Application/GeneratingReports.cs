@@ -143,22 +143,31 @@ namespace Cost.Application
             var allPayments = multiplePayments.Concat(singlePayment);
 
             var buyerPaymentInvoice = (await gettingData.BuyerPaymentInvoiceAsync()).Value;
-            var paymentsPlusSupplierPaymentInvoice = from vAllPayments in allPayments
+            var plusBuyerPaymentInvoice = from vAllPayments in allPayments
                                                      join vbuyerPaymentInvoice in buyerPaymentInvoice
                                                      on vAllPayments.PaymentDetailsId equals vbuyerPaymentInvoice.BuyerPaymentInvoiceId into leftJoin
                                                      from subvbuyerPaymentInvoice in leftJoin.DefaultIfEmpty()
                                                      select new { vAllPayments, subvbuyerPaymentInvoice?.Comment };
 
-            var result = paymentsPlusSupplierPaymentInvoice.Select(x => new Payment
+            var incomePaymentsFromExcel = gettingData.IncomePaymentsFromExcel();
+            var plusIncomePaymentsFromExcel = from vPlusBuyerPaymentInvoice in plusBuyerPaymentInvoice
+                                              join vIncomePaymentsFromExcel in incomePaymentsFromExcel
+                                               on vPlusBuyerPaymentInvoice.vAllPayments.PaymentId equals vIncomePaymentsFromExcel.PaymentId into leftJoin
+                                               from subvIncomePaymentsFromExcel in leftJoin.DefaultIfEmpty()
+                                               select new { vPlusBuyerPaymentInvoice, subvIncomePaymentsFromExcel };
+
+            var result = plusIncomePaymentsFromExcel.Select(x => new Payment
             {
-                PaymentId = x.vAllPayments.PaymentId,
-                Date = x.vAllPayments.Date,
-                PaymentAmount = x.vAllPayments.PaymentAmount,
-                ContractId = x.vAllPayments.ContractId,
-                PaymentPurpose = x.vAllPayments.PaymentPurpose,
-                TypeOperation = x.vAllPayments.TypeOperation,
-                CommentFromPaymentInvoice = x.Comment,
-                PaymentDetailsId = x.vAllPayments.PaymentDetailsId
+                PaymentId = x.vPlusBuyerPaymentInvoice.vAllPayments.PaymentId,
+                Date = x.vPlusBuyerPaymentInvoice.vAllPayments.Date,
+                PaymentAmount = x.vPlusBuyerPaymentInvoice.vAllPayments.PaymentAmount,
+                ContractId = x.vPlusBuyerPaymentInvoice.vAllPayments.ContractId,
+                PaymentPurpose = x.vPlusBuyerPaymentInvoice.vAllPayments.PaymentPurpose,
+                TypeOperation = x.vPlusBuyerPaymentInvoice.vAllPayments.TypeOperation,
+                CommentFromPaymentInvoice = x.vPlusBuyerPaymentInvoice.Comment,
+                PaymentDetailsId = x.vPlusBuyerPaymentInvoice.vAllPayments.PaymentDetailsId,
+                TypeOfActivity = x.subvIncomePaymentsFromExcel?.TypeOfActivity,
+                AreaOfActivity = x.subvIncomePaymentsFromExcel?.AreaOfActivity,
             }).OrderBy(x => x.Date);
 
             return result;
@@ -338,6 +347,8 @@ namespace Cost.Application
                     ContractId = x.ContractId,
                     TypeOperation = x.TypeOperation,
                     PaymentPurpose = x.PaymentPurpose,
+                    TypeOfActivity = x.TypeOfActivity,
+                    AreaOfActivity = x.AreaOfActivity,
                     PaymentId = x.PaymentId,
                     DocumentName = "Поступление на расчетный счет"
                 });
