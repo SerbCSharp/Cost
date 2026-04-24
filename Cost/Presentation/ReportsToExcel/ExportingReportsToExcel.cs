@@ -777,5 +777,57 @@ namespace Cost.Presentation.ReportsToExcel
 
             package.SaveAs(new FileInfo(filePath));
         }
+
+        public void ShareInNDS(IEnumerable<ShareInNDS> shareInNDS, string organization, DateOnly startDate, DateOnly endDate) // Доля в НДС по направлениям
+        {
+            string filePath = $"C:\\Cost\\ShareNDS{organization}.xlsx";
+            using var package = new ExcelPackage();
+
+            var sheet = package.Workbook.Worksheets.Add("ShareNDS");
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+            sheet.View.FreezePanes(2, 1);
+
+            sheet.Cells[1, 1, 1, 5].Merge = true;
+            sheet.Cells[1, 1].Value = $"Доля НДС по направлениям ({organization})";
+            sheet.Cells[1, 1].Style.Font.Size = 20;
+            sheet.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            sheet.Cells[2, 3, 2, 5].Merge = true;
+            sheet.Cells[2, 3].Value = $"с {startDate} по {endDate}";
+            sheet.Cells[2, 3].Style.Font.Size = 16;
+            sheet.Cells[2, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+            sheet.Cells[4, 1].Value = "Направление";
+            sheet.Cells[4, 2].Value = "Исходящий НДС";
+            sheet.Cells[4, 3].Value = "Входящий НДС";
+            sheet.Cells[4, 4].Value = "НДС к уплате";
+            sheet.Cells[4, 5].Value = "Доля";
+            sheet.Cells[4, 1, 4, 5].Style.Font.Bold = true;
+            sheet.Cells[4, 1, 4, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 5;
+            var column = 0;
+            foreach (var item in shareInNDS)
+            {
+                sheet.Cells[row, column + 1].Value = item.AreaOfActivity;
+                sheet.Cells[row, column + 2].Value = item.OutputNDS;
+                sheet.Cells[row, column + 3].Value = item.InputNDS;
+                sheet.Cells[row, column + 4].Value = item.NDSPayable;
+                sheet.Cells[row, column + 5].Value = item.Share;
+                row++;
+            }
+            sheet.Cells[1, 1, row, 5].AutoFitColumns();
+            sheet.Cells[5, 2, row, 5].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            var range = sheet.Cells[4, 1, row - 1, 5];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range.AutoFilter = true;
+
+            package.SaveAs(new FileInfo(filePath));
+        }
     }
 }

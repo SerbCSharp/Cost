@@ -431,6 +431,7 @@ namespace Cost.Application
                              ContractId = vIncomeAndExpenses.ContractId,
                              Contractor = subvContracts?.Contractor,
                              Number = subvContracts?.Number,
+                             RateNDS = subvContracts?.RateNDS2026 ?? 0,
                              PaymentPurpose = vIncomeAndExpenses.PaymentPurpose,
                              PaymentId = vIncomeAndExpenses.PaymentId
                          };
@@ -995,6 +996,31 @@ namespace Cost.Application
                 areaOfActivity = paymentAreaOfActivity;
 
                 return areaOfActivity;
+        }
+
+        public IEnumerable<ShareInNDS> ShareInNDS(IEnumerable<CashFlow> cashFlow) // Доля в НДС по направлениям
+        {
+            var shareInNDS = cashFlow.Where(w => w.TypeOfActivity == "Производственная деятельность (включая косвенные расходы)")
+                                 .GroupBy(x => x.AreaOfActivity)
+                                 .Select(y => new ShareInNDS
+                                 {
+                                     AreaOfActivity = y.Key,
+                                     OutputNDS = y.Sum(z => z.Receipt * z.RateNDS / (1 + z.RateNDS)),
+                                     InputNDS = y.Sum(z => z.Payment * z.RateNDS / (1 + z.RateNDS))
+                                 });
+
+            var sum = shareInNDS.Sum(x => x.OutputNDS - x.InputNDS);
+
+            var result = shareInNDS.Select(y => new ShareInNDS
+            {
+                AreaOfActivity = y.AreaOfActivity,
+                OutputNDS = y.OutputNDS,
+                InputNDS = y.InputNDS,
+                NDSPayable = y.OutputNDS - y.InputNDS,
+                Share = (y.OutputNDS - y.InputNDS) / sum * 100
+            });
+
+            return result;
         }
     }
 }

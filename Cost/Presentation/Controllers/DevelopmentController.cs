@@ -3,6 +3,7 @@ using Cost.Presentation.DTO.Request;
 using Cost.Presentation.ReportsToExcel;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace Cost.Presentation.Controllers
 {
@@ -23,7 +24,7 @@ namespace Cost.Presentation.Controllers
         [HttpGet("Browse")]
         public async Task<IActionResult> BrowseAsync([Required] Organizations organization)
         {
-            var browse = await _generatingReports.IncomeAndExpensesAsync(organization);
+            var browse = await _generatingReports.ActOfCompletionAsync(organization);
             _exportingReportsToExcel.Browse(browse);
             return NoContent();
         }
@@ -88,6 +89,9 @@ namespace Cost.Presentation.Controllers
 
             var cashFlowSource = await _generatingReports.CashFlowSourceAsync(organization, startDate, endDate);
             _exportingReportsToExcel.CashFlowSource(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate), organization.ToString());
+
+            var shareInNDS = _generatingReports.ShareInNDS(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate));
+            _exportingReportsToExcel.ShareInNDS(shareInNDS, organization.ToString(), startDate, endDate);
 
             var startBalance = _generatingReports.StartBalance(cashFlowSource, organization, startDate);
             var cashFlow = _generatingReports.CashFlow(cashFlowSource.ToList(), organization, startDate, endDate);
