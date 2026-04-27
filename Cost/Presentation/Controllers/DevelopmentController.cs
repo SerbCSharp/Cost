@@ -3,7 +3,6 @@ using Cost.Presentation.DTO.Request;
 using Cost.Presentation.ReportsToExcel;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 
 namespace Cost.Presentation.Controllers
 {
@@ -94,7 +93,7 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.ShareInNDS(shareInNDS, organization.ToString(), startDate, endDate);
 
             var startBalance = _generatingReports.StartBalance(cashFlowSource, organization, startDate);
-            var cashFlow = _generatingReports.CashFlow(cashFlowSource.ToList(), organization, startDate, endDate);
+            var cashFlow = _generatingReports.CashFlow([.. cashFlowSource], organization, startDate, endDate);
             _exportingReportsToExcel.CashFlow(cashFlow, startBalance, organization.ToString(), startDate, endDate);
             return NoContent();
         }
