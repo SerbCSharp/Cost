@@ -13,6 +13,7 @@
         public string PaymentPurpose { get; set; }
         public string TypeOfActivity { get; set; }
         public string AreaOfActivity { get; set; }
+        public string ContractIdIncome { get; set; }
         public string PaymentId { get; set; }
     }
 }

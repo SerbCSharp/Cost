@@ -103,6 +103,7 @@ namespace Cost.Application
                 CostItem = string.IsNullOrEmpty(x.subvExpensePaymentsFromExcel?.CostItems) ? x.vPlusCostItemName.Description : x.subvExpensePaymentsFromExcel?.CostItems,
                 TypeOfActivity = x.subvExpensePaymentsFromExcel?.TypeOfActivity,
                 AreaOfActivity = x.subvExpensePaymentsFromExcel?.AreaOfActivity,
+                ContractIdIncome = x.subvExpensePaymentsFromExcel?.ContractIdIncome,
                 PaymentPurpose = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.PaymentPurpose,
                 TypeOperation = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.TypeOperation,
                 CommentFromPaymentInvoice = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.subvSupplierPaymentInvoice?.Comment,
@@ -294,6 +295,7 @@ namespace Cost.Application
                     PaymentPurpose = x.PaymentPurpose,
                     TypeOfActivity = x.TypeOfActivity,
                     AreaOfActivity = x.AreaOfActivity,
+                    ContractIdIncome = x.ContractIdIncome,
                     PaymentId = x.PaymentId,
                     DocumentName = "Списание с расчетного счета"
                 });
@@ -400,6 +402,7 @@ namespace Cost.Application
                     PaymentPurpose = x.PaymentPurpose,
                     TypeOfActivity = x.TypeOfActivity,
                     AreaOfActivity = x.AreaOfActivity,
+                    ContractIdIncome = x.ContractIdIncome,
                     PaymentId = x.PaymentId
                 });
 
@@ -1041,7 +1044,7 @@ namespace Cost.Application
             return result;
         }
 
-        public async Task<IEnumerable<Income>> ExpensesUnderIncomeContractsAsync(Organizations organization) // Затраты по доходным договорам
+        public async Task<IEnumerable<ExpensesUnderIncomeContracts>> ExpensesUnderIncomeContractsAsync(Organizations organization) // Затраты по доходным договорам
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
@@ -1054,10 +1057,9 @@ namespace Cost.Application
                                 from subvIncomeAndExpenses in leftJoin.DefaultIfEmpty()
                                 select (vContracts, subvIncomeAndExpenses);
 
-
             var buyersContracts = plusContracts.Where(x => !string.IsNullOrEmpty(x.vContracts?.ContractIdIncome))
                               .GroupBy(y => y.vContracts.ContractId)
-                              .Select(z => new Income
+                              .Select(z => new ExpensesUnderIncomeContracts
                               {
                                   ContractId = z.Key,
                                   Receipt = z.Sum(s => s.subvIncomeAndExpenses?.Debit ?? 0),
@@ -1067,31 +1069,38 @@ namespace Cost.Application
                                   Liter = z.FirstOrDefault().vContracts.Liter,
                                   Date = z.FirstOrDefault().vContracts.Date,
                                   Sum = z.FirstOrDefault().vContracts.Sum,
-                                  Name = z.FirstOrDefault().vContracts.Name,
-                                  AmountUntil2026 = z.FirstOrDefault().vContracts.AmountUntil2026
+                                  TypeOfActivity = z.FirstOrDefault().vContracts.TypeOfActivity,
+                                  AreaOfActivity = z.FirstOrDefault().vContracts.AreaOfActivity
                               });
 
-            var income = buyersContracts.GroupBy(x => x.Contractor + x.Number)
-                              .Select(y => new Income
+            var expenses = incomeAndExpenses.Where(x => !string.IsNullOrEmpty(x.ContractIdIncome))
+                              .GroupBy(y => y.ContractIdIncome)
+                              .Select(z => new ExpensesUnderIncomeContracts
                               {
-                                  Receipt = y.Sum(s => s.Receipt),
-                                  Payment = y.Sum(s => s.Payment),
-                                  ContractId = y?.FirstOrDefault().ContractId,
-                                  Contractor = y.FirstOrDefault().Contractor,
-                                  Number = y.FirstOrDefault().Number,
-                                  Date = y.FirstOrDefault().Date,
-                                  Sum = y.Sum(z => z.Sum),
-                                  Liter = y.FirstOrDefault()?.Liter,
-                                  Name = y.FirstOrDefault().Name,
-                                  AmountUntil2026 = y.Sum(s => s.AmountUntil2026)
-                              }).ToList();
+                                  ContractId = z.Key,
+                                  Expenses = z.Sum(s => s.Credit)
+                              });
 
-            income.ForEach(item =>
-            {
-                item.OutgoingNDS = item.AmountUntil2026 * 0.2M + (item.Receipt - item.AmountUntil2026) * 0.22M;
-            });
+            var expensesUnderIncomeContracts = from vBuyersContracts in buyersContracts
+                                               join vExpenses in expenses
+                                               on vBuyersContracts.ContractId equals vExpenses.ContractId into leftJoin
+                                               from subvExpenses in leftJoin.DefaultIfEmpty()
+                                               select new ExpensesUnderIncomeContracts
+                                               {
+                                                   ContractId = vBuyersContracts.ContractId,
+                                                   Receipt = vBuyersContracts.Receipt,
+                                                   Payment = vBuyersContracts.Payment,
+                                                   Contractor = vBuyersContracts.Contractor,
+                                                   Number = vBuyersContracts.Number,
+                                                   Liter = vBuyersContracts.Liter,
+                                                   Date = vBuyersContracts.Date,
+                                                   Sum = vBuyersContracts.Sum,
+                                                   TypeOfActivity = vBuyersContracts.TypeOfActivity,
+                                                   AreaOfActivity = vBuyersContracts.AreaOfActivity,
+                                                   Expenses = subvExpenses.Expenses
+                                               };
 
-            return income.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number);
+            return expensesUnderIncomeContracts.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number);
         }
     }
 }

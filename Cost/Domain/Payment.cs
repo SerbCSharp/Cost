@@ -14,5 +14,6 @@
         public string CommentFromPaymentInvoice { get; set; }
         public string TypeOfActivity { get; set; }
         public string AreaOfActivity { get; set; }
+        public string ContractIdIncome { get; set; }
     }
 }

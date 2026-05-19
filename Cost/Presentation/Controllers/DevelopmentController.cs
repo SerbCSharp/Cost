@@ -134,7 +134,7 @@ namespace Cost.Presentation.Controllers
         public async Task<IActionResult> ExpensesUnderIncomeContractsAsync([Required] Organizations organization)
         {
             var expensesUnderIncomeContracts = await _generatingReports.ExpensesUnderIncomeContractsAsync(organization);
-            _exportingReportsToExcel.Income(expensesUnderIncomeContracts);
+            _exportingReportsToExcel.ExpensesUnderIncomeContracts(expensesUnderIncomeContracts);
             return NoContent();
         }
     }

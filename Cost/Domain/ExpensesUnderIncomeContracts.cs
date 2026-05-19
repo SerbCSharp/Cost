@@ -1,6 +1,6 @@
 ﻿namespace Cost.Domain
 {
-    public class Income
+    public class ExpensesUnderIncomeContracts
     {
         public string ContractId { get; set; }
         public string Contractor { get; set; }
@@ -10,8 +10,8 @@
         public string Liter { get; set; }
         public decimal Receipt { get; set; }
         public decimal Payment { get; set; }
-        public string Name { get; set; }
-        public decimal AmountUntil2026 { get; set; }
-        public decimal OutgoingNDS { get; set; }
+        public decimal Expenses { get; set; }
+        public string TypeOfActivity { get; set; }
+        public string AreaOfActivity { get; set; }
     }
 }
