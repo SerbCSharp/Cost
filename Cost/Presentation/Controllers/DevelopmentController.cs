@@ -23,7 +23,7 @@ namespace Cost.Presentation.Controllers
         [HttpGet("Browse")]
         public async Task<IActionResult> BrowseAsync([Required] Organizations organization)
         {
-            var browse = await _generatingReports.ActOfCompletionAsync(organization);
+            var browse = await _generatingReports.IncomeAndExpensesAsync(organization);
             _exportingReportsToExcel.Browse(browse);
             return NoContent();
         }
@@ -89,8 +89,8 @@ namespace Cost.Presentation.Controllers
             var cashFlowSource = await _generatingReports.CashFlowSourceAsync(organization, startDate, endDate);
             _exportingReportsToExcel.CashFlowSource(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate), organization.ToString());
 
-            var shareInNDS = _generatingReports.ShareInNDS(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate));
-            _exportingReportsToExcel.ShareInNDS(shareInNDS, organization.ToString(), startDate, endDate);
+            //var shareInNDS = _generatingReports.ShareInNDS(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate));
+            //_exportingReportsToExcel.ShareInNDS(shareInNDS, organization.ToString(), startDate, endDate);
 
             var startBalance = _generatingReports.StartBalance(cashFlowSource, organization, startDate);
             var cashFlow = _generatingReports.CashFlow([.. cashFlowSource], organization, startDate, endDate);
@@ -125,6 +125,16 @@ namespace Cost.Presentation.Controllers
         {
             var howMuchIsLeftToPayExtra = await _generatingReports.HowMuchIsLeftToPayExtraAsync(organization);
             _exportingReportsToExcel.HowMuchIsLeftToPayExtra(howMuchIsLeftToPayExtra, organization.ToString());
+            return NoContent();
+        }
+
+        /// <summary>Затраты по доходным договорам</summary>
+        /// <response>Записывает информацию в ExpensesUnderIncomeContracts.xlsx</response>
+        [HttpGet("ExpensesUnderIncomeContracts")]
+        public async Task<IActionResult> ExpensesUnderIncomeContractsAsync([Required] Organizations organization)
+        {
+            var expensesUnderIncomeContracts = await _generatingReports.ExpensesUnderIncomeContractsAsync(organization);
+            _exportingReportsToExcel.Income(expensesUnderIncomeContracts);
             return NoContent();
         }
     }

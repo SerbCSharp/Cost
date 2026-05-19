@@ -676,27 +676,27 @@ namespace Cost.Application
             var incomeAndExpenses = await IncomeAndExpensesAsync(organization);
 
             var contracts = gettingData.GetContracts();
-            var plusContracts = from vIncomeAndExpenses in incomeAndExpenses
-                                join vContracts in contracts
-                                on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
-                                from subvContracts in leftJoin.DefaultIfEmpty()
-                                select (vIncomeAndExpenses, subvContracts);
+            var plusContracts = from vContracts in contracts
+                                join vIncomeAndExpenses in incomeAndExpenses
+                                on vContracts.ContractId equals vIncomeAndExpenses.ContractId into leftJoin
+                                from subvIncomeAndExpenses in leftJoin.DefaultIfEmpty()
+                                select (vContracts, subvIncomeAndExpenses);
 
 
-            var buyersContracts = plusContracts.Where(x => x.subvContracts?.ContractorOrSupplier == "Покупатель")
-                              .GroupBy(y => y.subvContracts.ContractId)
+            var buyersContracts = plusContracts.Where(x => x.vContracts?.ContractorOrSupplier == "Покупатель")
+                              .GroupBy(y => y.vContracts.ContractId)
                               .Select(z => new Income
                               {
                                   ContractId = z.Key,
-                                  Receipt = z.Sum(s => s.vIncomeAndExpenses.Credit),
-                                  Payment = z.Sum(s => s.vIncomeAndExpenses.Debit),
-                                  Contractor = z.FirstOrDefault().subvContracts.Contractor,
-                                  Number = z.FirstOrDefault().subvContracts.Number,
-                                  Liter = z.FirstOrDefault().subvContracts.Liter,
-                                  Date = z.FirstOrDefault().subvContracts.Date,
-                                  Sum = z.FirstOrDefault().subvContracts.Sum,
-                                  Name = z.FirstOrDefault().subvContracts.Name,
-                                  AmountUntil2026 = z.FirstOrDefault().subvContracts.AmountUntil2026
+                                  Receipt = z.Sum(s => s.subvIncomeAndExpenses?.Debit ?? 0),
+                                  Payment = z.Sum(s => s.subvIncomeAndExpenses?.Credit ?? 0),
+                                  Contractor = z.FirstOrDefault().vContracts.Contractor,
+                                  Number = z.FirstOrDefault().vContracts.Number,
+                                  Liter = z.FirstOrDefault().vContracts.Liter,
+                                  Date = z.FirstOrDefault().vContracts.Date,
+                                  Sum = z.FirstOrDefault().vContracts.Sum,
+                                  Name = z.FirstOrDefault().vContracts.Name,
+                                  AmountUntil2026 = z.FirstOrDefault().vContracts.AmountUntil2026
                               });
 
             var income = buyersContracts.GroupBy(x => x.Contractor + x.Number)
@@ -740,6 +740,24 @@ namespace Cost.Application
                                 on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
                                 from subvContracts in leftJoin.DefaultIfEmpty()
                                 select (vIncomeAndExpenses, subvContracts);
+
+            //var browse = plusContracts.Select(z => new Expense
+            //{
+            //    ContractId = z.subvContracts?.ContractId,
+            //    Receipt = z.vIncomeAndExpenses.Credit,
+            //    Payment = z.vIncomeAndExpenses.Debit,
+            //    Contractor = z.subvContracts?.Contractor,
+            //    Number = z.subvContracts?.Number,
+            //    Liter = z.subvContracts?.Liter,
+            //    ContractClosed = z.subvContracts?.ContractClosed,
+            //    ContractorOrSupplier = z.subvContracts?.ContractorOrSupplier,
+            //    CostItem = z.subvContracts?.CostItem,
+            //    Date = z.vIncomeAndExpenses.Date,
+            //    Sum = z.subvContracts?.Sum,
+            //    Name = z.subvContracts?.Name,
+            //    NumberAA = z.vIncomeAndExpenses.TypeOperation
+            //});
+            //_exportingReportsToExcel.Browse(browse);
 
             var contractor = plusContracts.Where(x => x.subvContracts?.ContractorOrSupplier == "Подрядчик").GroupBy(y => y.subvContracts.ContractId).Select(z => new Expense
             {
@@ -1021,6 +1039,59 @@ namespace Cost.Application
             });
 
             return result;
+        }
+
+        public async Task<IEnumerable<Income>> ExpensesUnderIncomeContractsAsync(Organizations organization) // Затраты по доходным договорам
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            var incomeAndExpenses = await IncomeAndExpensesAsync(organization);
+
+            var contracts = gettingData.GetContracts();
+            var plusContracts = from vContracts in contracts
+                                join vIncomeAndExpenses in incomeAndExpenses
+                                on vContracts.ContractId equals vIncomeAndExpenses.ContractId into leftJoin
+                                from subvIncomeAndExpenses in leftJoin.DefaultIfEmpty()
+                                select (vContracts, subvIncomeAndExpenses);
+
+
+            var buyersContracts = plusContracts.Where(x => !string.IsNullOrEmpty(x.vContracts?.ContractIdIncome))
+                              .GroupBy(y => y.vContracts.ContractId)
+                              .Select(z => new Income
+                              {
+                                  ContractId = z.Key,
+                                  Receipt = z.Sum(s => s.subvIncomeAndExpenses?.Debit ?? 0),
+                                  Payment = z.Sum(s => s.subvIncomeAndExpenses?.Credit ?? 0),
+                                  Contractor = z.FirstOrDefault().vContracts.Contractor,
+                                  Number = z.FirstOrDefault().vContracts.Number,
+                                  Liter = z.FirstOrDefault().vContracts.Liter,
+                                  Date = z.FirstOrDefault().vContracts.Date,
+                                  Sum = z.FirstOrDefault().vContracts.Sum,
+                                  Name = z.FirstOrDefault().vContracts.Name,
+                                  AmountUntil2026 = z.FirstOrDefault().vContracts.AmountUntil2026
+                              });
+
+            var income = buyersContracts.GroupBy(x => x.Contractor + x.Number)
+                              .Select(y => new Income
+                              {
+                                  Receipt = y.Sum(s => s.Receipt),
+                                  Payment = y.Sum(s => s.Payment),
+                                  ContractId = y?.FirstOrDefault().ContractId,
+                                  Contractor = y.FirstOrDefault().Contractor,
+                                  Number = y.FirstOrDefault().Number,
+                                  Date = y.FirstOrDefault().Date,
+                                  Sum = y.Sum(z => z.Sum),
+                                  Liter = y.FirstOrDefault()?.Liter,
+                                  Name = y.FirstOrDefault().Name,
+                                  AmountUntil2026 = y.Sum(s => s.AmountUntil2026)
+                              }).ToList();
+
+            income.ForEach(item =>
+            {
+                item.OutgoingNDS = item.AmountUntil2026 * 0.2M + (item.Receipt - item.AmountUntil2026) * 0.22M;
+            });
+
+            return income.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number);
         }
     }
 }

@@ -120,7 +120,8 @@ namespace Cost.Infrastructure.Repositories
                 PaymentAmount = row.Field<decimal>("PaymentAmount"),
                 PurposePayment = row.Field<string>("PurposePayment"),
                 TypeOfActivity = row.Field<string>("TypeOfActivity"),
-                AreaOfActivity = row.Field<string>("AreaOfActivity")
+                AreaOfActivity = row.Field<string>("AreaOfActivity"),
+                ContractIdIncome = row.Field<string>("ContractIdIncome")
             });
         }
 
@@ -227,7 +228,8 @@ namespace Cost.Infrastructure.Repositories
                 AmountUntil2026 = row.Field<decimal>("AmountUntil2026"),
                 RateNDS2026 = row.Field<decimal>("RateNDS2026"),
                 TypeOfActivity = row.Field<string>("TypeOfActivity"),
-                AreaOfActivity = row.Field<string>("AreaOfActivity")
+                AreaOfActivity = row.Field<string>("AreaOfActivity"),
+                ContractIdIncome = row.Field<string>("ContractIdIncome")
             });
         }
 
