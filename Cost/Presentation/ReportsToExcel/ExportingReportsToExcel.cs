@@ -847,12 +847,12 @@ namespace Cost.Presentation.ReportsToExcel
             sheet.Cells[1, 5].Value = "Выполнение";
             sheet.Cells[1, 6].Value = "Оплата";
             sheet.Cells[1, 7].Value = "Литер";
-            sheet.Cells[1, 8].Value = "Вид деятельности";
-            sheet.Cells[1, 9].Value = "Направление";
-            sheet.Cells[1, 10].Value = "Затраты";
-            sheet.Cells[1, 11].Value = "ContractId";
-            sheet.Cells[1, 1, 1, 11].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            //sheet.Cells[1, 8].Value = "Вид деятельности";
+            sheet.Cells[1, 8].Value = "Направление";
+            sheet.Cells[1, 9].Value = "Затраты";
+            sheet.Cells[1, 10].Value = "ContractId";
+            sheet.Cells[1, 1, 1, 10].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 10].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             var row = 2;
             var column = 0;
@@ -865,20 +865,20 @@ namespace Cost.Presentation.ReportsToExcel
                 sheet.Cells[row, column + 5].Value = item.Receipt;
                 sheet.Cells[row, column + 6].Value = item.Payment;
                 sheet.Cells[row, column + 7].Value = item.Liter;
-                sheet.Cells[row, column + 8].Value = item.TypeOfActivity;
-                sheet.Cells[row, column + 9].Value = item.AreaOfActivity;
-                sheet.Cells[row, column + 10].Value = item.Expenses;
-                sheet.Cells[row, column + 11].Value = item.ContractId;
+                //sheet.Cells[row, column + 8].Value = item.TypeOfActivity;
+                sheet.Cells[row, column + 8].Value = item.AreaOfActivity;
+                sheet.Cells[row, column + 9].Value = item.Expenses;
+                sheet.Cells[row, column + 10].Value = item.ContractId;
                 row++;
             }
 
-            sheet.Cells[1, 1, row, 11].AutoFitColumns();
+            sheet.Cells[1, 1, row, 10].AutoFitColumns();
             sheet.Column(1).Width = 50;
             sheet.Column(2).Width = 50;
             sheet.Column(7).Width = 50;
-            sheet.Column(11).Hidden = true;
+            sheet.Column(10).Hidden = true;
 
-            var range = sheet.Cells[1, 1, row - 1, 11];
+            var range = sheet.Cells[1, 1, row - 1, 10];
             range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
             range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
@@ -887,7 +887,7 @@ namespace Cost.Presentation.ReportsToExcel
 
             sheet.Cells[2, 3, row, 3].Style.Numberformat.Format = "dd.mm.yyyy";
             sheet.Cells[2, 4, row, 6].Style.Numberformat.Format = "### ### ### ##0.00";
-            sheet.Cells[2, 10, row, 10].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 9, row, 9].Style.Numberformat.Format = "### ### ### ##0.00";
 
             package.SaveAs(new FileInfo(filePath));
         }

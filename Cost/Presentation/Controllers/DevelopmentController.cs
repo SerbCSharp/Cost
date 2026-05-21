@@ -131,9 +131,11 @@ namespace Cost.Presentation.Controllers
         /// <summary>Затраты по доходным договорам</summary>
         /// <response>Записывает информацию в ExpensesUnderIncomeContracts.xlsx</response>
         [HttpGet("ExpensesUnderIncomeContracts")]
-        public async Task<IActionResult> ExpensesUnderIncomeContractsAsync([Required] Organizations organization)
+        public async Task<IActionResult> ExpensesUnderIncomeContractsAsync([Required] Organizations organization, DateOnly startDate, DateOnly endDate)
         {
-            var expensesUnderIncomeContracts = await _generatingReports.ExpensesUnderIncomeContractsAsync(organization);
+            startDate = startDate.Year == 1 ? new DateOnly(2026, 1, 1) : startDate;
+            endDate = endDate.Year == 1 ? DateOnly.FromDateTime(DateTime.Now) : endDate;
+            var expensesUnderIncomeContracts = await _generatingReports.ExpensesUnderIncomeContractsAsync(organization, startDate, endDate);
             _exportingReportsToExcel.ExpensesUnderIncomeContracts(expensesUnderIncomeContracts);
             return NoContent();
         }
