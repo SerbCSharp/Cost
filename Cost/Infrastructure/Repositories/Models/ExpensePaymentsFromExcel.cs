@@ -8,9 +8,9 @@
         public string Liter { get; set; }
         public string CostItems { get; set; }
         public string PurposePayment { get; set; }
-        public string TypeOfActivity { get; set; }
-        public string AreaOfActivity { get; set; }
-        public string ContractIdIncome { get; set; }
+        //public string TypeOfActivity { get; set; }
+        //public string AreaOfActivity { get; set; }
+        //public string ContractIdIncome { get; set; }
 
         public bool Equals(ExpensePaymentsFromExcel other)
         {

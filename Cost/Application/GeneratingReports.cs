@@ -101,9 +101,9 @@ namespace Cost.Application
                 ContractId = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.ContractId,
                 Liter = string.IsNullOrEmpty(x.subvExpensePaymentsFromExcel?.Liter) ? x.vPlusCostItemName.vPlusLiterName.Description : x.subvExpensePaymentsFromExcel?.Liter,
                 CostItem = string.IsNullOrEmpty(x.subvExpensePaymentsFromExcel?.CostItems) ? x.vPlusCostItemName.Description : x.subvExpensePaymentsFromExcel?.CostItems,
-                TypeOfActivity = x.subvExpensePaymentsFromExcel?.TypeOfActivity,
-                AreaOfActivity = x.subvExpensePaymentsFromExcel?.AreaOfActivity,
-                ContractIdIncome = x.subvExpensePaymentsFromExcel?.ContractIdIncome,
+                //TypeOfActivity = x.subvExpensePaymentsFromExcel?.TypeOfActivity,
+                //AreaOfActivity = x.subvExpensePaymentsFromExcel?.AreaOfActivity,
+                //ContractIdIncome = x.subvExpensePaymentsFromExcel?.ContractIdIncome,
                 PaymentPurpose = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.PaymentPurpose,
                 TypeOperation = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.TypeOperation,
                 CommentFromPaymentInvoice = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.subvSupplierPaymentInvoice?.Comment,
@@ -145,30 +145,30 @@ namespace Cost.Application
 
             var buyerPaymentInvoice = (await gettingData.BuyerPaymentInvoiceAsync()).Value;
             var plusBuyerPaymentInvoice = from vAllPayments in allPayments
-                                                     join vbuyerPaymentInvoice in buyerPaymentInvoice
-                                                     on vAllPayments.PaymentDetailsId equals vbuyerPaymentInvoice.BuyerPaymentInvoiceId into leftJoin
-                                                     from subvbuyerPaymentInvoice in leftJoin.DefaultIfEmpty()
-                                                     select new { vAllPayments, subvbuyerPaymentInvoice?.Comment };
+                                          join vbuyerPaymentInvoice in buyerPaymentInvoice
+                                          on vAllPayments.PaymentDetailsId equals vbuyerPaymentInvoice.BuyerPaymentInvoiceId into leftJoin
+                                          from subvbuyerPaymentInvoice in leftJoin.DefaultIfEmpty()
+                                          select new { vAllPayments, subvbuyerPaymentInvoice?.Comment };
 
-            var incomePaymentsFromExcel = gettingData.IncomePaymentsFromExcel();
-            var plusIncomePaymentsFromExcel = from vPlusBuyerPaymentInvoice in plusBuyerPaymentInvoice
-                                              join vIncomePaymentsFromExcel in incomePaymentsFromExcel
-                                               on vPlusBuyerPaymentInvoice.vAllPayments.PaymentId equals vIncomePaymentsFromExcel.PaymentId into leftJoin
-                                               from subvIncomePaymentsFromExcel in leftJoin.DefaultIfEmpty()
-                                               select new { vPlusBuyerPaymentInvoice, subvIncomePaymentsFromExcel };
+            //var incomePaymentsFromExcel = gettingData.IncomePaymentsFromExcel();
+            //var plusIncomePaymentsFromExcel = from vPlusBuyerPaymentInvoice in plusBuyerPaymentInvoice
+            //                                  join vIncomePaymentsFromExcel in incomePaymentsFromExcel
+            //                                   on vPlusBuyerPaymentInvoice.vAllPayments.PaymentId equals vIncomePaymentsFromExcel.PaymentId into leftJoin
+            //                                  from subvIncomePaymentsFromExcel in leftJoin.DefaultIfEmpty()
+            //                                  select new { vPlusBuyerPaymentInvoice, subvIncomePaymentsFromExcel };
 
-            var result = plusIncomePaymentsFromExcel.Select(x => new Payment
+            var result = plusBuyerPaymentInvoice.Select(x => new Payment
             {
-                PaymentId = x.vPlusBuyerPaymentInvoice.vAllPayments.PaymentId,
-                Date = x.vPlusBuyerPaymentInvoice.vAllPayments.Date,
-                PaymentAmount = x.vPlusBuyerPaymentInvoice.vAllPayments.PaymentAmount,
-                ContractId = x.vPlusBuyerPaymentInvoice.vAllPayments.ContractId,
-                PaymentPurpose = x.vPlusBuyerPaymentInvoice.vAllPayments.PaymentPurpose,
-                TypeOperation = x.vPlusBuyerPaymentInvoice.vAllPayments.TypeOperation,
-                CommentFromPaymentInvoice = x.vPlusBuyerPaymentInvoice.Comment,
-                PaymentDetailsId = x.vPlusBuyerPaymentInvoice.vAllPayments.PaymentDetailsId,
-                TypeOfActivity = x.subvIncomePaymentsFromExcel?.TypeOfActivity,
-                AreaOfActivity = x.subvIncomePaymentsFromExcel?.AreaOfActivity,
+                PaymentId = x.vAllPayments.PaymentId,
+                Date = x.vAllPayments.Date,
+                PaymentAmount = x.vAllPayments.PaymentAmount,
+                ContractId = x.vAllPayments.ContractId,
+                PaymentPurpose = x.vAllPayments.PaymentPurpose,
+                TypeOperation = x.vAllPayments.TypeOperation,
+                CommentFromPaymentInvoice = x.Comment,
+                PaymentDetailsId = x.vAllPayments.PaymentDetailsId,
+                //TypeOfActivity = x.subvIncomePaymentsFromExcel?.TypeOfActivity,
+                //AreaOfActivity = x.subvIncomePaymentsFromExcel?.AreaOfActivity,
             }).OrderBy(x => x.Date);
 
             return result;

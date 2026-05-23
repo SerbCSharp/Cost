@@ -43,7 +43,7 @@ namespace Cost.Application
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
         IEnumerable<IndirectCosts> GetIndirectCosts(); // Косвенные расходы
         Task<ActOfCompletion> ActOfCompletionAsync(); // Акты об окончании СМР
-        IEnumerable<ExpensePaymentsFromExcel> IncomePaymentsFromExcel();
+        //IEnumerable<ExpensePaymentsFromExcel> IncomePaymentsFromExcel();
         Task<string> TmpAsync();
     }
 }
