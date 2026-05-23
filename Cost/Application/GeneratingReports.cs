@@ -672,58 +672,58 @@ namespace Cost.Application
                   });
         }
 
-        public async Task<IEnumerable<Income>> IncomeAsync(Organizations organization) // Доходы от строительства объектов
-        {
-            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+        //public async Task<IEnumerable<Income>> IncomeAsync(Organizations organization) // Доходы от строительства объектов
+        //{
+        //    IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            var incomeAndExpenses = await IncomeAndExpensesAsync(organization);
+        //    var incomeAndExpenses = await IncomeAndExpensesAsync(organization);
 
-            var contracts = gettingData.GetContracts();
-            var plusContracts = from vContracts in contracts
-                                join vIncomeAndExpenses in incomeAndExpenses
-                                on vContracts.ContractId equals vIncomeAndExpenses.ContractId into leftJoin
-                                from subvIncomeAndExpenses in leftJoin.DefaultIfEmpty()
-                                select (vContracts, subvIncomeAndExpenses);
+        //    var contracts = gettingData.GetContracts();
+        //    var plusContracts = from vContracts in contracts
+        //                        join vIncomeAndExpenses in incomeAndExpenses
+        //                        on vContracts.ContractId equals vIncomeAndExpenses.ContractId into leftJoin
+        //                        from subvIncomeAndExpenses in leftJoin.DefaultIfEmpty()
+        //                        select (vContracts, subvIncomeAndExpenses);
 
 
-            var buyersContracts = plusContracts.Where(x => x.vContracts?.ContractorOrSupplier == "Покупатель")
-                              .GroupBy(y => y.vContracts.ContractId)
-                              .Select(z => new Income
-                              {
-                                  ContractId = z.Key,
-                                  Receipt = z.Sum(s => s.subvIncomeAndExpenses?.Debit ?? 0),
-                                  Payment = z.Sum(s => s.subvIncomeAndExpenses?.Credit ?? 0),
-                                  Contractor = z.FirstOrDefault().vContracts.Contractor,
-                                  Number = z.FirstOrDefault().vContracts.Number,
-                                  Liter = z.FirstOrDefault().vContracts.Liter,
-                                  Date = z.FirstOrDefault().vContracts.Date,
-                                  Sum = z.FirstOrDefault().vContracts.Sum,
-                                  Name = z.FirstOrDefault().vContracts.Name,
-                                  AmountUntil2026 = z.FirstOrDefault().vContracts.AmountUntil2026
-                              });
+        //    var buyersContracts = plusContracts.Where(x => x.vContracts?.ContractorOrSupplier == "Покупатель")
+        //                      .GroupBy(y => y.vContracts.ContractId)
+        //                      .Select(z => new Income
+        //                      {
+        //                          ContractId = z.Key,
+        //                          Receipt = z.Sum(s => s.subvIncomeAndExpenses?.Debit ?? 0),
+        //                          Payment = z.Sum(s => s.subvIncomeAndExpenses?.Credit ?? 0),
+        //                          Contractor = z.FirstOrDefault().vContracts.Contractor,
+        //                          Number = z.FirstOrDefault().vContracts.Number,
+        //                          Liter = z.FirstOrDefault().vContracts.Liter,
+        //                          Date = z.FirstOrDefault().vContracts.Date,
+        //                          Sum = z.FirstOrDefault().vContracts.Sum,
+        //                          Name = z.FirstOrDefault().vContracts.Name,
+        //                          AmountUntil2026 = z.FirstOrDefault().vContracts.AmountUntil2026
+        //                      });
 
-            var income = buyersContracts.GroupBy(x => x.Contractor + x.Number)
-                              .Select(y => new Income
-                              {
-                                  Receipt = y.Sum(s => s.Receipt),
-                                  Payment = y.Sum(s => s.Payment),
-                                  ContractId = y?.FirstOrDefault().ContractId,
-                                  Contractor = y.FirstOrDefault().Contractor,
-                                  Number = y.FirstOrDefault().Number,
-                                  Date = y.FirstOrDefault().Date,
-                                  Sum = y.Sum(z => z.Sum),
-                                  Liter = y.FirstOrDefault()?.Liter,
-                                  Name = y.FirstOrDefault().Name,
-                                  AmountUntil2026 = y.Sum(s => s.AmountUntil2026)
-                              }).ToList();
+        //    var income = buyersContracts.GroupBy(x => x.Contractor + x.Number)
+        //                      .Select(y => new Income
+        //                      {
+        //                          Receipt = y.Sum(s => s.Receipt),
+        //                          Payment = y.Sum(s => s.Payment),
+        //                          ContractId = y?.FirstOrDefault().ContractId,
+        //                          Contractor = y.FirstOrDefault().Contractor,
+        //                          Number = y.FirstOrDefault().Number,
+        //                          Date = y.FirstOrDefault().Date,
+        //                          Sum = y.Sum(z => z.Sum),
+        //                          Liter = y.FirstOrDefault()?.Liter,
+        //                          Name = y.FirstOrDefault().Name,
+        //                          AmountUntil2026 = y.Sum(s => s.AmountUntil2026)
+        //                      }).ToList();
 
-            income.ForEach(item =>
-            {
-                item.OutgoingNDS = item.AmountUntil2026 * 0.2M + (item.Receipt - item.AmountUntil2026) * 0.22M;
-            });
+        //    income.ForEach(item =>
+        //    {
+        //        item.OutgoingNDS = item.AmountUntil2026 * 0.2M + (item.Receipt - item.AmountUntil2026) * 0.22M;
+        //    });
 
-            return income.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number);
-        }
+        //    return income.Where(y => !string.IsNullOrEmpty(y.ContractId)).OrderBy(x => x.Contractor).ThenBy(z => z.Number);
+        //}
 
         public async Task<IEnumerable<ActOfCompletionValue>> ActOfCompletionAsync(Organizations organization) // Акты об окончании СМР
         {
