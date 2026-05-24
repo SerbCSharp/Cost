@@ -68,16 +68,6 @@ namespace Cost.Presentation.Controllers
             return NoContent();
         }
 
-        /// <summary>Отчет о доходах от строительства объектов</summary>
-        /// <response>Записывает информацию в Income.xlsx</response>
-        [HttpGet("Income")]
-        public async Task<IActionResult> IncomeAsync([Required] Organizations organization)
-        {
-            var income = await _generatingReports.IncomeAsync(organization);
-            _exportingReportsToExcel.Income(income);
-            return NoContent();
-        }
-
         /// <summary>ДДС</summary>
         /// <response>Записывает информацию в CashFlow.xlsx</response>
         [HttpGet("CashFlow")]

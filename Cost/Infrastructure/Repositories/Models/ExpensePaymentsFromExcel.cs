@@ -1,6 +1,6 @@
 ﻿namespace Cost.Infrastructure.Repositories.Models
 {
-    public class ExpensePaymentsFromExcel
+    public class ExpensePaymentsFromExcel : IEquatable<ExpensePaymentsFromExcel>
     {
         public string PaymentId { get; set; }
         public DateOnly Date { get; set; }

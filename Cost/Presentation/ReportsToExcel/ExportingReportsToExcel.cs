@@ -384,82 +384,82 @@ namespace Cost.Presentation.ReportsToExcel
             package.SaveAs(new FileInfo(filePath));
         }
 
-        public void Income(IEnumerable<Income> income) // Доходы от строительства объектов
-        {
-            string filePath = "C:\\Cost\\Income.xlsx";
-            using var package = new ExcelPackage();
+        //public void Income(IEnumerable<Income> income) // Доходы от строительства объектов
+        //{
+        //    string filePath = "C:\\Cost\\Income.xlsx";
+        //    using var package = new ExcelPackage();
 
-            var sheet = package.Workbook.Worksheets.Add("Маржинальный доход");
-            sheet.Cells.Style.Font.Name = "Calibri";
-            sheet.Cells.Style.Font.Size = 11;
-            sheet.View.FreezePanes(2, 1);
+        //    var sheet = package.Workbook.Worksheets.Add("Маржинальный доход");
+        //    sheet.Cells.Style.Font.Name = "Calibri";
+        //    sheet.Cells.Style.Font.Size = 11;
+        //    sheet.View.FreezePanes(2, 1);
 
-            // Шапка
-            sheet.Cells[1, 1].Value = "Контрагент";
-            sheet.Cells[1, 2].Value = "Договор";
-            sheet.Cells[1, 3].Value = "Дата договора";
-            sheet.Cells[1, 4].Value = "Сумма договора";
-            sheet.Cells[1, 5].Value = "Выполнение";
-            sheet.Cells[1, 6].Value = "Оплата";
-            sheet.Cells[1, 7].Value = "Литер";
-            sheet.Cells[1, 8].Value = "Наименование";
-            sheet.Cells[1, 9].Value = "Исходящий НДС";
-            sheet.Cells[1, 10].Value = "Выполнение без НДС";
-            sheet.Cells[1, 11].Value = "ContractId";
-            sheet.Cells[1, 12].Value = "Выполнение до 2026";
-            sheet.Cells[1, 1, 1, 12].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, 12].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        //    // Шапка
+        //    sheet.Cells[1, 1].Value = "Контрагент";
+        //    sheet.Cells[1, 2].Value = "Договор";
+        //    sheet.Cells[1, 3].Value = "Дата договора";
+        //    sheet.Cells[1, 4].Value = "Сумма договора";
+        //    sheet.Cells[1, 5].Value = "Выполнение";
+        //    sheet.Cells[1, 6].Value = "Оплата";
+        //    sheet.Cells[1, 7].Value = "Литер";
+        //    sheet.Cells[1, 8].Value = "Наименование";
+        //    sheet.Cells[1, 9].Value = "Исходящий НДС";
+        //    sheet.Cells[1, 10].Value = "Выполнение без НДС";
+        //    sheet.Cells[1, 11].Value = "ContractId";
+        //    sheet.Cells[1, 12].Value = "Выполнение до 2026";
+        //    sheet.Cells[1, 1, 1, 12].Style.Font.Bold = true;
+        //    sheet.Cells[1, 1, 1, 12].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            var row = 2;
-            var column = 0;
-            foreach (var item in income)
-            {
-                sheet.Cells[row, column + 1].Value = item.Contractor;
-                sheet.Cells[row, column + 2].Value = item.Number;
-                sheet.Cells[row, column + 3].Value = item.Date;
-                sheet.Cells[row, column + 4].Value = item.Sum;
-                sheet.Cells[row, column + 5].Value = item.Receipt;
-                sheet.Cells[row, column + 6].Value = item.Payment;
-                sheet.Cells[row, column + 7].Value = item.Liter;
-                sheet.Cells[row, column + 8].Value = item.Name;
-                sheet.Cells[row, column + 9].Value = item.OutgoingNDS;
-                sheet.Cells[row, column + 10].Formula = $"E{row}-I{row}";
-                sheet.Cells[row, column + 11].Value = item.ContractId;
-                sheet.Cells[row, column + 12].Value = item.AmountUntil2026;
-                row++;
-            }
+        //    var row = 2;
+        //    var column = 0;
+        //    foreach (var item in income)
+        //    {
+        //        sheet.Cells[row, column + 1].Value = item.Contractor;
+        //        sheet.Cells[row, column + 2].Value = item.Number;
+        //        sheet.Cells[row, column + 3].Value = item.Date;
+        //        sheet.Cells[row, column + 4].Value = item.Sum;
+        //        sheet.Cells[row, column + 5].Value = item.Receipt;
+        //        sheet.Cells[row, column + 6].Value = item.Payment;
+        //        sheet.Cells[row, column + 7].Value = item.Liter;
+        //        sheet.Cells[row, column + 8].Value = item.Name;
+        //        sheet.Cells[row, column + 9].Value = item.OutgoingNDS;
+        //        sheet.Cells[row, column + 10].Formula = $"E{row}-I{row}";
+        //        sheet.Cells[row, column + 11].Value = item.ContractId;
+        //        sheet.Cells[row, column + 12].Value = item.AmountUntil2026;
+        //        row++;
+        //    }
 
-            sheet.Cells[row, column + 4].Formula = $"=SUBTOTAL(9,D2:D{row - 1})";
-            sheet.Cells[row, column + 5].Formula = $"=SUBTOTAL(9,E2:E{row - 1})";
-            sheet.Cells[row, column + 6].Formula = $"=SUBTOTAL(9,F2:F{row - 1})";
-            sheet.Cells[row, column + 9].Formula = $"=SUBTOTAL(9,I2:I{row - 1})";
-            sheet.Cells[row, column + 10].Formula = $"=SUBTOTAL(9,J2:J{row - 1})";
-            sheet.Cells[row, 2, row, 10].Style.Font.Bold = true;
+        //    sheet.Cells[row, column + 4].Formula = $"=SUBTOTAL(9,D2:D{row - 1})";
+        //    sheet.Cells[row, column + 5].Formula = $"=SUBTOTAL(9,E2:E{row - 1})";
+        //    sheet.Cells[row, column + 6].Formula = $"=SUBTOTAL(9,F2:F{row - 1})";
+        //    sheet.Cells[row, column + 9].Formula = $"=SUBTOTAL(9,I2:I{row - 1})";
+        //    sheet.Cells[row, column + 10].Formula = $"=SUBTOTAL(9,J2:J{row - 1})";
+        //    sheet.Cells[row, 2, row, 10].Style.Font.Bold = true;
 
 
-            sheet.Cells[1, 1, row, 17].AutoFitColumns();
-            sheet.Column(1).Width = 50;
-            sheet.Column(2).Width = 50;
-            sheet.Column(7).Width = 50;
-            sheet.Column(8).Width = 50;
-            sheet.Column(8).Hidden = true;
-            sheet.Column(11).Hidden = true;
+        //    sheet.Cells[1, 1, row, 17].AutoFitColumns();
+        //    sheet.Column(1).Width = 50;
+        //    sheet.Column(2).Width = 50;
+        //    sheet.Column(7).Width = 50;
+        //    sheet.Column(8).Width = 50;
+        //    sheet.Column(8).Hidden = true;
+        //    sheet.Column(11).Hidden = true;
 
-            var range = sheet.Cells[1, 1, row - 1, 12];
-            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-            range.AutoFilter = true;
+        //    var range = sheet.Cells[1, 1, row - 1, 12];
+        //    range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+        //    range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+        //    range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+        //    range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+        //    range.AutoFilter = true;
 
-            sheet.Cells[2, 3, row, 3].Style.Numberformat.Format = "dd.mm.yyyy";
-            sheet.Cells[2, 4, row, 6].Style.Numberformat.Format = "### ### ### ##0.00";
-            sheet.Cells[2, 9, row, 9].Style.Numberformat.Format = "### ### ### ##0.00";
-            sheet.Cells[2, 10, row, 10].Style.Numberformat.Format = "### ### ### ##0.00";
-            sheet.Cells[2, 12, row, 12].Style.Numberformat.Format = "### ### ### ##0.00";
+        //    sheet.Cells[2, 3, row, 3].Style.Numberformat.Format = "dd.mm.yyyy";
+        //    sheet.Cells[2, 4, row, 6].Style.Numberformat.Format = "### ### ### ##0.00";
+        //    sheet.Cells[2, 9, row, 9].Style.Numberformat.Format = "### ### ### ##0.00";
+        //    sheet.Cells[2, 10, row, 10].Style.Numberformat.Format = "### ### ### ##0.00";
+        //    sheet.Cells[2, 12, row, 12].Style.Numberformat.Format = "### ### ### ##0.00";
 
-            package.SaveAs(new FileInfo(filePath));
-        }
+        //    package.SaveAs(new FileInfo(filePath));
+        //}
 
         public void ReconciliationStatement(IEnumerable<ReconciliationStatement> reconciliationStatement)
         {

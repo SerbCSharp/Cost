@@ -293,9 +293,9 @@ namespace Cost.Application
                     CostItem = x.CostItem,
                     TypeOperation = x.TypeOperation,
                     PaymentPurpose = x.PaymentPurpose,
-                    TypeOfActivity = x.TypeOfActivity,
-                    AreaOfActivity = x.AreaOfActivity,
-                    ContractIdIncome = x.ContractIdIncome,
+                    //TypeOfActivity = x.TypeOfActivity,
+                    //AreaOfActivity = x.AreaOfActivity,
+                    //ContractIdIncome = x.ContractIdIncome,
                     PaymentId = x.PaymentId,
                     DocumentName = "Списание с расчетного счета"
                 });
@@ -349,8 +349,8 @@ namespace Cost.Application
                     ContractId = x.ContractId,
                     TypeOperation = x.TypeOperation,
                     PaymentPurpose = x.PaymentPurpose,
-                    TypeOfActivity = x.TypeOfActivity,
-                    AreaOfActivity = x.AreaOfActivity,
+                    //TypeOfActivity = x.TypeOfActivity,
+                    //AreaOfActivity = x.AreaOfActivity,
                     PaymentId = x.PaymentId,
                     DocumentName = "Поступление на расчетный счет"
                 });
@@ -400,9 +400,9 @@ namespace Cost.Application
                     Liter = x.Liter,
                     TypeOperation = x.TypeOperation,
                     PaymentPurpose = x.PaymentPurpose,
-                    TypeOfActivity = x.TypeOfActivity,
-                    AreaOfActivity = x.AreaOfActivity,
-                    ContractIdIncome = x.ContractIdIncome,
+                    //TypeOfActivity = x.TypeOfActivity,
+                    //AreaOfActivity = x.AreaOfActivity,
+                    //ContractIdIncome = x.ContractIdIncome,
                     PaymentId = x.PaymentId
                 });
 
@@ -416,22 +416,27 @@ namespace Cost.Application
             var incomeAndExpenses = (await IncomeAndExpensesAsync(organization)).Where(w => w.Date >= gettingData.StartDate
                 && (w.DocumentName == "Списание с расчетного счета" || w.DocumentName == "Поступление на расчетный счет"));
 
+
+
+            var addAreaOfActivity = AddAreaOfActivity(organization, incomeAndExpenses);
+
+
+
             var contracts = gettingData.GetContracts();
-            var result = from vIncomeAndExpenses in incomeAndExpenses
+            var result = from vIncomeAndExpenses in addAreaOfActivity
                          join vContracts in contracts
                          on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
                          from subvContracts in leftJoin.DefaultIfEmpty()
                          select new CashFlow
                          {
                              Date = vIncomeAndExpenses.Date,
-                             Receipt = vIncomeAndExpenses.Credit,
-                             Payment = vIncomeAndExpenses.Debit,
+                             Debit = vIncomeAndExpenses.Credit,
+                             Credit = vIncomeAndExpenses.Debit,
                              TypeOperation = vIncomeAndExpenses.TypeOperation,
                              TypeOfActivity = string.IsNullOrEmpty(vIncomeAndExpenses.TypeOfActivity) ? subvContracts?.TypeOfActivity : vIncomeAndExpenses.TypeOfActivity,
                              AreaOfActivity = AreaOfActivity(vIncomeAndExpenses.AreaOfActivity, subvContracts?.AreaOfActivity, vIncomeAndExpenses.TypeOperation),
                              Liter = vIncomeAndExpenses.Liter,
                              CostItem = vIncomeAndExpenses.CostItem,
-                             ContractId = vIncomeAndExpenses.ContractId,
                              Contractor = subvContracts?.Contractor,
                              Number = subvContracts?.Number,
                              RateNDS = subvContracts?.RateNDS2026 ?? 0,
@@ -455,13 +460,13 @@ namespace Cost.Application
                                         {
                                             TypeOfActivity = y.Key.TypeOfActivity,
                                             AreaOfActivity = y.Key.AreaOfActivity,
-                                            Receipt = y.Sum(z => z.Receipt),
-                                            Payment = y.Sum(z => z.Payment),
+                                            Debit = y.Sum(z => z.Debit),
+                                            Credit = y.Sum(z => z.Credit),
                                         });
 
             foreach (var item in startCashFlow)
             {
-                startBalance = startBalance + item.Receipt - item.Payment;
+                startBalance = startBalance + item.Debit - item.Credit;
             }
 
             return startBalance;
@@ -472,114 +477,114 @@ namespace Cost.Application
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
             // -------------------------------------------------
-            var indirectCosts = gettingData.GetIndirectCosts().Where(x => x.Date >= startDate && x.Date <= endDate).ToList();
+            //var indirectCosts = gettingData.GetIndirectCosts().Where(x => x.Date >= startDate && x.Date <= endDate).ToList();
             //var serb = indirectCosts.Where(z => z.Date >= new DateOnly(2026, 4, 1) && z.Date <= new DateOnly(2026, 4, 10))
             //    .GroupBy(x => x.PaymentId).Select(y => new { y.Key, Count = y.Count() }).ToList();
             //_exportingReportsToExcel.Browse(indirectCosts);
 
-            var plusIndirectCosts = from vCashFlow in cashFlow
-                                    join vIndirectCosts in indirectCosts
-                                    on vCashFlow.PaymentId equals vIndirectCosts.PaymentId into leftJoin
-                                    from subvIndirectCosts in leftJoin.DefaultIfEmpty()
-                                    select new { vCashFlow, subvIndirectCosts };
+            //var plusIndirectCosts = from vCashFlow in cashFlow
+            //                        join vIndirectCosts in indirectCosts
+            //                        on vCashFlow.PaymentId equals vIndirectCosts.PaymentId into leftJoin
+            //                        from subvIndirectCosts in leftJoin.DefaultIfEmpty()
+            //                        select new { vCashFlow, subvIndirectCosts };
 
-            var indirectCostsAdded = new List<CashFlow>();
-            foreach (var item in plusIndirectCosts)
-            {
-                if (!string.IsNullOrEmpty(item.subvIndirectCosts?.PaymentId))
-                {
-                    if (item.subvIndirectCosts.Ketov != 0)
-                        indirectCostsAdded.Add(new CashFlow
-                        {
-                            Date = item.vCashFlow.Date,
-                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-                            AreaOfActivity = "Субподряд (Кетов)",
-                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Ketov,
-                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Ketov : 0
-                        });
-                    if (item.subvIndirectCosts.Gontar != 0)
-                        indirectCostsAdded.Add(new CashFlow
-                        {
-                            Date = item.vCashFlow.Date,
-                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-                            AreaOfActivity = "Субподряд (Гонтарь)",
-                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Gontar,
-                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Gontar : 0
-                        });
-                    if (item.subvIndirectCosts.Endulsi != 0)
-                        indirectCostsAdded.Add(new CashFlow
-                        {
-                            Date = item.vCashFlow.Date,
-                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-                            AreaOfActivity = "Субподряд (Эндульси)",
-                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi,
-                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi : 0
-                        });
-                    if (item.subvIndirectCosts.TechnicalCustomer != 0)
-                        indirectCostsAdded.Add(new CashFlow
-                        {
-                            Date = item.vCashFlow.Date,
-                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-                            AreaOfActivity = "Технический заказчик",
-                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer,
-                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer : 0
-                        });
-                    if (item.subvIndirectCosts.TransportRental != 0)
-                        indirectCostsAdded.Add(new CashFlow
-                        {
-                            Date = item.vCashFlow.Date,
-                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-                            AreaOfActivity = "Аренда транспорта",
-                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental,
-                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental : 0
-                        });
-                    if (item.subvIndirectCosts.SalesDepartment != 0)
-                        indirectCostsAdded.Add(new CashFlow
-                        {
-                            Date = item.vCashFlow.Date,
-                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-                            AreaOfActivity = "Отдел продаж",
-                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.SalesDepartment,
-                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.SalesDepartment : 0
-                        });
-                    if (item.subvIndirectCosts.Rent != 0)
-                        indirectCostsAdded.Add(new CashFlow
-                        {
-                            Date = item.vCashFlow.Date,
-                            TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-                            AreaOfActivity = "Аренда",
-                            IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Rent,
-                            Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Rent : 0
-                        });
-                    if (item.subvIndirectCosts.Withdrawal != 0)
-                        indirectCostsAdded.Add(new CashFlow
-                        {
-                            Date = item.vCashFlow.Date,
-                            TypeOfActivity = "Финансовая деятельность",
-                            AreaOfActivity = "Отвлечение",
-                            Payment = item.vCashFlow.Payment * item.subvIndirectCosts.Withdrawal
-                        });
-                }
-            }
+            //var indirectCostsAdded = new List<CashFlow>();
+            //foreach (var item in plusIndirectCosts)
+            //{
+            //    if (!string.IsNullOrEmpty(item.subvIndirectCosts?.PaymentId))
+            //    {
+            //        if (item.subvIndirectCosts.Ketov != 0)
+            //            indirectCostsAdded.Add(new CashFlow
+            //            {
+            //                Date = item.vCashFlow.Date,
+            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+            //                AreaOfActivity = "Субподряд (Кетов)",
+            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Ketov,
+            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Ketov : 0
+            //            });
+            //        if (item.subvIndirectCosts.Gontar != 0)
+            //            indirectCostsAdded.Add(new CashFlow
+            //            {
+            //                Date = item.vCashFlow.Date,
+            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+            //                AreaOfActivity = "Субподряд (Гонтарь)",
+            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Gontar,
+            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Gontar : 0
+            //            });
+            //        if (item.subvIndirectCosts.Endulsi != 0)
+            //            indirectCostsAdded.Add(new CashFlow
+            //            {
+            //                Date = item.vCashFlow.Date,
+            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+            //                AreaOfActivity = "Субподряд (Эндульси)",
+            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi,
+            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi : 0
+            //            });
+            //        if (item.subvIndirectCosts.TechnicalCustomer != 0)
+            //            indirectCostsAdded.Add(new CashFlow
+            //            {
+            //                Date = item.vCashFlow.Date,
+            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+            //                AreaOfActivity = "Технический заказчик",
+            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer,
+            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer : 0
+            //            });
+            //        if (item.subvIndirectCosts.TransportRental != 0)
+            //            indirectCostsAdded.Add(new CashFlow
+            //            {
+            //                Date = item.vCashFlow.Date,
+            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+            //                AreaOfActivity = "Аренда транспорта",
+            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental,
+            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental : 0
+            //            });
+            //        if (item.subvIndirectCosts.SalesDepartment != 0)
+            //            indirectCostsAdded.Add(new CashFlow
+            //            {
+            //                Date = item.vCashFlow.Date,
+            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+            //                AreaOfActivity = "Отдел продаж",
+            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.SalesDepartment,
+            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.SalesDepartment : 0
+            //            });
+            //        if (item.subvIndirectCosts.Rent != 0)
+            //            indirectCostsAdded.Add(new CashFlow
+            //            {
+            //                Date = item.vCashFlow.Date,
+            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
+            //                AreaOfActivity = "Аренда",
+            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Rent,
+            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Rent : 0
+            //            });
+            //        if (item.subvIndirectCosts.Withdrawal != 0)
+            //            indirectCostsAdded.Add(new CashFlow
+            //            {
+            //                Date = item.vCashFlow.Date,
+            //                TypeOfActivity = "Финансовая деятельность",
+            //                AreaOfActivity = "Отвлечение",
+            //                Payment = item.vCashFlow.Payment * item.subvIndirectCosts.Withdrawal
+            //            });
+            //    }
+            //}
 
-            var countRemove = cashFlow.RemoveAll(x => indirectCosts.Any(y => y.PaymentId == x.PaymentId));
-            var cashFlowAdded = cashFlow.Concat(indirectCostsAdded);
+            //var countRemove = cashFlow.RemoveAll(x => indirectCosts.Any(y => y.PaymentId == x.PaymentId));
+            //var cashFlowAdded = cashFlow.Concat(indirectCostsAdded);
             // -------------------------------------------------
 
-            var cashFlowGroup = cashFlowAdded.Where(z => z.Date >= startDate && z.Date <= endDate)
+            var cashFlowGroup = cashFlow.Where(z => z.Date >= startDate && z.Date <= endDate)
                                  .GroupBy(x => new { x.TypeOfActivity, x.AreaOfActivity })
                                  .Select(y => new CashFlow
                                  {
                                      TypeOfActivity = y.Key.TypeOfActivity,
                                      AreaOfActivity = y.Key.AreaOfActivity,
-                                     Receipt = y.Sum(z => z.Receipt),
-                                     Payment = y.Sum(z => z.Payment),
+                                     Debit = y.Sum(z => z.Debit),
+                                     Credit = y.Sum(z => z.Credit),
                                      IndirectCosts = y.Sum(z => z.IndirectCosts)
                                  })
                                  .Where(z => z.AreaOfActivity != "ПереводСДругогоСчета" && z.AreaOfActivity != "ПереводНаДругойСчет");
 
             var groupTypeOfActivity = cashFlowGroup.GroupBy(y => y.TypeOfActivity)
-                .Select(x => new { typeOfActivity = x.Key, sumTypeOfActivity = x.Sum(z => z.Receipt) - x.Sum(z => z.Payment) - x.Sum(z => z.IndirectCosts) });
+                .Select(x => new { typeOfActivity = x.Key, sumTypeOfActivity = x.Sum(z => z.Debit) - x.Sum(z => z.Credit) - x.Sum(z => z.IndirectCosts) });
             
             var order = new List<CashFlowOrder>
             {
@@ -603,8 +608,8 @@ namespace Cost.Application
                                 {
                                     AreaOfActivity = vCashFlow.AreaOfActivity,
                                     TypeOfActivity = vCashFlow.TypeOfActivity,
-                                    Receipt = vCashFlow.Receipt,
-                                    Payment = vCashFlow.Payment,
+                                    Debit = vCashFlow.Debit,
+                                    Credit = vCashFlow.Credit,
                                     IndirectCosts = vCashFlow.IndirectCosts,
                                     SumTypeOfActivity = subvOrderTypeOfActivity?.vGroupTypeOfActivity != null ? subvOrderTypeOfActivity.vGroupTypeOfActivity.sumTypeOfActivity : 0
                                 };
@@ -647,8 +652,18 @@ namespace Cost.Application
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
             var incomeAndExpenses = await IncomeAndExpensesAsync(organization);
+
+
+
+
+            var addAreaOfActivity = AddAreaOfActivity(organization, incomeAndExpenses);
+
+
+
+
+
             var contracts = gettingData.GetContracts();
-            var plusContracts = from vIncomeAndExpenses in incomeAndExpenses
+            var plusContracts = from vIncomeAndExpenses in addAreaOfActivity
                                 join vContracts in contracts
                                 on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
                                 from subvContracts in leftJoin.DefaultIfEmpty()
@@ -1008,15 +1023,13 @@ namespace Cost.Application
                 }).OrderBy(x => x.Date);
         }
 
-        public string AreaOfActivity(string paymentAreaOfActivity, string contractAreaOfActivity, string typeOperation)
+        public IEnumerable<IncomeAndExpenses> AddAreaOfActivity(Organizations organization, IEnumerable<IncomeAndExpenses> incomeAndExpenses) // Добавляем направления
         {
-            string areaOfActivity;
-            if (string.IsNullOrWhiteSpace(paymentAreaOfActivity))
-                areaOfActivity = string.IsNullOrEmpty(contractAreaOfActivity) ? typeOperation : contractAreaOfActivity;
-            else
-                areaOfActivity = paymentAreaOfActivity;
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-                return areaOfActivity;
+            var areaOfActivityPaymentsFromExcel = gettingData.GetAreaOfActivityPaymentsFromExcel();
+
+            return incomeAndExpenses;
         }
 
         public IEnumerable<ShareInNDS> ShareInNDS(IEnumerable<CashFlow> cashFlow) // Доля в НДС по направлениям
@@ -1050,9 +1063,19 @@ namespace Cost.Application
 
             var incomeAndExpenses = (await IncomeAndExpensesAsync(organization)).Where(w => w.Date >= startDate && w.Date <= endDate);
 
+
+
+
+
+            var addAreaOfActivity = AddAreaOfActivity(organization, incomeAndExpenses);
+
+
+
+
+
             var contracts = gettingData.GetContracts();
             var plusContracts = from vContracts in contracts
-                                join vIncomeAndExpenses in incomeAndExpenses
+                                join vIncomeAndExpenses in addAreaOfActivity
                                 on vContracts.ContractId equals vIncomeAndExpenses.ContractId into leftJoin
                                 from subvIncomeAndExpenses in leftJoin.DefaultIfEmpty()
                                 select (vContracts, subvIncomeAndExpenses);
@@ -1088,7 +1111,7 @@ namespace Cost.Application
                       AreaOfActivity= y.FirstOrDefault().AreaOfActivity
                   });
 
-            var expenses = incomeAndExpenses.Where(x => !string.IsNullOrEmpty(x.ContractIdIncome) && x.Date >= startDate && x.Date <= endDate)
+            var expenses = addAreaOfActivity.Where(x => !string.IsNullOrEmpty(x.ContractIdIncome) && x.Date >= startDate && x.Date <= endDate)
                               .GroupBy(y => y.ContractIdIncome)
                               .Select(z => new ExpensesUnderIncomeContracts
                               {
