@@ -1078,7 +1078,7 @@ namespace Cost.Application
                               .Select(z => new ExpensesUnderIncomeContracts
                               {
                                   ContractId = z.Key,
-                                  Expenses = z.Sum(s => s.Debit)
+                                  Expenses = z.Sum(s => s.Credit)
                               });
 
             var expensesUnderIncomeContracts = from vBuyersContracts in income
@@ -1103,39 +1103,67 @@ namespace Cost.Application
             return expensesUnderIncomeContracts.OrderByDescending(x => x.Date);
         }
 
-        //public async Task<IEnumerable<ReconciliationStatement>> ReconciliationStatementTmpAsync(string contractName, Organizations organization, string contractor) // Акт сверки
-        //{
-        //    IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+        public async Task<IEnumerable<ReconciliationStatement>> BreakdownOfExpensesUnderRevenueContractsAsync(string contractId, Organizations organization) // Расшифровка затрат по доходным договорам
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-        //    var incomeAndExpenses = await IncomeAndExpensesAsync(organization);
-        //    var addAreaOfActivity = AddAreaOfActivity(organization, incomeAndExpenses);
-        //    var contracts = gettingData.GetContracts();
+            var incomeAndExpenses = await IncomeAndExpensesAsync(organization);
+            var addAreaOfActivity = AddAreaOfActivity(organization, incomeAndExpenses);
 
-        //    var plusContracts = from vIncomeAndExpenses in addAreaOfActivity
-        //                        join vContracts in contracts
-        //                        on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
-        //                        from subvContracts in leftJoin.DefaultIfEmpty()
-        //                        select (vIncomeAndExpenses, subvContracts);
 
-        //    var reconciliationStatement = string.IsNullOrEmpty(contractor) ?
-        //        plusContracts.Where(x => x.subvContracts?.Name == contractName) :
-        //        plusContracts.Where(x => x.subvContracts?.Name == contractName && x.subvContracts?.Contractor == contractor);
+            var credit = (await IncomeAndExpensesAsync(organization)).Where(x => x.ContractId == contractId);
+            var debit = addAreaOfActivity.Where(x => x.ContractIdIncome == contractId);
 
-        //    return reconciliationStatement
-        //          .Select(y => new ReconciliationStatement
-        //          {
-        //              ContractId = y.vIncomeAndExpenses.ContractId,
-        //              Credit = y.vIncomeAndExpenses.Credit,
-        //              Debit = y.vIncomeAndExpenses.Debit,
-        //              Contractor = y.subvContracts.Contractor,
-        //              Date = y.vIncomeAndExpenses.Date,
-        //              Sum = y.subvContracts.Sum,
-        //              Name = y.subvContracts.Name,
-        //              DocumentName = y.vIncomeAndExpenses.DocumentName,
-        //              TypeOperation = y.vIncomeAndExpenses.TypeOperation,
-        //              AreaOfActivity = y.vIncomeAndExpenses.AreaOfActivity,
-        //              ContractIdIncome = y.vIncomeAndExpenses.ContractIdIncome
-        //          });
-        //}
+
+            var contracts = gettingData.GetContracts();
+
+
+
+
+            var addAreaOfActivity = AddAreaOfActivity(organization, incomeAndExpenses);
+
+
+
+
+
+
+
+
+            var plusContracts = from vIncomeAndExpenses in addAreaOfActivity
+                                join vContracts in contracts
+                                on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
+                                from subvContracts in leftJoin.DefaultIfEmpty()
+                                select (vIncomeAndExpenses, subvContracts);
+
+            var reconciliationStatement = plusContracts.Where(x => x.subvContracts?.Name == contractName);
+            var expenses = addAreaOfActivity.Where(x => !string.IsNullOrEmpty(x.ContractIdIncome) && x.Date >= startDate && x.Date <= endDate)
+                              .GroupBy(y => y.ContractIdIncome)
+                              .Select(z => new ExpensesUnderIncomeContracts
+                              {
+                                  ContractId = z.Key,
+                                  Expenses = z.Sum(s => s.Credit)
+                              });
+
+
+
+
+
+
+            return reconciliationStatement
+                  .Select(y => new ReconciliationStatement
+                  {
+                      ContractId = y.vIncomeAndExpenses.ContractId,
+                      Credit = y.vIncomeAndExpenses.Credit,
+                      Debit = y.vIncomeAndExpenses.Debit,
+                      Contractor = y.subvContracts.Contractor,
+                      Date = y.vIncomeAndExpenses.Date,
+                      Sum = y.subvContracts.Sum,
+                      Name = y.subvContracts.Name,
+                      DocumentName = y.vIncomeAndExpenses.DocumentName,
+                      TypeOperation = y.vIncomeAndExpenses.TypeOperation,
+                      AreaOfActivity = y.vIncomeAndExpenses.AreaOfActivity,
+                      ContractIdIncome = y.vIncomeAndExpenses.ContractIdIncome
+                  });
+        }
     }
 }

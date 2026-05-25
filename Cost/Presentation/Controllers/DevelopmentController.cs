@@ -129,5 +129,15 @@ namespace Cost.Presentation.Controllers
             _exportingReportsToExcel.ExpensesUnderIncomeContracts(expensesUnderIncomeContracts);
             return NoContent();
         }
+
+        /// <summary>Расшифровка затрат по доходным договорам</summary>
+        /// <response>Записывает информацию в .xlsx</response>
+        [HttpGet("BreakdownOfExpensesUnderRevenueContracts")]
+        public async Task<IActionResult> BreakdownOfExpensesUnderRevenueContractsAsync([Required] Organizations organization, [Required] string contractName)
+        {
+            var breakdownOfExpensesUnderRevenueContracts = await _generatingReports.BreakdownOfExpensesUnderRevenueContractsAsync(contractName, organization);
+            _exportingReportsToExcel.Browse(breakdownOfExpensesUnderRevenueContracts);
+            return NoContent();
+        }
     }
 }
