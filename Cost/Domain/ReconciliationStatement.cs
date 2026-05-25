@@ -10,6 +10,5 @@
         public decimal Credit { get; set; }
         public string DocumentName { get; set; }
         public string ContractId { get; set; }
-
     }
 }

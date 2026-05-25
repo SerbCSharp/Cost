@@ -15,5 +15,7 @@
         public string AreaOfActivity { get; set; }
         public string ContractIdIncome { get; set; }
         public string PaymentId { get; set; }
+        public decimal Percent { get; set; }
+        public bool DirectOrIndirect { get; set; }
     }
 }
