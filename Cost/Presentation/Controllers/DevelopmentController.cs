@@ -131,11 +131,11 @@ namespace Cost.Presentation.Controllers
         }
 
         /// <summary>Расшифровка затрат по доходным договорам</summary>
-        /// <response>Записывает информацию в .xlsx</response>
+        /// <response>Записывает информацию в browse.xlsx</response>
         [HttpGet("BreakdownOfExpensesUnderRevenueContracts")]
-        public async Task<IActionResult> BreakdownOfExpensesUnderRevenueContractsAsync([Required] Organizations organization, [Required] string contractName)
+        public async Task<IActionResult> BreakdownOfExpensesUnderRevenueContractsAsync([Required] Organizations organization, [Required] string contractId)
         {
-            var breakdownOfExpensesUnderRevenueContracts = await _generatingReports.BreakdownOfExpensesUnderRevenueContractsAsync(contractName, organization);
+            var breakdownOfExpensesUnderRevenueContracts = await _generatingReports.BreakdownOfExpensesUnderRevenueContractsAsync(contractId, organization);
             _exportingReportsToExcel.Browse(breakdownOfExpensesUnderRevenueContracts);
             return NoContent();
         }

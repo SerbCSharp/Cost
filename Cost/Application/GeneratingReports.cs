@@ -34,10 +34,6 @@ namespace Cost.Application
                     TypeOperation = z.payment.TypeOperation
                 });
 
-            //var serb = multiplePayments.Where(z => z.Date >= new DateOnly(2026, 4, 1) && z.Date <= new DateOnly(2026, 4, 10))
-            //    .GroupBy(x => x.PaymentId).Select(y => new { y.Key, Count = y.Count() }).ToList();
-            //_exportingReportsToExcel.Browse(serb);
-
             var singlePayment = payments.Where(x => x.PaymentDetails.Length == 0)
                 .Select(y => new Payment
                 {
@@ -101,9 +97,6 @@ namespace Cost.Application
                 ContractId = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.ContractId,
                 Liter = string.IsNullOrEmpty(x.subvExpensePaymentsFromExcel?.Liter) ? x.vPlusCostItemName.vPlusLiterName.Description : x.subvExpensePaymentsFromExcel?.Liter,
                 CostItem = string.IsNullOrEmpty(x.subvExpensePaymentsFromExcel?.CostItems) ? x.vPlusCostItemName.Description : x.subvExpensePaymentsFromExcel?.CostItems,
-                //TypeOfActivity = x.subvExpensePaymentsFromExcel?.TypeOfActivity,
-                //AreaOfActivity = x.subvExpensePaymentsFromExcel?.AreaOfActivity,
-                //ContractIdIncome = x.subvExpensePaymentsFromExcel?.ContractIdIncome,
                 PaymentPurpose = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.PaymentPurpose,
                 TypeOperation = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.vAllPayments.TypeOperation,
                 CommentFromPaymentInvoice = x.vPlusCostItemName.vPlusLiterName.vPaymentsPlusLiterIdPlusCostItemId.vPaymentsPlusLiterId.vPaymentsPlusSupplierPaymentInvoice.subvSupplierPaymentInvoice?.Comment,
@@ -150,13 +143,6 @@ namespace Cost.Application
                                           from subvbuyerPaymentInvoice in leftJoin.DefaultIfEmpty()
                                           select new { vAllPayments, subvbuyerPaymentInvoice?.Comment };
 
-            //var incomePaymentsFromExcel = gettingData.IncomePaymentsFromExcel();
-            //var plusIncomePaymentsFromExcel = from vPlusBuyerPaymentInvoice in plusBuyerPaymentInvoice
-            //                                  join vIncomePaymentsFromExcel in incomePaymentsFromExcel
-            //                                   on vPlusBuyerPaymentInvoice.vAllPayments.PaymentId equals vIncomePaymentsFromExcel.PaymentId into leftJoin
-            //                                  from subvIncomePaymentsFromExcel in leftJoin.DefaultIfEmpty()
-            //                                  select new { vPlusBuyerPaymentInvoice, subvIncomePaymentsFromExcel };
-
             var result = plusBuyerPaymentInvoice.Select(x => new Payment
             {
                 PaymentId = x.vAllPayments.PaymentId,
@@ -167,8 +153,6 @@ namespace Cost.Application
                 TypeOperation = x.vAllPayments.TypeOperation,
                 CommentFromPaymentInvoice = x.Comment,
                 PaymentDetailsId = x.vAllPayments.PaymentDetailsId,
-                //TypeOfActivity = x.subvIncomePaymentsFromExcel?.TypeOfActivity,
-                //AreaOfActivity = x.subvIncomePaymentsFromExcel?.AreaOfActivity,
             }).OrderBy(x => x.Date);
 
             return result;
@@ -466,101 +450,6 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            // -------------------------------------------------
-            //var indirectCosts = gettingData.GetIndirectCosts().Where(x => x.Date >= startDate && x.Date <= endDate).ToList();
-            //var serb = indirectCosts.Where(z => z.Date >= new DateOnly(2026, 4, 1) && z.Date <= new DateOnly(2026, 4, 10))
-            //    .GroupBy(x => x.PaymentId).Select(y => new { y.Key, Count = y.Count() }).ToList();
-            //_exportingReportsToExcel.Browse(indirectCosts);
-
-            //var plusIndirectCosts = from vCashFlow in cashFlow
-            //                        join vIndirectCosts in indirectCosts
-            //                        on vCashFlow.PaymentId equals vIndirectCosts.PaymentId into leftJoin
-            //                        from subvIndirectCosts in leftJoin.DefaultIfEmpty()
-            //                        select new { vCashFlow, subvIndirectCosts };
-
-            //var indirectCostsAdded = new List<CashFlow>();
-            //foreach (var item in plusIndirectCosts)
-            //{
-            //    if (!string.IsNullOrEmpty(item.subvIndirectCosts?.PaymentId))
-            //    {
-            //        if (item.subvIndirectCosts.Ketov != 0)
-            //            indirectCostsAdded.Add(new CashFlow
-            //            {
-            //                Date = item.vCashFlow.Date,
-            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-            //                AreaOfActivity = "Субподряд (Кетов)",
-            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Ketov,
-            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Ketov : 0
-            //            });
-            //        if (item.subvIndirectCosts.Gontar != 0)
-            //            indirectCostsAdded.Add(new CashFlow
-            //            {
-            //                Date = item.vCashFlow.Date,
-            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-            //                AreaOfActivity = "Субподряд (Гонтарь)",
-            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Gontar,
-            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Gontar : 0
-            //            });
-            //        if (item.subvIndirectCosts.Endulsi != 0)
-            //            indirectCostsAdded.Add(new CashFlow
-            //            {
-            //                Date = item.vCashFlow.Date,
-            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-            //                AreaOfActivity = "Субподряд (Эндульси)",
-            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi,
-            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Endulsi : 0
-            //            });
-            //        if (item.subvIndirectCosts.TechnicalCustomer != 0)
-            //            indirectCostsAdded.Add(new CashFlow
-            //            {
-            //                Date = item.vCashFlow.Date,
-            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-            //                AreaOfActivity = "Технический заказчик",
-            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer,
-            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.TechnicalCustomer : 0
-            //            });
-            //        if (item.subvIndirectCosts.TransportRental != 0)
-            //            indirectCostsAdded.Add(new CashFlow
-            //            {
-            //                Date = item.vCashFlow.Date,
-            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-            //                AreaOfActivity = "Аренда транспорта",
-            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental,
-            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.TransportRental : 0
-            //            });
-            //        if (item.subvIndirectCosts.SalesDepartment != 0)
-            //            indirectCostsAdded.Add(new CashFlow
-            //            {
-            //                Date = item.vCashFlow.Date,
-            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-            //                AreaOfActivity = "Отдел продаж",
-            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.SalesDepartment,
-            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.SalesDepartment : 0
-            //            });
-            //        if (item.subvIndirectCosts.Rent != 0)
-            //            indirectCostsAdded.Add(new CashFlow
-            //            {
-            //                Date = item.vCashFlow.Date,
-            //                TypeOfActivity = "Производственная деятельность (включая косвенные расходы)",
-            //                AreaOfActivity = "Аренда",
-            //                IndirectCosts = item.subvIndirectCosts.DirectOrIndirect ? 0 : item.vCashFlow.Payment * item.subvIndirectCosts.Rent,
-            //                Payment = item.subvIndirectCosts.DirectOrIndirect ? item.vCashFlow.Payment * item.subvIndirectCosts.Rent : 0
-            //            });
-            //        if (item.subvIndirectCosts.Withdrawal != 0)
-            //            indirectCostsAdded.Add(new CashFlow
-            //            {
-            //                Date = item.vCashFlow.Date,
-            //                TypeOfActivity = "Финансовая деятельность",
-            //                AreaOfActivity = "Отвлечение",
-            //                Payment = item.vCashFlow.Payment * item.subvIndirectCosts.Withdrawal
-            //            });
-            //    }
-            //}
-
-            //var countRemove = cashFlow.RemoveAll(x => indirectCosts.Any(y => y.PaymentId == x.PaymentId));
-            //var cashFlowAdded = cashFlow.Concat(indirectCostsAdded);
-            // -------------------------------------------------
-
             foreach (var item in cashFlow)
             {
                 if ((item.Percent > 0 && item.Percent < 100) && !item.DirectOrIndirect)
@@ -703,24 +592,6 @@ namespace Cost.Application
                                 on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
                                 from subvContracts in leftJoin.DefaultIfEmpty()
                                 select (vIncomeAndExpenses, subvContracts);
-
-            //var browse = plusContracts.Select(z => new Expense
-            //{
-            //    ContractId = z.subvContracts?.ContractId,
-            //    Receipt = z.vIncomeAndExpenses.Credit,
-            //    Payment = z.vIncomeAndExpenses.Debit,
-            //    Contractor = z.subvContracts?.Contractor,
-            //    Number = z.subvContracts?.Number,
-            //    Liter = z.subvContracts?.Liter,
-            //    ContractClosed = z.subvContracts?.ContractClosed,
-            //    ContractorOrSupplier = z.subvContracts?.ContractorOrSupplier,
-            //    CostItem = z.subvContracts?.CostItem,
-            //    Date = z.vIncomeAndExpenses.Date,
-            //    Sum = z.subvContracts?.Sum,
-            //    Name = z.subvContracts?.Name,
-            //    NumberAA = z.vIncomeAndExpenses.TypeOperation
-            //});
-            //_exportingReportsToExcel.Browse(browse);
 
             var contractor = plusContracts.Where(x => x.subvContracts?.ContractorOrSupplier == "Подрядчик").GroupBy(y => y.subvContracts.ContractId).Select(z => new Expense
             {
@@ -973,8 +844,6 @@ namespace Cost.Application
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
             var areaOfActivityPaymentsFromExcel = gettingData.GetAreaOfActivityPaymentsFromExcel();
 
-            //_exportingReportsToExcel.Browse(incomeAndExpenses);
-
             var plusAreaOfActivity = from vIncomeAndExpenses in incomeAndExpenses
                                      join vAreaOfActivityPaymentsFromExcel in areaOfActivityPaymentsFromExcel
                                      on vIncomeAndExpenses.PaymentId equals vAreaOfActivityPaymentsFromExcel.PaymentId into leftJoin
@@ -997,8 +866,6 @@ namespace Cost.Application
                                          Percent = subvAreaOfActivityPaymentsFromExcel?.Percent ?? 0,
                                          DirectOrIndirect = subvAreaOfActivityPaymentsFromExcel?.DirectOrIndirect ?? false
                                      };
-
-            //_exportingReportsToExcel.Browse(plusAreaOfActivity);
 
             return plusAreaOfActivity;
         }
@@ -1028,7 +895,8 @@ namespace Cost.Application
             return result;
         }
 
-        public async Task<IEnumerable<ExpensesUnderIncomeContracts>> ExpensesUnderIncomeContractsAsync(Organizations organization, DateOnly startDate, DateOnly endDate) // Затраты по доходным договорам
+        // Затраты по доходным договорам
+        public async Task<IEnumerable<ExpensesUnderIncomeContracts>> ExpensesUnderIncomeContractsAsync(Organizations organization, DateOnly startDate, DateOnly endDate)
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
@@ -1103,67 +971,60 @@ namespace Cost.Application
             return expensesUnderIncomeContracts.OrderByDescending(x => x.Date);
         }
 
-        public async Task<IEnumerable<ReconciliationStatement>> BreakdownOfExpensesUnderRevenueContractsAsync(string contractId, Organizations organization) // Расшифровка затрат по доходным договорам
+        // Расшифровка затрат по доходным договорам
+        public async Task<IEnumerable<BreakdownOfExpensesUnderRevenueContracts>> BreakdownOfExpensesUnderRevenueContractsAsync(string contractId, Organizations organization)
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
             var incomeAndExpenses = await IncomeAndExpensesAsync(organization);
             var addAreaOfActivity = AddAreaOfActivity(organization, incomeAndExpenses);
 
-
-            var credit = (await IncomeAndExpensesAsync(organization)).Where(x => x.ContractId == contractId);
-            var debit = addAreaOfActivity.Where(x => x.ContractIdIncome == contractId);
-
-
+            var thisContract = (await IncomeAndExpensesAsync(organization)).Where(x => x.ContractId == contractId);
             var contracts = gettingData.GetContracts();
+            var thisContractPluscontract = from vThisContract in thisContract
+                                           join vContracts in contracts
+                                           on vThisContract.ContractId equals vContracts.ContractId into leftJoin
+                                           from subvContracts in leftJoin.DefaultIfEmpty()
+                                           select new BreakdownOfExpensesUnderRevenueContracts
+                                           {
+                                               ContractId = subvContracts.ContractId,
+                                               Contractor =subvContracts.Contractor,
+                                               Number = subvContracts.Number,
+                                               ContractIdIncome = subvContracts.ContractIdIncome,
+                                               Liter = subvContracts.Liter,
+                                               CostItem = subvContracts.CostItem,
+                                               Date = vThisContract.Date,
+                                               Credit = vThisContract.Credit,
+                                               Debit = vThisContract.Debit,
+                                               DocumentName = vThisContract.DocumentName,
+                                               PaymentPurpose = vThisContract.PaymentPurpose,
+                                               TypeOperation = vThisContract.TypeOperation,
+                                               PaymentId = vThisContract.PaymentId
+                                           };
 
+            var otherContracts = addAreaOfActivity.Where(x => x.ContractIdIncome == contractId);
+            var otherContractsPluscontract = from vOtherContracts in otherContracts
+                                             join vContracts in contracts
+                                             on vOtherContracts.ContractId equals vContracts.ContractId into leftJoin
+                                             from subvContracts in leftJoin.DefaultIfEmpty()
+                                             select new BreakdownOfExpensesUnderRevenueContracts
+                                             {
+                                                 ContractId = subvContracts.ContractId,
+                                                 Contractor = subvContracts.Contractor,
+                                                 Number = subvContracts.Number,
+                                                 ContractIdIncome = vOtherContracts.ContractIdIncome,
+                                                 Liter = vOtherContracts.Liter,
+                                                 CostItem = vOtherContracts.CostItem,
+                                                 Date = vOtherContracts.Date,
+                                                 DocumentName = vOtherContracts.DocumentName,
+                                                 PaymentPurpose = vOtherContracts.PaymentPurpose,
+                                                 TypeOperation = vOtherContracts.TypeOperation,
+                                                 PaymentId = vOtherContracts.PaymentId,
+                                                 Expenses = vOtherContracts.Debit - vOtherContracts.Credit
+                                             };
+            var allPayments = thisContractPluscontract.Concat(otherContractsPluscontract).OrderBy(x => x.Date);
 
-
-
-            var addAreaOfActivity = AddAreaOfActivity(organization, incomeAndExpenses);
-
-
-
-
-
-
-
-
-            var plusContracts = from vIncomeAndExpenses in addAreaOfActivity
-                                join vContracts in contracts
-                                on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
-                                from subvContracts in leftJoin.DefaultIfEmpty()
-                                select (vIncomeAndExpenses, subvContracts);
-
-            var reconciliationStatement = plusContracts.Where(x => x.subvContracts?.Name == contractName);
-            var expenses = addAreaOfActivity.Where(x => !string.IsNullOrEmpty(x.ContractIdIncome) && x.Date >= startDate && x.Date <= endDate)
-                              .GroupBy(y => y.ContractIdIncome)
-                              .Select(z => new ExpensesUnderIncomeContracts
-                              {
-                                  ContractId = z.Key,
-                                  Expenses = z.Sum(s => s.Credit)
-                              });
-
-
-
-
-
-
-            return reconciliationStatement
-                  .Select(y => new ReconciliationStatement
-                  {
-                      ContractId = y.vIncomeAndExpenses.ContractId,
-                      Credit = y.vIncomeAndExpenses.Credit,
-                      Debit = y.vIncomeAndExpenses.Debit,
-                      Contractor = y.subvContracts.Contractor,
-                      Date = y.vIncomeAndExpenses.Date,
-                      Sum = y.subvContracts.Sum,
-                      Name = y.subvContracts.Name,
-                      DocumentName = y.vIncomeAndExpenses.DocumentName,
-                      TypeOperation = y.vIncomeAndExpenses.TypeOperation,
-                      AreaOfActivity = y.vIncomeAndExpenses.AreaOfActivity,
-                      ContractIdIncome = y.vIncomeAndExpenses.ContractIdIncome
-                  });
+            return allPayments;
         }
     }
 }
