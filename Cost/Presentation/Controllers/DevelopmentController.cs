@@ -79,8 +79,8 @@ namespace Cost.Presentation.Controllers
             var cashFlowSource = await _generatingReports.CashFlowSourceAsync(organization, startDate, endDate);
             _exportingReportsToExcel.CashFlowSource(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate), organization.ToString());
 
-            //var shareInNDS = _generatingReports.ShareInNDS(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate));
-            //_exportingReportsToExcel.ShareInNDS(shareInNDS, organization.ToString(), startDate, endDate);
+            var shareInNDS = _generatingReports.ShareInNDS(cashFlowSource.Where(z => z.Date >= startDate && z.Date <= endDate));
+            _exportingReportsToExcel.ShareInNDS(shareInNDS, organization.ToString(), startDate, endDate);
 
             var startBalance = _generatingReports.StartBalance(cashFlowSource, organization, startDate);
             var cashFlow = _generatingReports.CashFlow([.. cashFlowSource], organization, startDate, endDate);
