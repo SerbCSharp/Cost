@@ -872,7 +872,7 @@ namespace Cost.Application
 
         public IEnumerable<ShareInNDS> ShareInNDS(IEnumerable<CashFlow> cashFlow) // Доля в НДС по направлениям
         {
-            var shareInNDS = cashFlow.Where(w => w.TypeOfActivity == "Производственная деятельность (включая косвенные расходы)")
+            var shareInNDS = cashFlow.Where(w => w.TypeOfActivity == "Производственная деятельность (включая косвенные расходы)" && w.DirectOrIndirect == true)
                                  .GroupBy(x => x.AreaOfActivity)
                                  .Select(y => new ShareInNDS
                                  {
@@ -946,7 +946,7 @@ namespace Cost.Application
                               .Select(z => new ExpensesUnderIncomeContracts
                               {
                                   ContractId = z.Key,
-                                  Expenses = z.Sum(s => s.Credit)
+                                  Expenses = z.Sum(s => s.Debit)
                               });
 
             var expensesUnderIncomeContracts = from vBuyersContracts in income
