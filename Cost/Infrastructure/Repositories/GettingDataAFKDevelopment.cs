@@ -278,7 +278,7 @@ namespace Cost.Infrastructure.Repositories
         public async Task<ReceiptGoodsServices> ReceiptGoodsServicesAsync() // Поступление товаров и услуг
         {
             var receiptGoodsServicesUrl = ApiUrl + "Document_ПоступлениеТоваровУслуг?$format=json"
-                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key,Товары"
                 + "&$filter=DeletionMark eq false and Posted eq true";
             using HttpResponseMessage receiptGoodsServicesResponse = await httpClient.GetAsync(receiptGoodsServicesUrl);
             return await receiptGoodsServicesResponse.Content.ReadFromJsonAsync<ReceiptGoodsServices>();
@@ -357,7 +357,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            var tmpUrl = ApiUrl + "Document_СчетНаОплатуПоставщика?$format=json";
+            var tmpUrl = ApiUrl + "Catalog_Номенклатура?$format=json";
             using HttpResponseMessage tmpResponse = await httpClient.GetAsync(tmpUrl);
             string content = await tmpResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content);
@@ -366,7 +366,7 @@ namespace Cost.Infrastructure.Repositories
 
         public IEnumerable<AreaOfActivityPaymentsFromExcel> GetAreaOfActivityPaymentsFromExcel()
         {
-            string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
+            string filePath = "C:\\Cost\\AFKDevelopment\\Catalogs.xlsx";
             FileInfo fileInfo = new(filePath);
             using var package = new ExcelPackage(fileInfo);
             var sheet = package.Workbook.Worksheets[Name: "CashFlow"];
@@ -401,6 +401,24 @@ namespace Cost.Infrastructure.Repositories
                 DirectOrIndirect = row.Field<bool>("DirectOrIndirect"),
                 ContractIdIncome = row.Field<string>("ContractIdIncome")
             });
+        }
+
+        public async Task<UnitsOfMeasurement> UnitsOfMeasurementAsync() // Единицы измерения
+        {
+            var unitsOfMeasurementUrl = ApiUrl + "Catalog_КлассификаторЕдиницИзмерения?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage unitsOfMeasurementResponse = await httpClient.GetAsync(unitsOfMeasurementUrl);
+            return await unitsOfMeasurementResponse.Content.ReadFromJsonAsync<UnitsOfMeasurement>();
+        }
+
+        public async Task<Nomenclature> NomenclatureAsync() // Номенклатура
+        {
+            var nomenclatureUrl = ApiUrl + "Catalog_Номенклатура?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage nomenclatureResponse = await httpClient.GetAsync(nomenclatureUrl);
+            return await nomenclatureResponse.Content.ReadFromJsonAsync<Nomenclature>();
         }
     }
 }

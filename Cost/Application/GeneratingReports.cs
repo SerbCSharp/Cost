@@ -287,6 +287,7 @@ namespace Cost.Application
                     Date = DateOnly.FromDateTime(x.Date),
                     Credit = x.DocumentAmount,
                     ContractId = x.ContractId,
+                    Goods = x.Goods,
                     DocumentName = "Поступление товаров и услуг"
                 });
             var plusReceiptGoodsServices = expensePayments.Concat(receiptGoodsServices);
@@ -379,7 +380,8 @@ namespace Cost.Application
                     Liter = x.Liter,
                     TypeOperation = x.TypeOperation,
                     PaymentPurpose = x.PaymentPurpose,
-                    PaymentId = x.PaymentId
+                    PaymentId = x.PaymentId,
+                    Goods = x.Goods
                 });
 
             return incomeAndExpenses.OrderBy(x => x.Date);
@@ -900,6 +902,8 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
+            //var incomeAndExpenses = (await IncomeAndExpensesAsync(organization)).Where(w => w.Date >= startDate && w.Date <= endDate 
+            //                                                                           && w.DocumentName != "Корректировка долга" && w.DocumentName != "Операция");
             var incomeAndExpenses = (await IncomeAndExpensesAsync(organization)).Where(w => w.Date >= startDate && w.Date <= endDate);
             var addAreaOfActivity = AddAreaOfActivity(organization, incomeAndExpenses);
             var contracts = gettingData.GetContracts();
@@ -1025,6 +1029,39 @@ namespace Cost.Application
             var allPayments = thisContractPluscontract.Concat(otherContractsPluscontract).OrderBy(x => x.Date);
 
             return allPayments;
+        }
+
+        public async Task<IEnumerable<CashFlow>> GreatestSuppliersAsync(Organizations organization) // Самые большие поставщики
+        {
+            IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
+
+            //var serb = await gettingData.ReceiptGoodsServicesAsync();
+            //_exportingReportsToExcel.Browse(serb.Value); // Source
+
+            var incomeAndExpenses = (await IncomeAndExpensesAsync(organization)).Where(w => w.Date.Year >= 2025 && w.DocumentName == "Поступление товаров и услуг");
+            var contracts = gettingData.GetContracts();
+
+            var cashFlow = from vIncomeAndExpenses in incomeAndExpenses
+                           join vContracts in contracts
+                           on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
+                           from subvContracts in leftJoin.DefaultIfEmpty()
+                           select new CashFlow
+                           {
+                               Debit = vIncomeAndExpenses.Credit,
+                               Credit = vIncomeAndExpenses.Debit,
+                               Contractor = subvContracts?.Contractor,
+                               AreaOfActivity = subvContracts?.ContractorOrSupplier
+                           };
+
+            var result = cashFlow.Where(w => w.AreaOfActivity == "Поставщик").GroupBy(x => x.Contractor)
+                .Select(y => new CashFlow
+                {
+                    Contractor = y.Key,
+                    Credit = y.Sum(z => z.Credit) - y.Sum(z => z.Debit)
+                })
+                .OrderByDescending(z => z.Credit);
+
+            return result;
         }
     }
 }

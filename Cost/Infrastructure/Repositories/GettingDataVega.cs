@@ -340,7 +340,7 @@ namespace Cost.Infrastructure.Repositories
 
         public IEnumerable<AreaOfActivityPaymentsFromExcel> GetAreaOfActivityPaymentsFromExcel()
         {
-            string filePath = "C:\\Cost\\AFK\\Catalogs.xlsx";
+            string filePath = "C:\\Cost\\Vega\\Catalogs.xlsx";
             FileInfo fileInfo = new(filePath);
             using var package = new ExcelPackage(fileInfo);
             var sheet = package.Workbook.Worksheets[Name: "CashFlow"];
