@@ -1,8 +1,10 @@
 ﻿using Cost.Domain;
 using Cost.Infrastructure.Repositories.Models.ActOfCompletion;
+using Cost.Infrastructure.Repositories.Models.Warehouse;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.DTO.Response;
 using Cost.Presentation.ReportsToExcel;
+using System.Diagnostics.Contracts;
 
 namespace Cost.Application
 {
@@ -287,7 +289,6 @@ namespace Cost.Application
                     Date = DateOnly.FromDateTime(x.Date),
                     Credit = x.DocumentAmount,
                     ContractId = x.ContractId,
-                    Goods = x.Goods,
                     DocumentName = "Поступление товаров и услуг"
                 });
             var plusReceiptGoodsServices = expensePayments.Concat(receiptGoodsServices);
@@ -380,8 +381,7 @@ namespace Cost.Application
                     Liter = x.Liter,
                     TypeOperation = x.TypeOperation,
                     PaymentPurpose = x.PaymentPurpose,
-                    PaymentId = x.PaymentId,
-                    Goods = x.Goods
+                    PaymentId = x.PaymentId
                 });
 
             return incomeAndExpenses.OrderBy(x => x.Date);
@@ -1031,35 +1031,68 @@ namespace Cost.Application
             return allPayments;
         }
 
-        public async Task<IEnumerable<CashFlow>> GreatestSuppliersAsync(Organizations organization) // Самые большие поставщики
+        public async Task<IEnumerable<ReceiptGoodsWithPrices>> ReceiptGoodsWithPricesAsync(Organizations organization) // Поступление товаров c ценами и объемами
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
-            //var serb = await gettingData.ReceiptGoodsServicesAsync();
-            //_exportingReportsToExcel.Browse(serb.Value); // Source
-
-            var incomeAndExpenses = (await IncomeAndExpensesAsync(organization)).Where(w => w.Date.Year >= 2025 && w.DocumentName == "Поступление товаров и услуг");
-            var contracts = gettingData.GetContracts();
-
-            var cashFlow = from vIncomeAndExpenses in incomeAndExpenses
-                           join vContracts in contracts
-                           on vIncomeAndExpenses.ContractId equals vContracts.ContractId into leftJoin
-                           from subvContracts in leftJoin.DefaultIfEmpty()
-                           select new CashFlow
-                           {
-                               Debit = vIncomeAndExpenses.Credit,
-                               Credit = vIncomeAndExpenses.Debit,
-                               Contractor = subvContracts?.Contractor,
-                               AreaOfActivity = subvContracts?.ContractorOrSupplier
-                           };
-
-            var result = cashFlow.Where(w => w.AreaOfActivity == "Поставщик").GroupBy(x => x.Contractor)
-                .Select(y => new CashFlow
+            var receiptGoodsWithPrices = (await gettingData.ReceiptGoodsWithPricesAsync()).Value;
+            var multipleReceiptGoodsWithPrices = receiptGoodsWithPrices
+                .SelectMany(y => y.Goods, (x, y) => new { receipt = x, goods = y })
+                .Select(z => new ReceiptGoodsWithPrices
                 {
-                    Contractor = y.Key,
-                    Credit = y.Sum(z => z.Credit) - y.Sum(z => z.Debit)
-                })
-                .OrderByDescending(z => z.Credit);
+                    Date = DateOnly.FromDateTime(z.receipt.Date),
+                    ContractId = z.receipt.ContractId,
+                    DocumentAmount = z.receipt.DocumentAmount,
+                    NomenclatureId = z.goods.NomenclatureId,
+                    Price = z.goods.Price,
+                    Quantity = z.goods.Quantity,
+                    Sum = z.goods.Sum,
+                    SumNDS = z.goods.SumNDS,
+                    UnitsOfMeasurementId = z.goods.UnitsOfMeasurementId,
+                    WarehouseId = z.receipt.WarehouseId
+                });
+
+            var contracts = gettingData.GetContracts();
+            var receiptGoodsWithPricesPluscontract = from vMultipleReceiptGoodsWithPrices in multipleReceiptGoodsWithPrices
+                                                     join vContracts in contracts
+                                                     on vMultipleReceiptGoodsWithPrices.ContractId equals vContracts.ContractId into leftJoin
+                                                     from subvContracts in leftJoin.DefaultIfEmpty()
+                                                     select new { vMultipleReceiptGoodsWithPrices, subvContracts };
+            var unitsOfMeasurement = (await gettingData.UnitsOfMeasurementAsync()).Value;
+            var plusUnitsOfMeasurement = from vReceiptGoodsWithPricesPluscontract in receiptGoodsWithPricesPluscontract
+                                         join vUnitsOfMeasurement in unitsOfMeasurement
+                                         on vReceiptGoodsWithPricesPluscontract.vMultipleReceiptGoodsWithPrices.UnitsOfMeasurementId 
+                                         equals vUnitsOfMeasurement.Ref_Key into leftJoin
+                                         from subvUnitsOfMeasurement in leftJoin.DefaultIfEmpty()
+                                         select new { vReceiptGoodsWithPricesPluscontract, subvUnitsOfMeasurement };
+            var warehouse = (await gettingData.WarehouseAsync()).Value;
+            var plusWarehouse = from vPlusUnitsOfMeasurement in plusUnitsOfMeasurement
+                                join vWarehouse in warehouse
+                                on vPlusUnitsOfMeasurement.vReceiptGoodsWithPricesPluscontract.vMultipleReceiptGoodsWithPrices.WarehouseId
+                                equals vWarehouse.Ref_Key into leftJoin
+                                from subvWarehouse in leftJoin.DefaultIfEmpty()
+                                select new { vPlusUnitsOfMeasurement, subvWarehouse };
+            var nomenclature = (await gettingData.NomenclatureAsync()).Value;
+            var plusNomenclature = from vPlusWarehouse in plusWarehouse
+                                   join vNomenclature in nomenclature
+                                   on vPlusWarehouse.vPlusUnitsOfMeasurement.vReceiptGoodsWithPricesPluscontract.vMultipleReceiptGoodsWithPrices.NomenclatureId
+                                   equals vNomenclature.Ref_Key into leftJoin
+                                   from subvNomenclature in leftJoin.DefaultIfEmpty()
+                                   select new ReceiptGoodsWithPrices
+                                   {
+                                       Date = vPlusWarehouse.vPlusUnitsOfMeasurement.vReceiptGoodsWithPricesPluscontract.vMultipleReceiptGoodsWithPrices.Date,
+                                       Contractor = vPlusWarehouse.vPlusUnitsOfMeasurement.vReceiptGoodsWithPricesPluscontract.subvContracts?.Contractor,
+                                       DocumentAmount = vPlusWarehouse.vPlusUnitsOfMeasurement.vReceiptGoodsWithPricesPluscontract.vMultipleReceiptGoodsWithPrices.DocumentAmount,
+                                       Nomenclature = subvNomenclature?.Description,
+                                       Price = vPlusWarehouse.vPlusUnitsOfMeasurement.vReceiptGoodsWithPricesPluscontract.vMultipleReceiptGoodsWithPrices.Price,
+                                       Quantity = vPlusWarehouse.vPlusUnitsOfMeasurement.vReceiptGoodsWithPricesPluscontract.vMultipleReceiptGoodsWithPrices.Quantity,
+                                       Sum = vPlusWarehouse.vPlusUnitsOfMeasurement.vReceiptGoodsWithPricesPluscontract.vMultipleReceiptGoodsWithPrices.Sum,
+                                       SumNDS = vPlusWarehouse.vPlusUnitsOfMeasurement.vReceiptGoodsWithPricesPluscontract.vMultipleReceiptGoodsWithPrices.SumNDS,
+                                       UnitsOfMeasurement = vPlusWarehouse.vPlusUnitsOfMeasurement.subvUnitsOfMeasurement?.Description,
+                                       Warehouse = vPlusWarehouse.subvWarehouse?.Description                                        
+                                   };
+
+            var result = plusNomenclature.OrderBy(x => x.Date);
 
             return result;
         }

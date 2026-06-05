@@ -1,4 +1,5 @@
 using Cost.Application;
+using Cost.Domain;
 using Cost.Presentation.DTO.Request;
 using Cost.Presentation.ReportsToExcel;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ namespace Cost.Presentation.Controllers
         [HttpGet("Browse")]
         public async Task<IActionResult> BrowseAsync([Required] Organizations organization)
         {
-            var browse = await _generatingReports.IncomeAndExpensesAsync(organization);
+            var browse = await _generatingReports.ReceiptGoodsWithPricesAsync(organization);
             _exportingReportsToExcel.Browse(browse);
             return NoContent();
         }
@@ -137,6 +138,16 @@ namespace Cost.Presentation.Controllers
         {
             var breakdownOfExpensesUnderRevenueContracts = await _generatingReports.BreakdownOfExpensesUnderRevenueContractsAsync(contractId, organization);
             _exportingReportsToExcel.Browse(breakdownOfExpensesUnderRevenueContracts);
+            return NoContent();
+        }
+
+        /// <summary>Динамика закупочных цен на товары</summary>
+        /// <response>Записывает информацию в ProductPrices.xlsx</response>
+        [HttpGet("ProductPrices")]
+        public async Task<IActionResult> ProductPricesAsync([Required] Organizations organization)
+        {
+            var productPrices = await _generatingReports.ReceiptGoodsWithPricesAsync(organization);
+            _exportingReportsToExcel.ProductPrices(productPrices, organization.ToString());
             return NoContent();
         }
     }

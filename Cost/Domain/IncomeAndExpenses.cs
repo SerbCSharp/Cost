@@ -1,6 +1,4 @@
-﻿using Cost.Infrastructure.Repositories.Models.ReceiptGoodsServices;
-
-namespace Cost.Domain
+﻿namespace Cost.Domain
 {
     public class IncomeAndExpenses
     {
@@ -19,7 +17,5 @@ namespace Cost.Domain
         public string PaymentId { get; set; }
         public decimal Percent { get; set; }
         public bool DirectOrIndirect { get; set; }
-        public Good[] Goods { get; set; }
-
     }
 }

@@ -10,11 +10,14 @@ using Cost.Infrastructure.Repositories.Models.DebitToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
 using Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
+using Cost.Infrastructure.Repositories.Models.Nomenclature;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
 using Cost.Infrastructure.Repositories.Models.ReceiptGoodsServices;
 using Cost.Infrastructure.Repositories.Models.ReceiptProcessing;
 using Cost.Infrastructure.Repositories.Models.SaleGoodsServices;
 using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
+using Cost.Infrastructure.Repositories.Models.UnitsOfMeasurement;
+using Cost.Infrastructure.Repositories.Models.Warehouse;
 
 namespace Cost.Application
 {
@@ -43,6 +46,10 @@ namespace Cost.Application
         Task<ImplementationConstructionWorks> ImplementationConstructionWorksAsync(); // Реализация строительных работ
         IEnumerable<AreaOfActivityPaymentsFromExcel> GetAreaOfActivityPaymentsFromExcel(); // Добавляем направления
         Task<ActOfCompletion> ActOfCompletionAsync(); // Акты об окончании СМР
+        Task<ReceiptGoodsServices> ReceiptGoodsWithPricesAsync(); // Поступление товаров c ценами и объемами
+        Task<Nomenclature> NomenclatureAsync(); // Номенклатура
+        Task<UnitsOfMeasurement> UnitsOfMeasurementAsync(); // Единицы измерения
+        Task<Warehouse> WarehouseAsync(); // Склады
         Task<string> TmpAsync();
     }
 }

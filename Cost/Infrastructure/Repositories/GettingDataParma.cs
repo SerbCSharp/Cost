@@ -11,11 +11,14 @@ using Cost.Infrastructure.Repositories.Models.DebitToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.DebtAdjustment;
 using Cost.Infrastructure.Repositories.Models.DepositToCurrentAccount;
 using Cost.Infrastructure.Repositories.Models.ImplementationConstructionWorks;
+using Cost.Infrastructure.Repositories.Models.Nomenclature;
 using Cost.Infrastructure.Repositories.Models.NomenclatureGroups;
 using Cost.Infrastructure.Repositories.Models.ReceiptGoodsServices;
 using Cost.Infrastructure.Repositories.Models.ReceiptProcessing;
 using Cost.Infrastructure.Repositories.Models.SaleGoodsServices;
 using Cost.Infrastructure.Repositories.Models.SupplierPaymentInvoice;
+using Cost.Infrastructure.Repositories.Models.UnitsOfMeasurement;
+using Cost.Infrastructure.Repositories.Models.Warehouse;
 using Microsoft.Extensions.Options;
 using OfficeOpenXml;
 using System.Data;
@@ -406,6 +409,42 @@ namespace Cost.Infrastructure.Repositories
                 DirectOrIndirect = row.Field<bool>("DirectOrIndirect"),
                 ContractIdIncome = row.Field<string>("ContractIdIncome")
             });
+        }
+
+        public async Task<ReceiptGoodsServices> ReceiptGoodsWithPricesAsync() // Поступление товаров c ценами и объемами
+        {
+            var receiptGoodsWithPricesUrl = ApiUrl + "Document_ПоступлениеТоваровУслуг?$format=json"
+                + "&$select=Date,СуммаДокумента,ДоговорКонтрагента_Key,Склад_Key,Товары"
+                + "&$filter=DeletionMark eq false and Posted eq true";
+            using HttpResponseMessage receiptGoodsWithPricesResponse = await httpClient.GetAsync(receiptGoodsWithPricesUrl);
+            return await receiptGoodsWithPricesResponse.Content.ReadFromJsonAsync<ReceiptGoodsServices>();
+        }
+
+        public async Task<UnitsOfMeasurement> UnitsOfMeasurementAsync() // Единицы измерения
+        {
+            var unitsOfMeasurementUrl = ApiUrl + "Catalog_КлассификаторЕдиницИзмерения?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage unitsOfMeasurementResponse = await httpClient.GetAsync(unitsOfMeasurementUrl);
+            return await unitsOfMeasurementResponse.Content.ReadFromJsonAsync<UnitsOfMeasurement>();
+        }
+
+        public async Task<Nomenclature> NomenclatureAsync() // Номенклатура
+        {
+            var nomenclatureUrl = ApiUrl + "Catalog_Номенклатура?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage nomenclatureResponse = await httpClient.GetAsync(nomenclatureUrl);
+            return await nomenclatureResponse.Content.ReadFromJsonAsync<Nomenclature>();
+        }
+
+        public async Task<Warehouse> WarehouseAsync() // Склады
+        {
+            var warehouseUrl = ApiUrl + "Catalog_Склады?$format=json"
+                + "&$select=Ref_Key,Description"
+                + "&$filter=DeletionMark eq false";
+            using HttpResponseMessage warehouseResponse = await httpClient.GetAsync(warehouseUrl);
+            return await warehouseResponse.Content.ReadFromJsonAsync<Warehouse>();
         }
     }
 }

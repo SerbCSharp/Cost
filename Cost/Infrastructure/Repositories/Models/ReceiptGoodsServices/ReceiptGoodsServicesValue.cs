@@ -12,6 +12,9 @@ namespace Cost.Infrastructure.Repositories.Models.ReceiptGoodsServices
         [JsonPropertyName("ДоговорКонтрагента_Key")]
         public string ContractId { get; set; }
 
+        [JsonPropertyName("Склад_Key")]
+        public string WarehouseId { get; set; }
+
         [JsonPropertyName("Товары")]
         public Good[] Goods { get; set; }
 

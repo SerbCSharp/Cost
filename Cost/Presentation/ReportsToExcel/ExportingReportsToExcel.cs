@@ -809,5 +809,63 @@ namespace Cost.Presentation.ReportsToExcel
 
             package.SaveAs(new FileInfo(filePath));
         }
+
+        public void ProductPrices(IEnumerable<ReceiptGoodsWithPrices> productPrices, string organization) // Закупочные цены на товары
+        {
+            var fileInfo = new FileInfo($"C:\\Cost\\ProductPrices{organization}.xlsx");
+            using var package = new ExcelPackage(fileInfo);
+
+            var sheet = package.Workbook.Worksheets.Add("Закупочные цены на товары");
+            sheet.Cells.Style.Font.Name = "Calibri";
+            sheet.Cells.Style.Font.Size = 11;
+            sheet.View.FreezePanes(2, 1);
+
+            // Шапка
+            sheet.Cells[1, 1].Value = "Дата";
+            sheet.Cells[1, 2].Value = "Сумма документа";
+            sheet.Cells[1, 3].Value = "Поставщик";
+            sheet.Cells[1, 4].Value = "Товар";
+            sheet.Cells[1, 5].Value = "Количество";
+            sheet.Cells[1, 6].Value = "Eд.изм.";
+            sheet.Cells[1, 7].Value = "Цена";
+            sheet.Cells[1, 8].Value = "Сумма";
+            sheet.Cells[1, 9].Value = "Сумма НДС";
+            sheet.Cells[1, 10].Value = "Склад";
+            sheet.Cells[1, 1, 1, 10].Style.Font.Bold = true;
+            sheet.Cells[1, 1, 1, 10].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            var row = 2;
+            var column = 0;
+            foreach (var item in productPrices)
+            {
+                sheet.Cells[row, column + 1].Value = item.Date;
+                sheet.Cells[row, column + 2].Value = item.DocumentAmount;
+                sheet.Cells[row, column + 3].Value = item.Contractor;
+                sheet.Cells[row, column + 4].Value = item.Nomenclature;
+                sheet.Cells[row, column + 5].Value = item.Quantity;
+                sheet.Cells[row, column + 6].Value = item.UnitsOfMeasurement;
+                sheet.Cells[row, column + 7].Value = item.Price;
+                sheet.Cells[row, column + 8].Value = item.Sum;
+                sheet.Cells[row, column + 9].Value = item.SumNDS;
+                sheet.Cells[row, column + 10].Value = item.Warehouse;
+                row++;
+            }
+
+            sheet.Cells[1, 1, row, 10].AutoFitColumns();
+            //sheet.Column(3).Width = 15;
+            sheet.Cells[2, 1, row, 1].Style.Numberformat.Format = "dd.mm.yyyy";
+            sheet.Cells[2, 2, row, 2].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 2, row, 5].Style.Numberformat.Format = "### ### ### ##0.00";
+            sheet.Cells[2, 7, row, 9].Style.Numberformat.Format = "### ### ### ##0.00";
+
+            var range = sheet.Cells[1, 1, row - 1, 10];
+            range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range.AutoFilter = true;
+
+            package.Save();
+        }
     }
 }
