@@ -360,7 +360,7 @@ namespace Cost.Infrastructure.Repositories
 
         public async Task<string> TmpAsync()
         {
-            var tmpUrl = ApiUrl + "Document_ПоступлениеТоваровУслуг?$format=json";
+            var tmpUrl = ApiUrl + "Catalog_НоменклатурныеГруппы?$format=json";
             using HttpResponseMessage tmpResponse = await httpClient.GetAsync(tmpUrl);
             string content = await tmpResponse.Content.ReadAsStringAsync();
             Console.WriteLine(content);

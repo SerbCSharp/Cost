@@ -1035,6 +1035,8 @@ namespace Cost.Application
         {
             IGettingData gettingData = _gettingDataFactory.Create(organization.ToString());
 
+            //var serb = await gettingData.TmpAsync();
+
             var receiptGoodsWithPrices = (await gettingData.ReceiptGoodsWithPricesAsync()).Value;
             var multipleReceiptGoodsWithPrices = receiptGoodsWithPrices
                 .SelectMany(y => y.Goods, (x, y) => new { receipt = x, goods = y })
